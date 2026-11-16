@@ -32,9 +32,17 @@ chmod +x py-redact-*-x86_64.AppImage
 ./py-redact-*-x86_64.AppImage [file.pdf]
 ```
 
-### Fedora
+### Fedora (Copr)
 
-The RPM is signed with the author's key, `RPM-GPG-KEY-py-redact`, which is
+```bash
+sudo dnf copr enable nivaca/py-redact
+sudo dnf install py-redact
+```
+
+Updates then come with `sudo dnf upgrade`. The packages are built and signed
+by [Copr](https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/).
+
+Each release also has the RPM itself. It is signed with the author's key, `RPM-GPG-KEY-py-redact`, which is
 attached to each release and is also in the repository
 ([`packaging/RPM-GPG-KEY-py-redact`](packaging/RPM-GPG-KEY-py-redact)). Its
 fingerprint is `8187 0643 CA22 1AF9 0C30 554E BE68 32CD 3599 4948`:

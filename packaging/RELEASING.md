@@ -13,13 +13,14 @@
 2. Commit, then publish:
 
    ```bash
-   uv run python tools/release.py --rpm --no-copr --notes-file NOTES.md
+   uv run python tools/release.py --rpm --notes-file NOTES.md
    ```
 
    This runs the tests; makes the wheel, the source package, the ZIP of the
    source, the AppImage and the signed RPM; tags `vVERSION`; pushes to
    GitHub (`origin`) and Codeberg (`codeberg`); and attaches the files to the
-   release on both. `--dry-run` only shows the commands.
+   release on both; then it sends the signed source RPM to Copr
+   (project nivaca/py-redact). `--dry-run` only shows the commands.
 
 ## What the RPM build needs
 
@@ -41,10 +42,7 @@ machine's gpg keyring. A copy of the public key is
 
 ## Copr
 
-There is no Copr project yet. To make one, and then drop `--no-copr`:
-
-```bash
-copr-cli create py-redact --chroot fedora-45-x86_64 --chroot fedora-rawhide-x86_64 \
-  --description "Redact PDF documents" \
-  --instructions "sudo dnf copr enable nivaca/py-redact && sudo dnf install py-redact"
-```
+The project is https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/,
+built for fedora-45-x86_64 and fedora-rawhide-x86_64. Each Copr build needs a
+higher version-release than the last, so bump the spec first. `copr-cli`
+needs an API token in `~/.config/copr` (it expires after 180 days).
