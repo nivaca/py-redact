@@ -250,3 +250,11 @@ def test_pdfa_greyed_without_py_pdfconform(app, sample, tmp_path, monkeypatch):
     assert not w.output_actions["a-2b"].isEnabled() and w.output_actions[""].isChecked()
     assert w.output() == "" and w.a_save.text() == "Save the redacted copy…"
     w.close()
+
+
+def test_toolbar_has_icons(window):
+    buttons = [a for a in window.toolbar.actions() if not a.isSeparator()]
+    assert buttons and all(not a.icon().isNull() for a in buttons)
+    assert window.toolbar.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonIconOnly
+    window.a_labels.trigger()
+    assert window.toolbar.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonTextUnderIcon

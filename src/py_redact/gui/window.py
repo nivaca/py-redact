@@ -57,6 +57,16 @@ def install_qt_translations():
             break
 
 
+ACTIONS = Path(__file__).resolve().parent.parent / "icons" / "actions"
+
+
+def icon(name: str) -> QIcon:
+    """The icon NAME (a freedesktop name: document-open...) of the desktop's icon
+    theme, so that it looks like the rest of the desktop; or else the program's own."""
+    own = ACTIONS / f"{name}.svg"
+    return QIcon.fromTheme(name, QIcon(str(own)) if own.is_file() else QIcon())
+
+
 def swatch(color: str, size: int = 16) -> QIcon:
     pixmap = QPixmap(size, size)
     pixmap.fill(QColor(color))
@@ -304,6 +314,9 @@ class MainWindow(QMainWindow):
 
         m = self.menuBar().addMenu(tr("&Settings"))
         self._action(m, tr("Settings…"), self.settings_dialog, QKeySequence.StandardKey.Preferences)
+        self.a_labels = QAction(tr("Labels in the toolbar"), self, checkable=True)
+        self.a_labels.toggled.connect(self.show_labels)
+        m.addAction(self.a_labels)
         lang = m.addMenu(tr("Language"))
         group = QActionGroup(self)
         for code, name in interface.names().items():
@@ -315,9 +328,17 @@ class MainWindow(QMainWindow):
         m = self.menuBar().addMenu(tr("&Help"))
         self._action(m, tr("About"), self.about)
 
+        for act, name in ((self.a_open, "document-open"), (self.a_save, "document-save-as"),
+                          (self.a_tool_text, "edit-select-text"), (self.a_tool_box, "draw-rectangle"),
+                          (self.a_find, "edit-find"), (self.a_undo, "edit-undo"), (self.a_redo, "edit-redo"),
+                          (self.a_delete, "edit-delete"), (self.a_prev, "go-previous"), (self.a_next, "go-next"),
+                          (self.a_fit, "zoom-fit-best"), (self.a_fit_width, "zoom-fit-width"),
+                          (self.a_zoom_out, "zoom-out"), (self.a_zoom_in, "zoom-in"), (self.a_result, "view-preview")):
+            act.setIcon(icon(name))
         bar = QToolBar(tr("Tools"))
+        self.toolbar = bar
         bar.setObjectName("tools")
-        bar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        bar.setIconSize(QSize(22, 22))
         for act in (self.a_open, self.a_save, None, self.a_tool_text, self.a_tool_box, self.a_find, None, self.a_undo,
                     self.a_redo, self.a_delete, None, self.a_prev,
                     self.a_next, None, self.a_fit, self.a_fit_width, self.a_zoom_out, self.a_zoom_in):
@@ -326,6 +347,8 @@ class MainWindow(QMainWindow):
             else:
                 bar.addAction(act)
         self.addToolBar(bar)
+        self.show_labels(self.settings.value("toolbar_labels", "false") == "true")
+        self._toolbar_tips()
 
     # ----------------------------------------------------------------- settings
 
@@ -533,6 +556,33 @@ class MainWindow(QMainWindow):
         self.status(message)
         return True
 
+    # ----------------------------------------------------------------- the toolbar
+
+    def show_labels(self, on: bool):
+        """Icons with their names under them in the toolbar, or (by default) only icons."""
+        self.toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon if on
+                                        else Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.a_labels.blockSignals(True)
+        self.a_labels.setChecked(on)
+        self.a_labels.blockSignals(False)
+        self.settings.setValue("toolbar_labels", "true" if on else "false")
+
+    def _toolbar_tips(self):
+        """The tooltip of each button of the toolbar: what it does, and its shortcut."""
+        if not hasattr(self, "toolbar"):
+            return
+        for act in self.toolbar.actions():
+            if act.isSeparator():
+                continue
+            text = act.text().replace("&&", "\0").replace("&", "").replace("\0", "&")
+            keys = act.shortcut().toString(QKeySequence.SequenceFormat.NativeText)
+            tip = f"<b>{text}</b>" + (f" &nbsp;<span style='color:gray'>{keys}</span>" if keys else "")
+            if act.statusTip():
+                tip += f"<br>{act.statusTip()}"
+            for button in self.toolbar.findChildren(QToolButton):
+                if button.defaultAction() is act:
+                    button.setToolTip(tip)
+
     # ----------------------------------------------------------------- PDF/A and PDF/X
 
     def output(self) -> str:
@@ -553,6 +603,7 @@ class MainWindow(QMainWindow):
                                                   command=conform.COMMAND))
         self.a_save.setText(tr("Save the redacted copy…") if not self.output()
                             else tr("Save the redacted copy as {standard}…", standard=conform.label(self.output())))
+        self._toolbar_tips()
 
     # ----------------------------------------------------------------- recent files
 

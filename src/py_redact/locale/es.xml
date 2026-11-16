@@ -717,4 +717,8 @@
     <en>{command} took too long</en>
     <tr>{command} tardó demasiado</tr>
   </text>
+  <text>
+    <en>Labels in the toolbar</en>
+    <tr>Etiquetas en la barra de herramientas</tr>
+  </text>
 </interface>
