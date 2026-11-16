@@ -1,0 +1,79 @@
+# py-redact, which redacts PDF documents.
+# Copyright (C) 2026 Nicolas Vaughan <nivaca@fastmail.com>
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version. This program is distributed WITHOUT ANY
+# WARRANTY; see the LICENSE file, or <https://www.gnu.org/licenses/>.
+#
+# Build with packaging/build-rpm.sh, which makes the source tarball.
+
+Name:           py-redact
+Version:        0.1.0
+Release:        1%{?dist}
+Summary:        Redact PDF documents: remove what lies under boxes drawn on their pages
+
+License:        GPL-3.0-or-later
+URL:            https://github.com/nivaca/py-redact
+Source0:        %{name}-%{version}.tar.gz
+
+BuildArch:      noarch
+
+BuildRequires:  python3-devel
+BuildRequires:  desktop-file-utils
+# For %%check: the tests run the window (headless).
+BuildRequires:  python3-pytest
+BuildRequires:  python3-pyside6
+
+# PyMuPDF comes from the package's metadata (pyproject.toml).
+# The window: Fedora's PySide6 (pyproject.toml names the PyPI wheel, pyside6-essentials).
+Requires:       python3-pyside6
+Requires:       hicolor-icon-theme
+
+%description
+py-redact redacts PDF documents. Boxes are drawn on the pages, and in the
+redacted copy whatever lies under them is removed for good (text, the parts
+of images under them, drawings, annotations, form fields); each box is then
+filled with a colour of choice, white included. A box can be repeated on
+other pages: all, the odd or the even ones, or a list of pages.
+
+The window is in English or Spanish.
+
+%prep
+%autosetup -n %{name}-%{version}
+# (Fedora's PySide6 is python3-pyside6, which doesn't provide pyside6-essentials)
+sed -i '/"pyside6-essentials/d' pyproject.toml
+
+%generate_buildrequires
+%pyproject_buildrequires
+
+%build
+%pyproject_wheel
+
+%install
+%pyproject_install
+%pyproject_save_files -l py_redact
+desktop-file-install --dir=%{buildroot}%{_datadir}/applications packaging/py-redact.desktop
+install -d %{buildroot}%{_datadir}/icons
+cp -pr src/py_redact/icons/linux/hicolor %{buildroot}%{_datadir}/icons/
+
+%check
+desktop-file-validate %{buildroot}%{_datadir}/applications/py-redact.desktop
+%pyproject_check_import -e 'py_redact.gui*'
+# The whole test suite, on the installed package, with no settings of the
+# builder's and the window drawn offscreen.
+export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_PLATFORM=offscreen
+%pytest -q tests
+%{py3_test_envvars} %{buildroot}%{_bindir}/py-redact --version | grep -q '%{version}'
+
+%files -f %{pyproject_files}
+%doc README.md
+%{_bindir}/py-redact
+%{_datadir}/applications/py-redact.desktop
+%{_datadir}/icons/hicolor/*/apps/py-redact.*
+
+%changelog
+* Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.1.0-1
+- First package: the window, in English or Spanish, with a menu entry that
+  also opens PDF files

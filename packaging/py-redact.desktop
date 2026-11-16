@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=py-redact
+GenericName=PDF redaction
+GenericName[es]=Censura de PDF
+Comment=Redact PDF documents: remove for good what lies under boxes drawn on their pages
+Comment[es]=Censurar documentos PDF: eliminar definitivamente lo que hay debajo de recuadros dibujados en sus páginas
+Keywords=redact;redaction;anonymize;censor;black out;PDF;
+Keywords[es]=censurar;censura;anonimizar;tachar;PDF;
+Categories=Office;Publishing;
+Icon=py-redact
+Exec=py-redact %f
+MimeType=application/pdf;
+Terminal=false
+StartupNotify=true
+StartupWMClass=py-redact

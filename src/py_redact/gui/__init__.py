@@ -9,11 +9,23 @@ from pathlib import Path
 def app_icon():
     from PySide6.QtGui import QIcon
 
-    return QIcon(str(Path(__file__).resolve().parent.parent / "icons" / "py-redact.svg"))
+    icon = QIcon()
+    hicolor = Path(__file__).resolve().parent.parent / "icons" / "linux" / "hicolor"
+    for png in sorted(hicolor.glob("*/apps/py-redact.png")):
+        icon.addFile(str(png))
+    return icon
 
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] in ("--version", "-V"):
+        from .. import __version__
+
+        print(f"py-redact {__version__}")
+        return 0
+    if argv and argv[0] in ("--help", "-h"):
+        print("Usage: py-redact [file.pdf]")
+        return 0
     from .. import interface
 
     interface.use_configured()
