@@ -485,9 +485,14 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 0.4.0 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 0.4.1 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 0.4.1:
+  - La documentación está completa, en español y en inglés: qué se necesita,
+    cómo conseguir el programa, una entrada en el menú, actualizar,
+    desinstalar, qué hay dónde, ayuda, el idioma de la ventana, esta
+    historia, antecedentes y fuentes. El programa es el mismo.
 - 0.4.0:
   - De Adobe Acrobat Pro: Buscar y censurar busca varias palabras o frases
     a la vez (escritas o leídas de un archivo de texto) y patrones

@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-redact
-Version:        0.4.0
+Version:        0.4.1
 Release:        1%{?dist}
 Summary:        Redact PDF documents: remove what lies under boxes drawn on their pages
 
@@ -74,6 +74,11 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
 %{_datadir}/icons/hicolor/*/apps/py-redact.*
 
 %changelog
+* Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.1-1
+- Complete documentation in English and Spanish: installing, updating,
+  uninstalling, what is where, help, the language of the window, the history of
+  the versions, background and sources
+
 * Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.0-1
 - From Acrobat Pro: several words or phrases and patterns in Find and redact,
   partial marking, redaction codes, a preview under the mouse, Remove hidden

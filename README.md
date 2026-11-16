@@ -468,8 +468,13 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 0.4.0. `py-redact --version` says which one is installed.
+This is py-redact 0.4.1. `py-redact --version` says which one is installed.
 
+- 0.4.1:
+  - The documentation is complete, in English and Spanish: what is needed,
+    getting the program, a menu entry, updating, uninstalling, what is
+    where, help, the language of the window, this history, background and
+    sources. The program is the same.
 - 0.4.0:
   - From Adobe Acrobat Pro: Find and redact looks for several words or
     phrases at once (typed, or read from a text file) and for patterns
