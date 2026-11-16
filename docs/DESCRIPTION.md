@@ -1,0 +1,169 @@
+How py-redact was made
+======================
+
+py-redact is a program for redacting PDF documents: what lies under the
+marks drawn on the pages is removed from the file for good, and the place
+is filled with a colour, or left empty, with a text over it if wanted.
+Nicolas Vaughan made it in 2026, in one day, as a companion to two other
+PDF programs of his, py-foliation (the page labels of a PDF) and
+py-imposition (imposition for printing), from which it took its shape.
+Here I explain how it was made, in seven stages.
+
+It is free software, under the GNU General Public License, version 3 or
+later. The redaction is done by PyMuPDF (GNU AGPL 3) and the window by
+PySide6 (GNU LGPL 3).
+
+Nicolas Vaughan is Associate Professor of Literature at the School of Arts
+and Humanities of the Universidad de los Andes, Bogotá, Colombia.
+
+1. A window that removes
+------------------------
+
+The first question was which library could do the work. py-foliation and
+py-imposition use pikepdf, which reads and writes the structure of a PDF
+very well, but redacting is a different thing: it means finding, inside
+the content of a page, which letters, which pixels of which images and
+which lines of which drawings fall under a rectangle, and taking them out
+while the rest stays as it was. pikepdf has nothing for that. PyMuPDF has
+it: a redaction annotation marks a rectangle, and applying it removes what
+is under it and paints the fill. So py-redact uses PyMuPDF both to redact
+and to draw the pages, and pikepdf is not needed.
+
+The first version had what the request asked for, and little more. A mark
+is a small immutable record: the page where it was drawn, its rectangle,
+its colour, and the pages it is repeated on. The rectangle is measured on
+the page as it is shown, with its rotation, from the top left corner; when
+it is applied it is turned back into the page's own coordinates, so a mark
+on a rotated page covers what the eye sees under it. A mark repeated on
+other pages keeps its position, cut to the size of each page. The pages
+are written as py-imposition writes them (`2-10, 15, LAST`), and the module
+that reads them came from there, with one addition: an open range, `12-`,
+goes to the end.
+
+From py-foliation came the rest of the frame: the interface in English and
+Spanish, with each text of the program found by its English in an XML file,
+and a test that fails if one is missing; the configuration file; the menu
+of recent files; changing the language by building the window again; the
+password of protected files; drag and drop; and the question before closing
+with work not saved. The page is drawn by PyMuPDF at the resolution of the
+screen and shown in a Qt graphics view, where the marks are drawn, moved
+and resized with the mouse; every change goes on a stack, so that it can be
+undone.
+
+A redacted copy is never the original: it is written beside it, as
+`NAME-redacted.pdf`, through a temporary file, and protected files keep
+their protection. When it is written, the objects that nothing uses any more
+are taken out, because a font or a picture that only the removed text used
+would otherwise stay in the file.
+
+2. Packages
+-----------
+
+The AppImage, the RPM and the release script were adapted from py-foliation.
+The AppImage carries a Python of its own with PyMuPDF and PySide6, and
+before it is finished it makes a redaction with that Python, to be sure
+the bundle works. The RPM uses Fedora's own Python, PyMuPDF and PySide6;
+Fedora's PySide6 is not named as PyPI names it, so the spec takes that line
+out of `pyproject.toml` before building. The RPM runs the whole test suite
+on the installed package, with the window drawn off the screen, and is
+signed with the same key as my other programs. One script tags the
+version, builds everything, publishes it on GitHub and Codeberg, and sends
+the source RPM to Copr, which builds it for each Fedora.
+
+3. Right-click, settings and text
+---------------------------------
+
+The first use brought corrections. A mark's pages and colour were
+now chosen with the right mouse button. A new mark no longer took the pages
+of the one before: a header repeated on every page is not a reason for the
+next name to be repeated too. The colour of new marks became a setting of
+its own, kept in the configuration file with how pictures and drawings are
+treated, and every value is checked when it is read, so that a file edited
+by hand can never stop the program.
+
+With them came the marking of text. The words of a page are read with their
+rectangles; a drag from one word to another selects all the words between
+them in reading order, and a mark is made over each of their lines.
+
+4. Find and redact
+------------------
+
+Searching works on the text of a page as a sequence of characters, each
+one with its rectangle, with single spaces between words and between lines.
+A phrase is therefore found across a line break, however it is spaced, and
+each place found becomes one mark for each line it spans. It looks on all
+pages, on a list of them, or from the page shown to the end; it lists every
+place found with the words around it, and shows any of them on its page.
+The menus learnt to offer what fits where they are opened: on a word, to
+redact it on that page or on all of them; on a mark with text under it, to
+find that text everywhere else.
+
+5. PDF/A and PDF/X
+------------------
+
+py-pdfconform, another program of mine, converts a PDF to PDF/A or PDF/X-4
+with Ghostscript and pikepdf, and checks the result. py-redact writes the
+redacted copy and then gives it to py-pdfconform, if it is installed; if not,
+those choices are greyed out.
+
+This stage left one lesson. py-pdfconform starts with `#!/usr/bin/env
+python3`, so it runs with the first Python on the PATH; inside the
+environment where py-redact runs (its virtual environment, or the
+AppImage), that is py-redact's Python, which hasn't pikepdf. The conversion
+failed, and in the build of the RPM the warning that said so waited for a
+click that never came. Now py-pdfconform is always run without py-redact's
+environment, the RPM is built outside it, and in the tests a warning fails
+instead of waiting.
+
+6. What came from Xodo
+----------------------
+
+The help pages of Xodo PDF Studio about redaction gave a list of things to
+do. There is now one tool for text and areas: over text a drag selects it,
+elsewhere it draws a box, and Ctrl+drag always draws a box. A double click
+marks one word, or a whole picture. A mark has properties: a fill of any
+colour or none at all (the content goes, and nothing is painted), a text
+written over it with its colour, size and alignment, repeated along the
+mark if wanted, a note shown under the mouse, and a lock; and these can be
+saved as the look of new marks. Marks not yet applied are see-through with
+a red outline, as in Xodo. "Apply all redactions" is at the top of the
+right-click menu. A hand tool moves the page.
+
+Xodo also says how to check, by hand, that a document was redacted well: by
+selecting text, by searching, by moving the marks. py-redact does it by
+itself after saving: every word that was under a mark in the original is
+looked for under the same mark in the copy, leaving aside the text written
+over the mark, and a warning says where any can still be read.
+
+7. What came from Acrobat Pro
+-----------------------------
+
+A chapter about the redaction tools of Adobe Acrobat Pro gave the last
+group. Find and redact can now look for several words or phrases at once,
+typed or read from a file, and for patterns: e-mail addresses, phone
+numbers, card numbers, dates, identity numbers and bank accounts, in their
+U.S. forms or in those of Spain and Latin America. Because the search works
+on characters, it can leave part of each place visible, such as the last
+four digits of a card number. Redaction codes write over a mark the
+exemption under which it was redacted; the U.S. FOIA and Privacy Act sets
+come with the program, and the user's own sets are kept in an XML file,
+which can be exported and imported. With the mouse over a mark, the mark is
+shown as it will be once applied. "Remove hidden information" lists what a
+document holds besides its pages (metadata, attachments, bookmarks,
+comments, form fields, hidden text, links and scripts, thumbnails, unused
+objects) and how much of each, and removes what is ticked; "Sanitize"
+removes all of it.
+
+Testing
+-------
+
+The program has 78 tests (`uv run pytest`). The tests of the redaction make
+documents with text, pictures, annotations, form fields, rotated pages and
+passwords, redact them, and read the result: what was under a mark must be
+gone, and what was not must stay. The window is tested as a user would use
+it, with mouse events on the page: drawing, moving and resizing marks,
+selecting text, double clicks, the tools, finding, marking, saving, and the
+right-click menus. A test checks that every text of the window has its
+Spanish translation, and no other. The conversion to PDF/A and PDF/X is
+tested when py-pdfconform is installed. The RPM runs all the tests again
+with Fedora's own packages. The program has 20 files, around 3,900 lines.

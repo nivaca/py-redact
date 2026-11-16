@@ -332,7 +332,7 @@ class MainWindow(QMainWindow):
                                        QKeySequence.StandardKey.ZoomOut)
 
         m = self.menuBar().addMenu(tr("&Settings"))
-        self._action(m, tr("Settings…"), self.settings_dialog, QKeySequence.StandardKey.Preferences)
+        self._action(m, tr("Settings…"), self.settings_dialog, [QKeySequence("Ctrl+,")])
         self.a_labels = QAction(tr("Labels in the toolbar"), self, checkable=True)
         self.a_labels.toggled.connect(self.show_labels)
         m.addAction(self.a_labels)
