@@ -194,3 +194,27 @@ def test_conform_missing(sample, tmp_path, monkeypatch):
     monkeypatch.setattr(conform, "command", lambda: None)
     with pytest.raises(conform.ConformError):
         conform.convert(sample, tmp_path / "x.pdf", "a-2b")
+
+
+def test_overlay_text_and_no_fill(sample, tmp_path):
+    from py_redact.redact import check_redacted, overlay
+
+    boxes = [Box(0, NAME, "", text="X"), Box(1, NAME, "#000000", text="[name]", repeat_text=True, align="left")]
+    out = tmp_path / "out.pdf"
+    write_redacted(sample, boxes, out)
+    assert check_redacted(sample, out, boxes) == []
+    assert check_redacted(sample, sample, boxes)  # (an unredacted file: its words are found)
+    pix = pymupdf.open(out)[0].get_pixmap()
+    assert pix.pixel(65, 110) == (255, 255, 255)  # (no fill: nothing painted)
+    text, size = overlay(boxes[1], pymupdf.Rect(NAME))
+    assert text.count("[name]") > 3 and 3 <= size <= 12
+
+
+def test_image_at(tmp_path):
+    from py_redact.redact import image_at
+
+    doc = pymupdf.open()
+    page = doc.new_page()
+    pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 10, 10), False)
+    page.insert_image(pymupdf.Rect(100, 100, 200, 150), pixmap=pix)
+    assert image_at(page, 150, 120) == (100, 100, 200, 150) and image_at(page, 10, 10) is None

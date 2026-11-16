@@ -174,7 +174,8 @@ def test_menus_fit_where_they_are(window, monkeypatch):
     assert not any("Select the" in t for t in texts)  # (no boxes on the page)
     drag(window, (70, 108), (200, 125))
     texts = menu_texts(window, monkeypatch, 0, (100, 116))
-    assert texts[0].startswith("Box drawn on page 1") and any(t.startswith("Redact “Name: Person1”") for t in texts)
+    assert texts[0] == "Apply the redaction…" and texts[2].startswith("Box drawn on page 1")
+    assert any(t.startswith("Redact “Name: Person1”") for t in texts) and "Properties…" in texts
     assert not any("Up to page" in t for t in texts)  # (it is on page 1)
     window.mark_matches(window._find("Name", [0]))  # (inside the box: still marked)
     window._edit_menu()
@@ -258,3 +259,85 @@ def test_toolbar_has_icons(window):
     assert window.toolbar.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonIconOnly
     window.a_labels.trigger()
     assert window.toolbar.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+
+
+def double_click(w, point):
+    c = w.canvas
+    pos = c.mapFromScene(*point)
+    c.mouseDoubleClickEvent(QMouseEvent(QEvent.Type.MouseButtonDblClick, QPointF(pos),
+                                        QPointF(c.viewport().mapToGlobal(pos)), Qt.MouseButton.LeftButton,
+                                        Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier))
+    QApplication.processEvents()
+
+
+def test_one_tool_for_text_and_areas(window):
+    window.set_tool("text")
+    drag(window, (300, 400), (400, 500))  # (no text there: a box)
+    assert len(window.boxes) == 1 and close(window.boxes[0].rect, (300, 400, 400, 500))
+    drag(window, (75, 115), (150, 118))  # (over text: the text)
+    assert len(window.boxes) == 2 and window.boxes[1].rect[3] < 125
+    drag(window, (80, 296), (150, 330), Qt.KeyboardModifier.ControlModifier)  # (Ctrl: a box, even over text)
+    assert len(window.boxes) == 3 and close(window.boxes[2].rect, (80, 296, 150, 330))
+
+
+def test_double_click_a_word(window):
+    window.set_tool("text")
+    double_click(window, (120, 116))  # ("Person1")
+    assert len(window.boxes) == 1
+    x0, y0, x1, y1 = window.boxes[0].rect
+    assert x0 > 100 and x1 < 160
+
+
+def test_locked_boxes_stay(window):
+    drag(window, (60, 40), (300, 66))
+    window.set_locked(True)
+    drag(window, (150, 50), (170, 60))
+    assert close(window.boxes[0].rect, (60, 40, 300, 66))
+    window.delete_selected()
+    window.delete_all = lambda: None
+    assert len(window.boxes) == 1
+    window.set_locked(False)
+    window.delete_selected()
+    assert window.boxes == []
+
+
+def test_properties_and_default(window, tmp_path, monkeypatch):
+    from py_redact.gui import props
+
+    drag(window, (60, 105), (300, 126))
+
+    def fake_exec(dialog):
+        dialog.fill.set_color("")
+        dialog.text.setText("  [name]  ")
+        dialog.text_color.set_color("#ff0000")
+        dialog.note.setText("from the register")
+        dialog.as_default.setChecked(True)
+        return props.QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(props.PropertiesDialog, "exec", fake_exec)
+    window.properties_dialog()
+    box = window.boxes[0]
+    assert (box.color, box.text, box.text_color, box.note) == ("", "[name]", "#ff0000", "from the register")
+    assert settings.load().text == "[name]" and settings.load().color == ""
+    window.pick([], False)
+    drag(window, (60, 40), (300, 66))
+    assert (window.boxes[1].text, window.boxes[1].color, window.boxes[1].note) == ("[name]", "", "")
+    out = tmp_path / "out.pdf"
+    assert window.save_to(out)
+    assert "checked" in window.statusBar().currentMessage()
+    assert "Person1" not in pymupdf.open(out)[0].get_text()
+
+
+def test_hand_tool_draws_nothing(window):
+    window.set_tool("hand")
+    drag(window, (300, 400), (400, 500))
+    assert window.boxes == [] and window.a_tool_hand.isChecked()
+
+
+def test_sanitize(window, tmp_path, monkeypatch):
+    from py_redact.gui import window as w
+
+    out = tmp_path / "clean.pdf"
+    monkeypatch.setattr(w.QFileDialog, "getSaveFileName", lambda *a, **k: (str(out), ""))
+    assert window.sanitize_dialog()
+    assert "Person1" in pymupdf.open(out)[0].get_text()

@@ -20,15 +20,16 @@ from PySide6.QtWidgets import (
 from .. import __version__, conform, config, interface, settings
 from ..interface import N_, ntr, tr
 from ..pagesel import check
-from ..redact import Box, Match, PasswordError, RedactError, text_under, Rect, boxes_on, open_pdf, preview_page, write_redacted
+from ..redact import Box, Match, PasswordError, RedactError, check_redacted, sanitize, text_under, Rect, boxes_on, open_pdf, preview_page, write_redacted
 from .canvas import PageCanvas, page_image
 from .find import FindDialog
 from .prefs import SettingsDialog
+from .props import PropertiesDialog
 
 RECENT = 10  # documents in File ▸ Open recent
 AUTHOR = '<a href="https://nicolasvaughan.org">Nicolas Vaughan</a>'
 THUMB = QSize(84, 112)  # the largest thumbnail of a page
-SWATCHES = [("#000000", N_("Black")), ("#ffffff", N_("White")), ("#808080", N_("Grey"))]
+SWATCHES = [("#000000", N_("Black")), ("#ffffff", N_("White")), ("#808080", N_("Grey")), ("", N_("No colour"))]
 # the choices of "Pages": (what is kept in Box.repeat, its name); '*' is a list typed by the user
 REPEATS = [("", N_("Only the page where it was drawn")), ("all", N_("All pages")), ("odd", N_("Odd pages")),
            ("even", N_("Even pages")), ("*", N_("These pages:"))]
@@ -68,9 +69,13 @@ def icon(name: str) -> QIcon:
 
 
 def swatch(color: str, size: int = 16) -> QIcon:
+    """A square of COLOR; for no colour (''), an empty square crossed out."""
     pixmap = QPixmap(size, size)
-    pixmap.fill(QColor(color))
+    pixmap.fill(QColor(color) if color else QColor(0, 0, 0, 0))
     p = QPainter(pixmap)
+    if not color:
+        p.setPen(QColor(208, 48, 48))
+        p.drawLine(1, size - 2, size - 2, 1)
     p.setPen(QColor(128, 128, 128))
     p.drawRect(0, 0, size - 1, size - 1)
     p.end()
@@ -138,6 +143,7 @@ class MainWindow(QMainWindow):
         self.canvas.edited.connect(self.move_box)
         self.canvas.picked.connect(self.pick)
         self.canvas.text_chosen.connect(self.add_text_boxes)
+        self.canvas.double_clicked.connect(self.double_clicked)
         self.canvas.menu_asked.connect(self.box_menu)
         self.canvas.zoom_changed.connect(lambda z: self.zoom_label.setText(f"{z * 100:.0f} %"))
         self.page_spin = QSpinBox()
@@ -159,8 +165,9 @@ class MainWindow(QMainWindow):
         lay.setContentsMargins(4, 4, 4, 4)
         lay.addLayout(top)
         lay.addWidget(self.canvas, 1)
-        hint = QLabel(tr("Drag on the page to draw a box (B), or over text to mark it (T). Drag a box to move it, or "
-                         "its edges to resize it; right-click it for its pages and colour."))
+        hint = QLabel(tr("Drag over text to mark it, or elsewhere to draw a box (Ctrl+drag: always a box); double-click "
+                         "a word or an image to mark it. Drag a box to move or resize it; double-click it for its "
+                         "properties, right-click it for more."))
         hint.setWordWrap(True)
         hint.setStyleSheet("color: palette(placeholder-text);")
         lay.addWidget(hint)
@@ -246,6 +253,9 @@ class MainWindow(QMainWindow):
                                    "author and other metadata, text that isn't shown, attached files, "
                                    "JavaScript and links"))
         m.addAction(self.a_clean)
+        self.a_sanitize = self._action(m, tr("Sanitize the document…"), self.sanitize_dialog,
+                                       tip=tr("Save a copy without metadata, hidden text, attachments, scripts and "
+                                              "links, and with nothing else changed (the boxes aren't applied)"))
         self.m_output = m.addMenu(tr("Save as"))
         self.m_output.setToolTipsVisible(True)
         group = QActionGroup(self)
@@ -278,12 +288,15 @@ class MainWindow(QMainWindow):
 
         m = self.menuBar().addMenu(tr("&Tools"))
         tools = QActionGroup(self)
+        self.a_tool_text = self._action(m, tr("Redact (text or area)"), lambda: self.set_tool("text"), "T",
+                                        tr("Over text, dragging selects it and a box is made over each of its lines; "
+                                           "elsewhere it draws a box (Ctrl+drag always draws one). Double-click a "
+                                           "word or an image to mark only that"))
         self.a_tool_box = self._action(m, tr("Draw boxes"), lambda: self.set_tool("box"), "B",
-                                       tr("Dragging on the page draws a box"))
-        self.a_tool_text = self._action(m, tr("Select text"), lambda: self.set_tool("text"), "T",
-                                        tr("Dragging over text selects it, and a box is made over each of its "
-                                           "lines"))
-        for act in (self.a_tool_box, self.a_tool_text):
+                                       tr("Dragging on the page always draws a box, even over text"))
+        self.a_tool_hand = self._action(m, tr("Hand"), lambda: self.set_tool("hand"), "H",
+                                        tr("Dragging moves the page in the window"))
+        for act in (self.a_tool_box, self.a_tool_text, self.a_tool_hand):
             act.setCheckable(True)
             tools.addAction(act)
         self.a_tool_text.setChecked(True)
@@ -330,6 +343,7 @@ class MainWindow(QMainWindow):
 
         for act, name in ((self.a_open, "document-open"), (self.a_save, "document-save-as"),
                           (self.a_tool_text, "edit-select-text"), (self.a_tool_box, "draw-rectangle"),
+                          (self.a_tool_hand, "transform-browse"),
                           (self.a_find, "edit-find"), (self.a_undo, "edit-undo"), (self.a_redo, "edit-redo"),
                           (self.a_delete, "edit-delete"), (self.a_prev, "go-previous"), (self.a_next, "go-next"),
                           (self.a_fit, "zoom-fit-best"), (self.a_fit_width, "zoom-fit-width"),
@@ -339,7 +353,7 @@ class MainWindow(QMainWindow):
         self.toolbar = bar
         bar.setObjectName("tools")
         bar.setIconSize(QSize(22, 22))
-        for act in (self.a_open, self.a_save, None, self.a_tool_text, self.a_tool_box, self.a_find, None, self.a_undo,
+        for act in (self.a_open, self.a_save, None, self.a_tool_text, self.a_tool_box, self.a_tool_hand, self.a_find, None, self.a_undo,
                     self.a_redo, self.a_delete, None, self.a_prev,
                     self.a_next, None, self.a_fit, self.a_fit_width, self.a_zoom_out, self.a_zoom_in):
             if act is None:
@@ -539,6 +553,7 @@ class MainWindow(QMainWindow):
                 QApplication.restoreOverrideCursor()
         self.settings.setValue("last_dir", str(target.parent))
         self.add_recent(target)
+        leaks = [] if replacing else self.check_copy(target)
         self.saved = list(self.boxes)
         if replacing:  # (the boxes are in the file now)
             page = self.page
@@ -553,7 +568,42 @@ class MainWindow(QMainWindow):
             message += " — " + conform.label(standard) + (f" ({check_})" if check_ else "")
             if self.password:
                 message += " — " + tr("PDF/A and PDF/X can't be protected: the copy has no password")
+        if leaks:
+            QMessageBox.warning(self, tr("Check the redacted copy"),
+                                tr("Some text can still be read under the boxes of {name}:", name=target.name)
+                                + "\n\n" + "\n".join(tr("Page {page}: {context}", page=p + 1, context=t)
+                                                     for p, t in leaks[:10]))
+        elif not replacing:
+            message += " — " + tr("checked: nothing under the boxes can be read")
         self.status(message)
+        return True
+
+    def check_copy(self, target: Path) -> list[tuple[int, str]]:
+        """What can still be read under the boxes in TARGET (see redact.check_redacted)."""
+        try:
+            return check_redacted(self.path, target, self.boxes, self.password)
+        except RedactError as e:
+            self.status(str(e), error=True)
+            return []
+
+    def sanitize_dialog(self) -> bool:
+        if self.path is None:
+            return False
+        default = Path(self.last_dir()) / f"{self.path.stem}-sanitized.pdf"
+        name, _ = QFileDialog.getSaveFileName(self, tr("Sanitize the document"), str(default),
+                                              tr("PDF files (*.pdf)"))
+        if not name:
+            return False
+        target = Path(name)
+        if target.resolve() == self.path.resolve():
+            self.status(tr("Choose another name: the document stays open"), error=True)
+            return False
+        try:
+            sanitize(self.path, target, self.password)
+        except RedactError as e:
+            self.status(str(e), error=True)
+            return False
+        self.status(tr("Saved {path}, sanitized", path=target))
         return True
 
     # ----------------------------------------------------------------- the toolbar
@@ -653,19 +703,45 @@ class MainWindow(QMainWindow):
 
     def add_box(self, rect: Rect):
         """A new box, of the default colour, only on the page shown (it never takes the pages of another)."""
-        box = Box(self.page, rect, self.prefs.color)
+        box = self.new_box(self.page, rect)
         self.change(self.boxes + [box], [len(self.boxes)])
 
     def add_text_boxes(self, rects: list[Rect]):
         """A box over each line of the text selected."""
-        new = [Box(self.page, r, self.prefs.color) for r in rects]
+        new = [self.new_box(self.page, r) for r in rects]
         self.change(self.boxes + new, list(range(len(self.boxes), len(self.boxes) + len(new))))
         self.status(ntr("{count} line of text marked", "{count} lines of text marked", len(new)))
 
+    def new_box(self, page: int, rect: Rect) -> Box:
+        """A box with the appearance of new boxes (Settings, or Save as default)."""
+        p = self.prefs
+        return Box(page, rect, p.color, text=p.text, text_color=p.text_color, font_size=p.font_size,
+                   align=p.align, repeat_text=p.repeat_text)
+
+    def double_clicked(self, index: int, point: tuple):
+        """A box: its properties. A word: a box over it. An image: a box over all of it."""
+        if index >= 0:
+            self.properties_dialog()
+            return
+        if self.canvas.mode == "box":
+            return
+        from ..redact import nearest_word, text_rects, words
+
+        found = words(self.doc[self.page])
+        i = nearest_word(found, *point)
+        if i is not None:
+            x0, y0, x1, y1 = found[i][0]
+            if x0 - 2 <= point[0] <= x1 + 2 and y0 - 2 <= point[1] <= y1 + 2:
+                self.add_text_boxes(text_rects(found, i, i))
+                return
+        image = self.canvas.image_rect(point)
+        if image is not None:
+            self.add_box(image)
+            self.status(tr("The image is marked"))
+
     def set_tool(self, tool: str):
-        self.canvas.mode = tool
-        (self.a_tool_text if tool == "text" else self.a_tool_box).setChecked(True)
-        self.canvas.viewport().unsetCursor()
+        self.canvas.set_mode(tool)
+        {"text": self.a_tool_text, "box": self.a_tool_box, "hand": self.a_tool_hand}[tool].setChecked(True)
 
     def move_box(self, index: int, rect: Rect):
         boxes = list(self.boxes)
@@ -685,18 +761,41 @@ class MainWindow(QMainWindow):
             self.change(boxes, [])
 
     def delete_selected(self):
-        chosen = set(self.selected)
-        self.change([b for i, b in enumerate(self.boxes) if i not in chosen], [])
+        chosen = {i for i in self.selected if not self.boxes[i].locked}
+        locked = len(self.selected) - len(chosen)
+        if chosen:
+            self.change([b for i, b in enumerate(self.boxes) if i not in chosen], [])
+        if locked:
+            self.status(ntr("{count} box is locked, and was kept", "{count} boxes are locked, and were kept",
+                            locked), error=not chosen)
+
+    def set_locked(self, locked: bool):
+        self._change_selected(locked=locked)
+
+    def properties_dialog(self):
+        if not self.selected:
+            return
+        dialog = PropertiesDialog([self.boxes[i] for i in self.selected], swatch, color_name, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        boxes = list(self.boxes)
+        for i in self.selected:
+            boxes[i] = dialog.apply(boxes[i])
+        self.change(boxes, self.selected)
+        if dialog.as_default.isChecked():
+            first = boxes[self.selected[0]]
+            self.set_prefs(dataclasses.replace(self.prefs, **{k: getattr(first, k) for k in settings.APPEARANCE}))
+            self.status(tr("New boxes will look like these"))
 
     def delete_page(self):
-        self._remove(lambda b: b.page != self.page)
+        self._remove(lambda b: b.page != self.page or b.locked)
 
     def delete_all(self):
         if self.boxes and QMessageBox.question(
                 self, tr("Delete all the boxes"),
                 ntr("Delete the {count} box of the document?", "Delete the {count} boxes of the document?",
                     len(self.boxes))) == QMessageBox.StandardButton.Yes:
-            self._remove(lambda b: False)
+            self._remove(lambda b: b.locked)
 
     def set_color(self, color: str):
         """The colour of the selected boxes; with none selected, the default colour of new boxes."""
@@ -761,6 +860,11 @@ class MainWindow(QMainWindow):
         of the page (INDEX -1), with what makes sense where it was clicked."""
         menu = QMenu(self)
         menu.setToolTipsVisible(True)
+        if self.boxes:
+            act = menu.addAction(icon("document-save-as"), ntr("Apply the redaction…", "Apply all {count} redactions…",
+                                                                len(self.boxes)), self.save_dialog)
+            act.setToolTip(tr("Save the redacted copy: what is under the boxes is removed for good"))
+            menu.addSeparator()
         if index >= 0 and self.selected:
             chosen = [self.boxes[i] for i in self.selected]
             if len(chosen) == 1:
@@ -804,7 +908,12 @@ class MainWindow(QMainWindow):
                                          lambda: self.find_dialog(words_))
                     act.setToolTip(tr("Find the text under this box on every page, and mark it"))
             menu.addSeparator()
-            menu.addAction(ntr("Delete the box", "Delete the {count} boxes", len(chosen)), self.delete_selected)
+            menu.addAction(tr("Properties…"), self.properties_dialog)
+            all_locked = all(b.locked for b in chosen)
+            menu.addAction(tr("Unlock") if all_locked else tr("Lock"), lambda: self.set_locked(not all_locked))
+            act = menu.addAction(icon("edit-delete"), ntr("Delete the box", "Delete the {count} boxes", len(chosen)),
+                                 self.delete_selected)
+            act.setEnabled(not all_locked)
         else:
             word = self.canvas.word_at(point) if point is not None and self.canvas.editable else ""
             if word:
@@ -871,7 +980,7 @@ class MainWindow(QMainWindow):
             for r in m.rects:
                 if (m.page, r) not in have:
                     have.add((m.page, r))
-                    new.append(Box(m.page, r, self.prefs.color))
+                    new.append(self.new_box(m.page, r))
         if not new:
             self.status(tr("Those places are marked already") if matches else tr("Not found"))
             return
@@ -1151,7 +1260,7 @@ class MainWindow(QMainWindow):
 
     def _enable(self):
         has = self.doc is not None
-        for w in (self.a_save, self.a_find, self.a_select_all, self.a_clear_page, self.a_result, self.a_first, self.a_last,
+        for w in (self.a_save, self.a_find, self.a_sanitize, self.a_select_all, self.a_clear_page, self.a_result, self.a_first, self.a_last,
                   self.a_fit, self.a_fit_width, self.a_zoom_in, self.a_zoom_out, self.page_spin, self.result_box,
                   self.color_button):
             w.setEnabled(has)

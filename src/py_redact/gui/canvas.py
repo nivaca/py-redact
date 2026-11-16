@@ -9,14 +9,15 @@ from PySide6.QtGui import QBrush, QColor, QCursor, QImage, QPainter, QPen, QPixm
 from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView
 
 from ..interface import tr
-from ..redact import Box, Rect, nearest_word, normalized, text_rects, words
+from ..redact import Box, Rect, image_at, nearest_word, normalized, text_rects, words
 
 SCENE_MARGIN = 12  # points around the page
 MIN_SIZE = 2.0  # points: a smaller drag is a click
 GRIP = 6  # pixels from an edge where dragging resizes
 MAX_PIXELS = 40_000_000  # the largest rendering of a page
 SELECTED = QColor(42, 127, 255)
-OUTLINE = QColor(128, 128, 128)
+OUTLINE = QColor(208, 48, 48)  # (marks not yet applied: red, as in Xodo)
+NEAR_TEXT = 3.0  # points: a drag that starts this close to a word selects text
 
 
 def page_image(page: pymupdf.Page, scale: float) -> QImage:
@@ -25,16 +26,22 @@ def page_image(page: pymupdf.Page, scale: float) -> QImage:
 
 
 class BoxItem(QGraphicsRectItem):
+    """A box not yet applied: see-through, with a red outline (blue when
+    selected), dashed if it goes on other pages; its text shown as it will be."""
+
     def __init__(self, index: int, box: Box, own: bool, selected: bool):
         super().__init__(QRectF(QPointF(box.rect[0], box.rect[1]), QPointF(box.rect[2], box.rect[3])))
         self.index = index
         self.box = box
         self.own = own
         self.chosen = selected
-        fill = QColor(box.color)
-        fill.setAlpha(170)
-        self.setBrush(QBrush(fill))
-        pen = QPen(SELECTED if selected else OUTLINE, 2 if selected else 1)
+        if box.color:
+            fill = QColor(box.color)
+            fill.setAlpha(150)
+            self.setBrush(QBrush(fill))
+        else:  # (no colour: only the content goes)
+            self.setBrush(QBrush(QColor(208, 48, 48, 90), Qt.BrushStyle.BDiagPattern))
+        pen = QPen(SELECTED if selected else OUTLINE, 2 if selected else 1.5)
         pen.setCosmetic(True)
         if not own or box.repeat.strip():
             pen.setStyle(Qt.PenStyle.DashLine)
@@ -44,14 +51,38 @@ class BoxItem(QGraphicsRectItem):
             tip = tr("Drawn on page {page}, repeated on: {pages}", page=box.page + 1, pages=box.repeat)
         else:
             tip = tr("Only on this page")
+        if box.locked:
+            tip += " — " + tr("locked")
+        if box.note:
+            tip = f"<b>{box.note}</b><br>{tip}"
         self.setToolTip(tip)
 
     def paint(self, painter, option, widget=None):
         super().paint(painter, option, widget)
-        if self.chosen:  # (the corners, of a fixed size on the screen)
-            scale = painter.worldTransform().m11() or 1
+        from ..redact import overlay
+
+        r = self.rect()
+        text, size = overlay(self.box, pymupdf.Rect(r.left(), r.top(), r.right(), r.bottom()))
+        if text:
+            font = painter.font()
+            font.setFamily("Helvetica")
+            font.setPointSizeF(size)
+            painter.setFont(font)
+            painter.setPen(QColor(self.box.text_color))
+            flags = {"left": Qt.AlignmentFlag.AlignLeft, "right": Qt.AlignmentFlag.AlignRight}.get(
+                self.box.align, Qt.AlignmentFlag.AlignHCenter) | Qt.AlignmentFlag.AlignVCenter
+            painter.drawText(r.adjusted(1, 0, -1, 0), flags, text)
+        scale = painter.worldTransform().m11() or 1
+        if self.box.locked:  # (a small padlock in the corner)
+            side = 9 / scale
+            x, y = r.right() - side - 2 / scale, r.top() + 2 / scale
+            painter.setPen(QPen(OUTLINE, 1.2 / scale))
+            painter.setBrush(QColor(255, 255, 255, 220))
+            painter.drawRect(QRectF(x, y + side * 0.45, side, side * 0.55))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawArc(QRectF(x + side * 0.2, y, side * 0.6, side * 0.9), 0, 180 * 16)
+        elif self.chosen:  # (the corners, of a fixed size on the screen)
             side = 7 / scale
-            r = self.rect()
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(SELECTED)
             for corner in (r.topLeft(), r.topRight(), r.bottomLeft(), r.bottomRight()):
@@ -67,6 +98,8 @@ class PageCanvas(QGraphicsView):
     picked = Signal(list, bool)  # indices clicked; whether to add them to the selection
     zoom_changed = Signal(float)
     text_chosen = Signal(list)  # [Rect]: the lines of the text selected
+    double_clicked = Signal(int, tuple)  # index of the box (-1: none), (x, y) on the page
+    image_chosen = Signal(tuple)  # Rect of an image double-clicked
     menu_asked = Signal(int, object, object)  # index of the box (-1: none), place on the screen, on the page
 
     def __init__(self, parent=None):
@@ -82,7 +115,9 @@ class PageCanvas(QGraphicsView):
         self.page_size = QRectF()
         self.editable = True
         self.fit = "page"  # 'page', 'width' or '' (a zoom of its own)
-        self.mode = "text"  # 'text': dragging selects text; 'box': it draws boxes (boxes are moved in both)
+        # 'text': dragging over text selects it, and elsewhere draws a box (Ctrl+drag always draws one);
+        # 'box': dragging draws a box; 'hand': dragging scrolls. Boxes are moved in 'text' and 'box'.
+        self.mode = "text"
         self._words: list | None = None  # (of the page, when first needed)
         self.pixmap_item: QGraphicsPixmapItem | None = None
         self.sheet: QGraphicsRectItem | None = None
@@ -254,11 +289,41 @@ class PageCanvas(QGraphicsView):
             item.setZValue(3)
         self._drag["rects"] = rects
 
+    def near_text(self, point: QPointF) -> bool:
+        """Whether POINT (on the page) is on a word, or very close to one."""
+        for (x0, y0, x1, y1), _, _ in self.page_words():
+            if x0 - NEAR_TEXT <= point.x() <= x1 + NEAR_TEXT and y0 - NEAR_TEXT <= point.y() <= y1 + NEAR_TEXT:
+                return True
+        return False
+
+    def set_mode(self, mode: str):
+        self.mode = mode
+        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag if mode == "hand"
+                         else QGraphicsView.DragMode.NoDrag)
+        self.viewport().unsetCursor()
+
+    def mouseDoubleClickEvent(self, event):
+        if not self.editable or self.page is None or self.mode == "hand" \
+                or event.button() != Qt.MouseButton.LeftButton:
+            super().mouseDoubleClickEvent(event)
+            return
+        point = self.mapToScene(event.position().toPoint())
+        item, _ = self._hit(event.position().toPoint())
+        self._drag = None
+        self.double_clicked.emit(item.index if item else -1, (point.x(), point.y()))
+        event.accept()
+
     def mousePressEvent(self, event):
+        if self.mode == "hand":
+            super().mousePressEvent(event)
+            return
+        ctrl = bool(event.modifiers() & Qt.KeyboardModifier.ControlModifier)
+        point = self.mapToScene(event.position().toPoint()) if self.page is not None else QPointF()
         if (self.editable and self.page is not None and self.mode == "text"
                 and event.button() == Qt.MouseButton.LeftButton
                 and (event.modifiers() & Qt.KeyboardModifier.ShiftModifier
-                     or self._hit(event.position().toPoint())[0] is None)):
+                     or (self._hit(event.position().toPoint())[0] is None and not ctrl
+                         and self.near_text(point)))):
             start = self.mapToScene(event.position().toPoint())
             self.picked.emit([], False)
             self._drag = {"kind": "text", "start": start, "marks": [], "rects": []}
@@ -274,7 +339,7 @@ class PageCanvas(QGraphicsView):
             else self._hit(event.position().toPoint())
         start = self.mapToScene(event.position().toPoint())
         if item is None:
-            if not add:
+            if not add or self.mode == "text":
                 self.picked.emit([], False)
             start = self._clamp(start)
             rect = QGraphicsRectItem(QRectF(start, start))
@@ -291,6 +356,10 @@ class PageCanvas(QGraphicsView):
                 if item is None or add:
                     self._drag = None
                     return
+            if item.box.locked:  # (selected, but it stays where it is)
+                self._drag = None
+                event.accept()
+                return
             self._drag = {"kind": "edit", "start": start, "item": item, "edges": edges,
                           "rect": QRectF(item.rect()), "moved": False}
         event.accept()
@@ -298,10 +367,17 @@ class PageCanvas(QGraphicsView):
     def mouseMoveEvent(self, event):
         drag = self._drag
         if drag is None:
-            if self.editable and self.page is not None:
+            if self.editable and self.page is not None and self.mode != "hand":
                 item, edges = self._hit(event.position().toPoint())
-                empty = Qt.CursorShape.IBeamCursor if self.mode == "text" else Qt.CursorShape.CrossCursor
-                self.viewport().setCursor(QCursor(self._cursor(edges) if item else empty))
+                point = self.mapToScene(event.position().toPoint())
+                text_here = self.mode == "text" and not event.modifiers() & Qt.KeyboardModifier.ControlModifier \
+                    and self.near_text(point)
+                empty = Qt.CursorShape.IBeamCursor if text_here else Qt.CursorShape.CrossCursor
+                if item is not None and item.box.locked:
+                    shape = Qt.CursorShape.ArrowCursor
+                else:
+                    shape = self._cursor(edges) if item else empty
+                self.viewport().setCursor(QCursor(shape))
             super().mouseMoveEvent(event)
             return
         point = self.mapToScene(event.position().toPoint())
@@ -396,3 +472,6 @@ class PageCanvas(QGraphicsView):
                     pass
 
         QTimer.singleShot(1500, remove)
+
+    def image_rect(self, point: tuple[float, float]) -> Rect | None:
+        return image_at(self.page, *point) if self.page is not None else None

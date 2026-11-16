@@ -31,8 +31,15 @@ Rect = tuple[float, float, float, float]  # x0, y0, x1, y1
 class Box:
     page: int  # 0-based: the page where it was drawn
     rect: Rect
-    color: str = "#000000"
+    color: str = "#000000"  # of the fill; '' for none (what is under it is removed, and nothing is painted)
     repeat: str = ""  # '' for its own page only; else the pages it goes on
+    text: str = ""  # written over the box once it is redacted ("REDACTED", "[name]"...)
+    text_color: str = "#ffffff"
+    font_size: float = 0  # 0: as large as fits, up to 12 points
+    align: str = "center"  # of the text: 'left', 'center' or 'right'
+    repeat_text: bool = False  # the text again and again, all along the box
+    note: str = ""  # shown when the mouse is over the box; never written in the PDF
+    locked: bool = False  # can't be moved, resized or deleted
 
     def pages(self, count: int) -> list[int]:
         """The pages (0-based) it covers, in a document of COUNT pages."""
@@ -63,6 +70,29 @@ def rgb(color: str) -> tuple[float, float, float]:
     if len(c) != 6:
         raise ValueError(color)
     return tuple(int(c[i:i + 2], 16) / 255 for i in (0, 2, 4))
+
+
+ALIGN = {"left": pymupdf.TEXT_ALIGN_LEFT, "center": pymupdf.TEXT_ALIGN_CENTER, "right": pymupdf.TEXT_ALIGN_RIGHT}
+FONT = "helv"
+MAX_FONT = 12.0
+
+
+def overlay(box: Box, area: pymupdf.Rect) -> tuple[str, float]:
+    """The text to write over AREA, and its size: as large as fits on one line
+    (or the box's own size), and, with repeat_text, repeated to fill the line."""
+    text = " ".join(box.text.split())
+    if not text or area.width < 2 or area.height < 2:
+        return "", 0
+    size = box.font_size or min(MAX_FONT, area.height * 0.75)
+    width = pymupdf.get_text_length(text, fontname=FONT, fontsize=size)
+    room = area.width - 2
+    if not box.font_size and width > room:
+        size = max(size * room / width, 3)
+    if box.repeat_text:
+        unit = text + " "
+        n = max(int(room // pymupdf.get_text_length(unit, fontname=FONT, fontsize=size)), 1)
+        text = (unit * n).strip()
+    return text, round(size, 2)
 
 
 def boxes_on(boxes: list[Box], page: int, count: int) -> list[Box]:
@@ -96,7 +126,10 @@ def redact_page(page: pymupdf.Page, boxes: list[Box], images: str = "pixels", dr
         if area is None:
             continue
         areas.append(area)
-        page.add_redact_annot(area, fill=rgb(box.color), cross_out=False)
+        text, size = overlay(box, area)
+        page.add_redact_annot(area, text=text or None, fontname=FONT, fontsize=size or 11, align=ALIGN[box.align],
+                              fill=rgb(box.color) if box.color else False,
+                              text_color=rgb(box.text_color), cross_out=False)
     if not areas:
         return 0
     # (annotations and form fields over the boxes would keep what they say)
@@ -276,3 +309,48 @@ def text_under(page: pymupdf.Page, rect: Rect) -> str:
         if not r.is_empty and (r & area).get_area() >= 0.5 * r.get_area():
             out.append(w[4])
     return " ".join(out)
+
+
+def words_under(page: pymupdf.Page, rect: Rect) -> list[str]:
+    return text_under(page, rect).split()
+
+
+def check_redacted(source: Path, target: Path, boxes: list[Box], password: str = "") -> list[tuple[int, str]]:
+    """What can still be read under the boxes in TARGET, the redacted copy of
+    SOURCE: [(page, text)], empty if nothing. A word counts if it was under a
+    box in SOURCE and is still under it in TARGET (the text written over a box
+    doesn't count)."""
+    leaks = []
+    before, after = open_pdf(source, password), open_pdf(target, password)
+    try:
+        count = min(before.page_count, after.page_count)
+        for number in range(count):
+            for box in boxes_on(boxes, number, before.page_count):
+                area = page_rect(before[number], box.rect)
+                if area is None:
+                    continue
+                shown = tuple((area * before[number].rotation_matrix).normalize())
+                hidden = set(words_under(before[number], shown))
+                written = set(overlay(box, area)[0].split())
+                left = [w for w in words_under(after[number], shown) if w in hidden and w not in written]
+                if left:
+                    leaks.append((number, " ".join(left)))
+    finally:
+        before.close()
+        after.close()
+    return leaks
+
+
+def image_at(page: pymupdf.Page, x: float, y: float) -> Rect | None:
+    """The rectangle (as the page is shown) of the image at (X, Y), if there is one."""
+    for info in page.get_image_info():
+        r = _shown(page, info["bbox"])
+        if r.contains(pymupdf.Point(x, y)):
+            return (round(r.x0, 2), round(r.y0, 2), round(r.x1, 2), round(r.y1, 2))
+    return None
+
+
+def sanitize(source: Path, target: Path, password: str = "") -> None:
+    """SOURCE without its metadata, hidden text, attachments, scripts and links,
+    and nothing else changed, saved as TARGET."""
+    write_redacted(source, [], target, password, clean=True)

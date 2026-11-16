@@ -20,7 +20,12 @@ DRAWINGS = ("covered", "touched", "none")  # and to drawings (lines, shapes)
 
 @dataclasses.dataclass(frozen=True)
 class Settings:
-    color: str = "#000000"  # of new boxes
+    color: str = "#000000"  # of new boxes ('' for none)
+    text: str = ""  # written over new boxes
+    text_color: str = "#ffffff"
+    font_size: float = 0  # 0: as large as fits
+    align: str = "center"
+    repeat_text: bool = False
     clean: bool = False  # also remove metadata, hidden text, attachments, scripts
     images: str = "pixels"
     drawings: str = "covered"
@@ -29,13 +34,24 @@ class Settings:
 
 DEFAULTS = Settings()
 KEYS = {"color": "redact_color", "clean": "redact_clean", "images": "redact_images",
-        "drawings": "redact_drawings", "output": "redact_output"}
+        "drawings": "redact_drawings", "output": "redact_output", "text": "box_text",
+        "text_color": "box_text_color", "font_size": "box_font_size", "align": "box_align",
+        "repeat_text": "box_repeat_text"}
+APPEARANCE = ("color", "text", "text_color", "font_size", "align", "repeat_text")  # (of new boxes)
 
 
 def valid(name: str, value) -> bool:
     if name == "color":
+        return isinstance(value, str) and (value == "" or bool(COLOR.fullmatch(value.lower())))
+    if name == "text_color":
         return isinstance(value, str) and bool(COLOR.fullmatch(value.lower()))
-    if name == "clean":
+    if name == "text":
+        return isinstance(value, str) and "\n" not in value and len(value) <= 200
+    if name == "font_size":
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and 0 <= value <= 72
+    if name == "align":
+        return value in ("left", "center", "right")
+    if name in ("clean", "repeat_text"):
         return isinstance(value, bool)
     if name == "images":
         return value in IMAGES
@@ -59,7 +75,7 @@ def load() -> Settings:
     for name, key in KEYS.items():
         value = params.get(key)
         if valid(name, value):
-            values[name] = value.lower() if name == "color" else value
+            values[name] = value.lower() if name in ("color", "text_color") else value
     return dataclasses.replace(DEFAULTS, **values)
 
 

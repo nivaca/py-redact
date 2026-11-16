@@ -64,8 +64,8 @@
     <tr>La página tal como quedará en la copia censurada (mientras se muestra, los recuadros no se pueden cambiar)</tr>
   </text>
   <text>
-    <en>Drag on the page to draw a box (B), or over text to mark it (T). Drag a box to move it, or its edges to resize it; right-click it for its pages and colour.</en>
-    <tr>Arrastre sobre la página para dibujar un recuadro (B), o sobre un texto para marcarlo (T). Arrastre un recuadro para moverlo, o sus bordes para cambiar su tamaño; con el botón derecho, sus páginas y su color.</tr>
+    <en>Drag over text to mark it, or elsewhere to draw a box (Ctrl+drag: always a box); double-click a word or an image to mark it. Drag a box to move or resize it; double-click it for its properties, right-click it for more.</en>
+    <tr>Arrastre sobre un texto para marcarlo, o en otra parte para dibujar un recuadro (Ctrl+arrastrar: siempre un recuadro); doble clic en una palabra o una imagen para marcarla. Arrastre un recuadro para moverlo o redimensionarlo; doble clic para sus propiedades, botón derecho para más.</tr>
   </text>
   <text>
     <en>Other colour…</en>
@@ -392,14 +392,6 @@
     <tr>Borrar los {count} recuadros</tr>
   </text>
   <text>
-    <en>Dragging on the page draws a box</en>
-    <tr>Arrastrar sobre la página dibuja un recuadro</tr>
-  </text>
-  <text>
-    <en>Dragging over text selects it, and a box is made over each of its lines</en>
-    <tr>Arrastrar sobre un texto lo selecciona, y se hace un recuadro sobre cada una de sus líneas</tr>
-  </text>
-  <text>
     <en>Draw boxes</en>
     <tr>Dibujar recuadros</tr>
   </text>
@@ -446,10 +438,6 @@
   <text>
     <en>Remove those wholly under a box</en>
     <tr>Quitar los que quedan del todo debajo de un recuadro</tr>
-  </text>
-  <text>
-    <en>Select text</en>
-    <tr>Seleccionar texto</tr>
   </text>
   <text>
     <en>Settings</en>
@@ -720,5 +708,193 @@
   <text>
     <en>Labels in the toolbar</en>
     <tr>Etiquetas en la barra de herramientas</tr>
+  </text>
+  <text>
+    <en>Alignment:</en>
+    <tr>Alineación:</tr>
+  </text>
+  <text>
+    <en>Apply all {count} redactions…</en>
+    <tr>Aplicar las {count} censuras…</tr>
+  </text>
+  <text>
+    <en>Apply the redaction…</en>
+    <tr>Aplicar la censura…</tr>
+  </text>
+  <text>
+    <en>As large as fits</en>
+    <tr>Tan grande como quepa</tr>
+  </text>
+  <text>
+    <en>Box</en>
+    <tr>Recuadro</tr>
+  </text>
+  <text>
+    <en>Centre</en>
+    <tr>Centro</tr>
+  </text>
+  <text>
+    <en>Check the redacted copy</en>
+    <tr>Comprobar la copia censurada</tr>
+  </text>
+  <text>
+    <en>Choose another name: the document stays open</en>
+    <tr>Elija otro nombre: el documento sigue abierto</tr>
+  </text>
+  <text>
+    <en>Choose…</en>
+    <tr>Elegir…</tr>
+  </text>
+  <text>
+    <en>Dragging moves the page in the window</en>
+    <tr>Arrastrar mueve la página en la ventana</tr>
+  </text>
+  <text>
+    <en>Dragging on the page always draws a box, even over text</en>
+    <tr>Arrastrar sobre la página siempre dibuja un recuadro, aun sobre el texto</tr>
+  </text>
+  <text>
+    <en>Fill:</en>
+    <tr>Relleno:</tr>
+  </text>
+  <text>
+    <en>Font size:</en>
+    <tr>Tamaño de letra:</tr>
+  </text>
+  <text>
+    <en>Hand</en>
+    <tr>Mano</tr>
+  </text>
+  <text>
+    <en>Left</en>
+    <tr>Izquierda</tr>
+  </text>
+  <text>
+    <en>Lock</en>
+    <tr>Bloquear</tr>
+  </text>
+  <text>
+    <en>Locked: can't be moved, resized or deleted</en>
+    <tr>Bloqueado: no se puede mover, redimensionar ni borrar</tr>
+  </text>
+  <text>
+    <en>New boxes will look like these</en>
+    <tr>Los recuadros nuevos serán como estos</tr>
+  </text>
+  <text>
+    <en>No colour</en>
+    <tr>Sin color</tr>
+  </text>
+  <text>
+    <en>Note:</en>
+    <tr>Nota:</tr>
+  </text>
+  <text>
+    <en>Once redacted</en>
+    <tr>Una vez censurado</tr>
+  </text>
+  <text>
+    <en>Over text, dragging selects it and a box is made over each of its lines; elsewhere it draws a box (Ctrl+drag always draws one). Double-click a word or an image to mark only that</en>
+    <tr>Sobre un texto, arrastrar lo selecciona y se hace un recuadro sobre cada una de sus líneas; en otra parte dibuja un recuadro (Ctrl+arrastrar siempre dibuja uno). Doble clic en una palabra o una imagen para marcar solo eso</tr>
+  </text>
+  <text>
+    <en>Properties of the box</en>
+    <tr>Propiedades del recuadro</tr>
+  </text>
+  <text>
+    <en>Properties of the {count} boxes</en>
+    <tr>Propiedades de los {count} recuadros</tr>
+  </text>
+  <text>
+    <en>Properties…</en>
+    <tr>Propiedades…</tr>
+  </text>
+  <text>
+    <en>REDACTED, [name]…</en>
+    <tr>CENSURADO, [nombre]…</tr>
+  </text>
+  <text>
+    <en>Redact (text or area)</en>
+    <tr>Censurar (texto o zona)</tr>
+  </text>
+  <text>
+    <en>Repeat the text all along the box</en>
+    <tr>Repetir el texto a lo largo del recuadro</tr>
+  </text>
+  <text>
+    <en>Right</en>
+    <tr>Derecha</tr>
+  </text>
+  <text>
+    <en>Sanitize the document</en>
+    <tr>Sanear el documento</tr>
+  </text>
+  <text>
+    <en>Sanitize the document…</en>
+    <tr>Sanear el documento…</tr>
+  </text>
+  <text>
+    <en>Save a copy without metadata, hidden text, attachments, scripts and links, and with nothing else changed (the boxes aren't applied)</en>
+    <tr>Guardar una copia sin metadatos, texto oculto, adjuntos, scripts ni enlaces, y sin ningún otro cambio (los recuadros no se aplican)</tr>
+  </text>
+  <text>
+    <en>Save as default for new boxes</en>
+    <tr>Guardar como predeterminado para los recuadros nuevos</tr>
+  </text>
+  <text>
+    <en>Save the redacted copy: what is under the boxes is removed for good</en>
+    <tr>Guardar la copia censurada: lo que hay debajo de los recuadros se elimina definitivamente</tr>
+  </text>
+  <text>
+    <en>Saved {path}, sanitized</en>
+    <tr>Se guardó {path}, saneado</tr>
+  </text>
+  <text>
+    <en>Shown when the mouse is over the box</en>
+    <tr>Se muestra cuando el ratón está sobre el recuadro</tr>
+  </text>
+  <text>
+    <en>Some text can still be read under the boxes of {name}:</en>
+    <tr>Todavía se puede leer algún texto debajo de los recuadros de {name}:</tr>
+  </text>
+  <text>
+    <en>Text colour:</en>
+    <tr>Color del texto:</tr>
+  </text>
+  <text>
+    <en>Text:</en>
+    <tr>Texto:</tr>
+  </text>
+  <text>
+    <en>The fill and the text, with its colour, size and alignment</en>
+    <tr>El relleno y el texto, con su color, tamaño y alineación</tr>
+  </text>
+  <text>
+    <en>The image is marked</en>
+    <tr>La imagen está marcada</tr>
+  </text>
+  <text>
+    <en>Unlock</en>
+    <tr>Desbloquear</tr>
+  </text>
+  <text>
+    <en>With no colour, what is under the box is removed and nothing is painted there</en>
+    <tr>Sin color, lo que hay debajo del recuadro se elimina y no se pinta nada allí</tr>
+  </text>
+  <text>
+    <en>checked: nothing under the boxes can be read</en>
+    <tr>comprobado: no se puede leer nada debajo de los recuadros</tr>
+  </text>
+  <text>
+    <en>locked</en>
+    <tr>bloqueado</tr>
+  </text>
+  <text>
+    <en>{count} box is locked, and was kept</en>
+    <tr>{count} recuadro está bloqueado y se conservó</tr>
+  </text>
+  <text>
+    <en>{count} boxes are locked, and were kept</en>
+    <tr>{count} recuadros están bloqueados y se conservaron</tr>
   </text>
 </interface>

@@ -66,11 +66,22 @@ It needs Python 3.15, PyMuPDF (which does the redaction) and PySide6.
 
 ## Using it
 
-- The window starts with *Select text* (T): drag over text, and a box is
-  made over each of its lines. *Draw boxes* (B) draws boxes instead: drag on
-  the page. With either tool, drag a box to move it, or its edges and corners
-  to resize it; Ctrl+click adds a box to the selection, and Shift+drag
-  starts a new selection or box over others.
+- The window starts with *Redact* (T), which works as Xodo's redaction tool:
+  dragging over text selects it, and a box is made over each of its lines;
+  dragging anywhere else draws a box; Ctrl+drag always draws a box, even
+  over text. Double-click a word to mark only that word, or an image to mark
+  all of it. *Draw boxes* (B) always draws boxes, and *Hand* (H) moves the
+  page in the window. Drag a box to move it, or its edges and corners to
+  resize it.
+- Until they are applied, boxes are see-through with a red outline (blue
+  when selected; dashed when they go on other pages).
+- Double-click a box, or right-click it and choose *Properties…*, for what it
+  will look like once redacted: its fill (any colour, or *No colour*, which
+  removes what is under it and paints nothing), a text written over it
+  (`REDACTED`, `[name]`) with its colour, size and alignment, repeated all
+  along the box if wanted; a note, shown when the mouse is over the box; and
+  *Locked*, so that it can't be moved, resized or deleted. *Save as default
+  for new boxes* makes new boxes look the same.
 - *Tools ▸ Find and redact…* (Ctrl+F) looks for a text on all pages, this
   page, from this page to the end, or a list of pages, with or without
   matching case, as whole words, or as a regular expression (`\d+-\d+`,
@@ -99,6 +110,11 @@ It needs Python 3.15, PyMuPDF (which does the redaction) and PySide6.
   without its password.
 - *View ▸ Show the result* (Ctrl+R) shows the page as it will be in the
   redacted copy.
+- *Apply all redactions…*, at the top of the right-click menu, saves the
+  redacted copy. The copy is then checked: if any word that was under a box
+  can still be read there, a warning says where.
+- *File ▸ Sanitize the document…* saves a copy without metadata, hidden
+  text, attachments, scripts and links, with nothing else changed.
 - Closing the window, or opening another file, with boxes not yet saved to a
   redacted copy asks first.
 
