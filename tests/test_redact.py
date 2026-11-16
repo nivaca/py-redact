@@ -172,3 +172,17 @@ def test_settings_survive_a_bad_file():
     assert settings.load() == settings.DEFAULTS
     settings.save(settings.Settings(color="#ff0000", clean=True))
     assert settings.load() == settings.Settings(color="#ff0000", clean=True)
+
+
+def test_find_text(tmp_path):
+    from py_redact.redact import find_text, text_under
+
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((72, 100), "John Doe signed. JOHN", fontsize=12)
+    page.insert_text((72, 120), "Doe again, johnny", fontsize=12)
+    found = find_text(doc, "john  doe")
+    assert [len(m.rects) for m in found] == [1, 2]  # (the second goes across a line break)
+    assert len(find_text(doc, "john", whole_words=True)) == 2 and len(find_text(doc, "john")) == 3
+    assert len(find_text(doc, "John", case=True)) == 1 and find_text(doc, "  ") == []
+    assert text_under(page, found[0].rects[0]) == "John Doe"

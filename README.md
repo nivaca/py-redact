@@ -66,15 +66,23 @@ It needs Python 3.15, PyMuPDF (which does the redaction) and PySide6.
 
 ## Using it
 
-- Drag on the page to draw a box. Drag a box to move it, or its edges and
-  corners to resize it. Ctrl+click adds a box to the selection; Shift+drag
-  draws a new box over others.
-- *Select text* (T) marks text instead: drag over it, and a box is made over
-  each of its lines. *Draw boxes* (B) goes back to drawing.
+- The window starts with *Select text* (T): drag over text, and a box is
+  made over each of its lines. *Draw boxes* (B) draws boxes instead: drag on
+  the page. With either tool, drag a box to move it, or its edges and corners
+  to resize it; Ctrl+click adds a box to the selection, and Shift+drag
+  starts a new selection or box over others.
+- *Tools ▸ Find and redact…* (Ctrl+F) looks for a text on all pages, this
+  page, from this page to the end, or a list of pages, with or without
+  matching case, as whole words, or as a regular expression (`\d+-\d+`,
+  `[\w.]+@[\w.]+`). It lists every place found with the words around it;
+  clicking one shows it on its page, and *Mark them all* or *Mark the ticked
+  ones* puts boxes over them. A phrase is found across line breaks.
 - Right-click a box for its pages (its own page only, all, odd, even, from
-  it to the end, or a list such as `2-10, 15, LAST`), its colour, and to make
-  its colour the one of new boxes. Right-click the page for the colour of new
-  boxes.
+  it to the end, up to it, or a list such as `2-10, 15, LAST`), its colour,
+  to make its colour the one of new boxes, and to redact the text under it
+  wherever else it is. Right-click a word to redact it on this page or on
+  every page; right-click elsewhere on the page for the tools, the colour of
+  new boxes and the boxes of the page.
 - A new box is always on its own page only, whatever the box before it was
   repeated on, and has the colour of new boxes.
 - *Settings ▸ Settings…* keeps, in the configuration file: the colour of new

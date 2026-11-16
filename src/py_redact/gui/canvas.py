@@ -67,7 +67,7 @@ class PageCanvas(QGraphicsView):
     picked = Signal(list, bool)  # indices clicked; whether to add them to the selection
     zoom_changed = Signal(float)
     text_chosen = Signal(list)  # [Rect]: the lines of the text selected
-    menu_asked = Signal(int, object)  # index of the box (-1: none), the place on the screen (QPoint)
+    menu_asked = Signal(int, object, object)  # index of the box (-1: none), place on the screen, on the page
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -82,7 +82,7 @@ class PageCanvas(QGraphicsView):
         self.page_size = QRectF()
         self.editable = True
         self.fit = "page"  # 'page', 'width' or '' (a zoom of its own)
-        self.mode = "box"  # 'box': dragging draws boxes; 'text': it selects text
+        self.mode = "text"  # 'text': dragging selects text; 'box': it draws boxes (boxes are moved in both)
         self._words: list | None = None  # (of the page, when first needed)
         self.pixmap_item: QGraphicsPixmapItem | None = None
         self.sheet: QGraphicsRectItem | None = None
@@ -229,7 +229,7 @@ class PageCanvas(QGraphicsView):
         item, _ = self._hit(event.pos())
         if item is not None and not item.chosen:
             self.picked.emit([item.index], False)
-        self.menu_asked.emit(item.index if item else -1, event.globalPos())
+        self.menu_asked.emit(item.index if item else -1, event.globalPos(), self.mapToScene(event.pos()))
         event.accept()
 
     def page_words(self) -> list:
@@ -256,7 +256,9 @@ class PageCanvas(QGraphicsView):
 
     def mousePressEvent(self, event):
         if (self.editable and self.page is not None and self.mode == "text"
-                and event.button() == Qt.MouseButton.LeftButton):
+                and event.button() == Qt.MouseButton.LeftButton
+                and (event.modifiers() & Qt.KeyboardModifier.ShiftModifier
+                     or self._hit(event.position().toPoint())[0] is None)):
             start = self.mapToScene(event.position().toPoint())
             self.picked.emit([], False)
             self._drag = {"kind": "text", "start": start, "marks": [], "rects": []}
@@ -296,11 +298,10 @@ class PageCanvas(QGraphicsView):
     def mouseMoveEvent(self, event):
         drag = self._drag
         if drag is None:
-            if self.editable and self.page is not None and self.mode == "text":
-                self.viewport().setCursor(QCursor(Qt.CursorShape.IBeamCursor))
-            elif self.editable and self.page is not None:
+            if self.editable and self.page is not None:
                 item, edges = self._hit(event.position().toPoint())
-                self.viewport().setCursor(QCursor(self._cursor(edges) if item else Qt.CursorShape.CrossCursor))
+                empty = Qt.CursorShape.IBeamCursor if self.mode == "text" else Qt.CursorShape.CrossCursor
+                self.viewport().setCursor(QCursor(self._cursor(edges) if item else empty))
             super().mouseMoveEvent(event)
             return
         point = self.mapToScene(event.position().toPoint())
@@ -361,3 +362,37 @@ class PageCanvas(QGraphicsView):
     @staticmethod
     def _rect(r: QRectF) -> Rect:
         return normalized((round(r.left(), 2), round(r.top(), 2), round(r.right(), 2), round(r.bottom(), 2)))
+
+    def word_at(self, point: QPointF) -> str:
+        """The word under POINT (on the page), or ''."""
+        if self.page is None:
+            return ""
+        for w in self.page.get_text("words", sort=False):
+            r = pymupdf.Rect(w[:4]) * self.page.rotation_matrix
+            if r.normalize().contains(pymupdf.Point(point.x(), point.y())):
+                return w[4]
+        return ""
+
+    def flash(self, rects: list[Rect]):
+        """Show RECTS for a moment (a place found), and bring them into view."""
+        if not rects:
+            return
+        color = QColor(255, 200, 0, 150)
+        pen = QPen(QColor(230, 120, 0), 2)
+        pen.setCosmetic(True)
+        items = []
+        for r in rects:
+            item = self.scene().addRect(QRectF(QPointF(r[0], r[1]), QPointF(r[2], r[3])), pen, QBrush(color))
+            item.setZValue(4)
+            items.append(item)
+        self.ensureVisible(items[0], 60, 60)
+
+        def remove():
+            for item in items:
+                try:
+                    if item.scene() is not None:
+                        item.scene().removeItem(item)
+                except RuntimeError:  # (the page was shown again meanwhile: the item is gone)
+                    pass
+
+        QTimer.singleShot(1500, remove)

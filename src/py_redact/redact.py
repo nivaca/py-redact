@@ -216,3 +216,63 @@ def text_rects(found: list[tuple[Rect, int, int]], first: int, last: int, pad: f
         r[0], r[1], r[2], r[3] = min(r[0], x0), min(r[1], y0), max(r[2], x1), max(r[3], y1)
     return [(round(x0 - pad, 2), round(y0 - pad, 2), round(x1 + pad, 2), round(y1 + pad, 2))
             for x0, y0, x1, y1 in lines.values()]
+
+
+@dataclasses.dataclass(frozen=True)
+class Match:
+    page: int  # 0-based
+    rects: tuple[Rect, ...]  # one for each line of the text found (as the page is shown)
+    text: str  # what was found
+    context: str  # with some words around it
+
+
+def find_text(doc: pymupdf.Document, query: str, pages: list[int] | None = None, case: bool = False,
+              whole_words: bool = False, regex: bool = False) -> list[Match]:
+    """Where QUERY is on PAGES (0-based; all if None) of DOC. The text of a page
+    is read as its words separated by single spaces, so a phrase is found
+    across line breaks and however the words are spaced. With REGEX, QUERY is a
+    regular expression (raises re.error if it is wrong)."""
+    import re
+
+    if not query.strip():
+        return []
+    pattern = query if regex else r"\s+".join(re.escape(w) for w in query.split())
+    if whole_words:
+        pattern = rf"(?<!\w)(?:{pattern})(?!\w)"
+    found_re = re.compile(pattern, 0 if case else re.IGNORECASE)
+    out = []
+    for number in (range(doc.page_count) if pages is None else pages):
+        page = doc[number]
+        raw = page.get_text("words", sort=False)
+        found = words(page)
+        if not found:
+            continue
+        text, starts = "", []
+        for w in raw:
+            starts.append(len(text))
+            text += w[4] + " "
+        ends = [s + len(w[4]) for s, w in zip(starts, raw)]
+        for m in found_re.finditer(text):
+            if m.end() <= m.start():
+                continue
+            first = next(i for i, e in enumerate(ends) if e > m.start())
+            last = max(i for i, s in enumerate(starts) if s < m.end())
+            if last < first:
+                continue
+            before = " ".join(w[4] for w in raw[max(first - 4, 0):first])
+            after = " ".join(w[4] for w in raw[last + 1:last + 5])
+            snippet = m.group(0).strip()
+            context = " ".join(p for p in (before, f"[{snippet}]", after) if p)
+            out.append(Match(number, tuple(text_rects(found, first, last)), snippet, context))
+    return out
+
+
+def text_under(page: pymupdf.Page, rect: Rect) -> str:
+    """The words of PAGE wholly or mostly under RECT (as the page is shown), in reading order."""
+    area = pymupdf.Rect(rect)
+    out = []
+    for (x0, y0, x1, y1), w in zip((r for r, _, _ in words(page)), page.get_text("words", sort=False)):
+        r = pymupdf.Rect(x0, y0, x1, y1)
+        if not r.is_empty and (r & area).get_area() >= 0.5 * r.get_area():
+            out.append(w[4])
+    return " ".join(out)

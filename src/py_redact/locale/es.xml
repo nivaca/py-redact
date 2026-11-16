@@ -479,4 +479,176 @@
     <en>{count} lines of text marked</en>
     <tr>{count} líneas de texto marcadas</tr>
   </text>
+  <text>
+    <en>&amp;Tools</en>
+    <tr>&amp;Herramientas</tr>
+  </text>
+  <text>
+    <en>, on {count} page</en>
+    <tr>, en {count} página</tr>
+  </text>
+  <text>
+    <en>, on {count} pages</en>
+    <tr>, en {count} páginas</tr>
+  </text>
+  <text>
+    <en>A box over every place found</en>
+    <tr>Un recuadro sobre cada lugar encontrado</tr>
+  </text>
+  <text>
+    <en>Box drawn on page {page} — {pages}</en>
+    <tr>Recuadro dibujado en la página {page} — {pages}</tr>
+  </text>
+  <text>
+    <en>Close</en>
+    <tr>Cerrar</tr>
+  </text>
+  <text>
+    <en>Delete the selected box</en>
+    <tr>Borrar el recuadro seleccionado</tr>
+  </text>
+  <text>
+    <en>Delete the {count} selected boxes</en>
+    <tr>Borrar los {count} recuadros seleccionados</tr>
+  </text>
+  <text>
+    <en>Find</en>
+    <tr>Buscar</tr>
+  </text>
+  <text>
+    <en>Find a text, or a regular expression, on some or all pages, and put boxes over it</en>
+    <tr>Buscar un texto, o una expresión regular, en algunas páginas o en todas, y poner recuadros encima</tr>
+  </text>
+  <text>
+    <en>Find and redact</en>
+    <tr>Buscar y censurar</tr>
+  </text>
+  <text>
+    <en>Find and redact…</en>
+    <tr>Buscar y censurar…</tr>
+  </text>
+  <text>
+    <en>Find the text under this box on every page, and mark it</en>
+    <tr>Buscar en todas las páginas el texto que hay debajo de este recuadro, y marcarlo</tr>
+  </text>
+  <text>
+    <en>Find:</en>
+    <tr>Buscar:</tr>
+  </text>
+  <text>
+    <en>For instance \d+-\d+ for numbers such as 555-1234, or [\w.]+@[\w.]+ for e-mail addresses</en>
+    <tr>Por ejemplo, \d+-\d+ para números como 555-1234, o [\w.]+@[\w.]+ para direcciones de correo</tr>
+  </text>
+  <text>
+    <en>Found once</en>
+    <tr>Encontrado una vez</tr>
+  </text>
+  <text>
+    <en>Found {count} times</en>
+    <tr>Encontrado {count} veces</tr>
+  </text>
+  <text>
+    <en>From this page to the end</en>
+    <tr>De esta página hasta el final</tr>
+  </text>
+  <text>
+    <en>Mark the ticked ones</en>
+    <tr>Marcar los seleccionados</tr>
+  </text>
+  <text>
+    <en>Mark them all</en>
+    <tr>Marcarlos todos</tr>
+  </text>
+  <text>
+    <en>Match case</en>
+    <tr>Distinguir mayúsculas</tr>
+  </text>
+  <text>
+    <en>Not found</en>
+    <tr>No se encontró</tr>
+  </text>
+  <text>
+    <en>On:</en>
+    <tr>En:</tr>
+  </text>
+  <text>
+    <en>Other colour ({color})…</en>
+    <tr>Otro color ({color})…</tr>
+  </text>
+  <text>
+    <en>Page {page}: {context}</en>
+    <tr>Página {page}: {context}</tr>
+  </text>
+  <text>
+    <en>Redact it on every page…</en>
+    <tr>Censurarla en todas las páginas…</tr>
+  </text>
+  <text>
+    <en>Redact it on this page</en>
+    <tr>Censurarla en esta página</tr>
+  </text>
+  <text>
+    <en>Redact “{text}” wherever it is…</en>
+    <tr>Censurar «{text}» dondequiera que esté…</tr>
+  </text>
+  <text>
+    <en>Regular expression</en>
+    <tr>Expresión regular</tr>
+  </text>
+  <text>
+    <en>Select the box of this page</en>
+    <tr>Seleccionar el recuadro de esta página</tr>
+  </text>
+  <text>
+    <en>Select the {count} boxes of this page</en>
+    <tr>Seleccionar los {count} recuadros de esta página</tr>
+  </text>
+  <text>
+    <en>Text to find</en>
+    <tr>Texto que buscar</tr>
+  </text>
+  <text>
+    <en>That regular expression can't be read: {error}</en>
+    <tr>Esa expresión regular no se puede leer: {error}</tr>
+  </text>
+  <text>
+    <en>These pages ({pages})…</en>
+    <tr>Estas páginas ({pages})…</tr>
+  </text>
+  <text>
+    <en>This page</en>
+    <tr>Esta página</tr>
+  </text>
+  <text>
+    <en>Those places are marked already</en>
+    <tr>Esos lugares ya están marcados</tr>
+  </text>
+  <text>
+    <en>Undo ({count})</en>
+    <tr>Deshacer ({count})</tr>
+  </text>
+  <text>
+    <en>Whole words</en>
+    <tr>Palabras completas</tr>
+  </text>
+  <text>
+    <en>only there</en>
+    <tr>solo allí</tr>
+  </text>
+  <text>
+    <en>{count} box</en>
+    <tr>{count} recuadro</tr>
+  </text>
+  <text>
+    <en>{count} box added</en>
+    <tr>Se añadió {count} recuadro</tr>
+  </text>
+  <text>
+    <en>{count} boxes</en>
+    <tr>{count} recuadros</tr>
+  </text>
+  <text>
+    <en>{count} boxes added</en>
+    <tr>Se añadieron {count} recuadros</tr>
+  </text>
 </interface>

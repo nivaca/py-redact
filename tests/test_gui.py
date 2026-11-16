@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pymupdf
 import pytest
-from PySide6.QtCore import QEvent, QPointF, Qt
+from PySide6.QtCore import QEvent, QPointF, Qt  # noqa: F401
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QApplication, QMessageBox
 
@@ -26,6 +26,8 @@ def window(app, sample, tmp_path, monkeypatch):
     app.processEvents()
     assert w.open_path(sample)
     app.processEvents()
+    assert w.canvas.mode == "text"  # (the tool on startup)
+    w.set_tool("box")
     yield w
     w.boxes = w.saved = []
     w.close()
@@ -103,7 +105,82 @@ def test_default_colour_is_kept(window):
     assert settings.load().color == "#ffffff" and [b.color for b in window.boxes] == ["#ff0000", "#ff0000"]
 
 
+def test_text_tool_still_moves_boxes(window):
+    drag(window, (60, 40), (300, 66))
+    window.set_tool("text")
+    drag(window, (150, 50), (170, 60))  # (on a box: moves it, selects no text)
+    assert len(window.boxes) == 1 and close(window.boxes[0].rect, (80, 50, 320, 76))
+
+
+def test_find_and_redact(window, tmp_path):
+    window.find_dialog("person")
+    finder = window.finder
+    assert len(finder.matches) == 5 and "5" in finder.summary.text()
+    finder.results.setCurrentRow(2)  # (shows the place)
+    assert window.page == 2
+    finder.results.item(0).setCheckState(Qt.CheckState.Unchecked)
+    finder.mark.emit(finder.ticked())
+    assert sorted(b.page for b in window.boxes) == [1, 2, 3, 4]
+    finder.mark.emit(finder.ticked(all_=True))  # (not twice over the same place)
+    assert sorted(b.page for b in window.boxes) == [0, 1, 2, 3, 4]
+    out = tmp_path / "out.pdf"
+    assert window.save_to(out)
+    assert not any("Person" in p.get_text() for p in pymupdf.open(out))
+
+
+def test_find_options(window):
+    window.find_dialog()
+    f = window.finder
+    f.query.setText("PERSON")
+    f.case.setChecked(True)
+    f.search()
+    assert f.matches == []
+    f.case.setChecked(False)
+    f.scope.setCurrentIndex(3)
+    f.pages.setText("2-3")
+    f.search()
+    assert [m.page for m in f.matches] == [1, 2]
+    f.regex.setChecked(True)
+    f.query.setText(r"Person[13]")
+    f.scope.setCurrentIndex(0)
+    f.search()
+    assert [m.page for m in f.matches] == [0, 2]
+    f.query.setText("(unclosed")
+    f.search()
+    assert f.matches == [] and f.summary.text()
+
+
+def menu_texts(window, monkeypatch, index, point):
+    seen = []
+
+    def fake_exec(menu, *_):
+        def walk(m, depth=0):
+            for act in m.actions():
+                seen.append(("  " * depth) + act.text())
+                if act.menu():
+                    walk(act.menu(), depth + 1)
+        walk(menu)
+
+    monkeypatch.setattr(window, "show_menu", fake_exec)
+    window.box_menu(index, None, QPointF(*point))
+    return seen
+
+
+def test_menus_fit_where_they_are(window, monkeypatch):
+    texts = menu_texts(window, monkeypatch, -1, (80, 116))  # (on the word "Name:")
+    assert texts[0] == "“Name:”" and "Redact it on every page…" in texts
+    assert not any("Select the" in t for t in texts)  # (no boxes on the page)
+    drag(window, (70, 108), (200, 125))
+    texts = menu_texts(window, monkeypatch, 0, (100, 116))
+    assert texts[0].startswith("Box drawn on page 1") and any(t.startswith("Redact “Name: Person1”") for t in texts)
+    assert not any("Up to page" in t for t in texts)  # (it is on page 1)
+    window.mark_matches(window._find("Name", [0]))  # (inside the box: still marked)
+    window._edit_menu()
+    assert window.a_select_all.isEnabled() and window.a_undo.text() == "Undo (2)"
+
+
 def test_select_text(window):
+    window.set_tool("text")
     window.set_tool("text")
     drag(window, (75, 115), (150, 118))  # (over "Name: Person1")
     assert len(window.boxes) == 1 and window.boxes[0].page == 0
