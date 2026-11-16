@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..interface import N_, tr
+from .. import conform
 from ..settings import DEFAULTS, Settings
 
 IMAGES = [("pixels", N_("Blank the part under the box")), ("whole", N_("Remove the whole image")),
@@ -31,12 +32,22 @@ class SettingsDialog(QDialog):
         self.drawings = QComboBox()
         for value, name in DRAWINGS:
             self.drawings.addItem(tr(name), value)
+        self.output = QComboBox()
+        self.output.addItem(tr("PDF"), "")
+        for value, name in conform.STANDARDS:
+            self.output.addItem(tr(name), value)
+            if not conform.available():
+                self.output.model().item(self.output.count() - 1).setEnabled(False)
+        if not conform.available():
+            self.output.setToolTip(tr("PDF/A and PDF/X need {command}, which is not installed (or not on the PATH)",
+                                      command=conform.COMMAND))
         self.clean = QCheckBox(tr("Also remove metadata, hidden text, attachments and scripts"))
         form = QFormLayout()
         form.addRow(tr("Colour of new boxes:"), self.color_button)
         form.addRow(tr("Images under a box:"), self.images)
         form.addRow(tr("Drawings under a box:"), self.drawings)
         form.addRow("", self.clean)
+        form.addRow(tr("Save as:"), self.output)
         note = QLabel(tr("Text under a box is always removed."))
         note.setStyleSheet("color: palette(placeholder-text);")
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -59,6 +70,8 @@ class SettingsDialog(QDialog):
         self.images.setCurrentIndex([v for v, _ in IMAGES].index(settings.images))
         self.drawings.setCurrentIndex([v for v, _ in DRAWINGS].index(settings.drawings))
         self.clean.setChecked(settings.clean)
+        values = [self.output.itemData(i) for i in range(self.output.count())]
+        self.output.setCurrentIndex(values.index(settings.output) if conform.available() else 0)
 
     def _show_color(self):
         self.color_button.setIcon(self._swatch(self.color))
@@ -72,4 +85,4 @@ class SettingsDialog(QDialog):
 
     def settings(self) -> Settings:
         return Settings(color=self.color, clean=self.clean.isChecked(), images=self.images.currentData(),
-                        drawings=self.drawings.currentData())
+                        drawings=self.drawings.currentData(), output=self.output.currentData())

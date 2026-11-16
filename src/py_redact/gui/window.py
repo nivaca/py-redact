@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from .. import __version__, config, interface, settings
+from .. import __version__, conform, config, interface, settings
 from ..interface import N_, ntr, tr
 from ..pagesel import check
 from ..redact import Box, Match, PasswordError, RedactError, text_under, Rect, boxes_on, open_pdf, preview_page, write_redacted
@@ -236,6 +236,17 @@ class MainWindow(QMainWindow):
                                    "author and other metadata, text that isn't shown, attached files, "
                                    "JavaScript and links"))
         m.addAction(self.a_clean)
+        self.m_output = m.addMenu(tr("Save as"))
+        self.m_output.setToolTipsVisible(True)
+        group = QActionGroup(self)
+        self.output_actions = {}
+        for value, name in [("", N_("PDF"))] + conform.STANDARDS:
+            act = QAction(tr(name), self, checkable=True)
+            act.triggered.connect(lambda _=False, v=value: self.set_output(v))
+            group.addAction(act)
+            self.m_output.addAction(act)
+            self.output_actions[value] = act
+        self._show_output()
         m.addSeparator()
         self._action(m, tr("Quit"), self.close, QKeySequence.StandardKey.Quit)
 
@@ -487,6 +498,22 @@ class MainWindow(QMainWindow):
                 self.refresh()
             self.status(str(e), error=True)
             return False
+        standard, check_ = self.output(), ""
+        if standard:
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            self.status(tr("Making {standard} with {command}…", standard=conform.label(standard),
+                           command=conform.COMMAND))
+            QApplication.processEvents()
+            try:
+                check_ = conform.convert(target, target, standard, self.password)
+            except conform.ConformError as e:
+                QApplication.restoreOverrideCursor()
+                QMessageBox.warning(self, conform.label(standard),
+                                    tr("The redacted copy was saved as a plain PDF, but it could not be made "
+                                       "{standard}:\n\n{error}", standard=conform.label(standard), error=e))
+                standard = ""
+            else:
+                QApplication.restoreOverrideCursor()
         self.settings.setValue("last_dir", str(target.parent))
         self.add_recent(target)
         self.saved = list(self.boxes)
@@ -497,9 +524,35 @@ class MainWindow(QMainWindow):
             self.refresh()
             self.show_page(page)
         self._update_title()
-        self.status(ntr("Saved {path} ({count} area redacted)", "Saved {path} ({count} areas redacted)", done,
-                        path=target))
+        message = ntr("Saved {path} ({count} area redacted)", "Saved {path} ({count} areas redacted)", done,
+                      path=target)
+        if standard:
+            message += " — " + conform.label(standard) + (f" ({check_})" if check_ else "")
+            if self.password:
+                message += " — " + tr("PDF/A and PDF/X can't be protected: the copy has no password")
+        self.status(message)
         return True
+
+    # ----------------------------------------------------------------- PDF/A and PDF/X
+
+    def output(self) -> str:
+        """The standard the redacted copy is made to ('' for a plain PDF)."""
+        return self.prefs.output if self.prefs.output and conform.available() else ""
+
+    def set_output(self, value: str):
+        self.set_prefs(dataclasses.replace(self.prefs, output=value))
+
+    def _show_output(self):
+        """The Save as menu: what is chosen, and greyed out if py-pdfconform isn't there."""
+        have = conform.available()
+        for value, act in self.output_actions.items():
+            act.setChecked(value == self.output())
+            if value:
+                act.setEnabled(have)
+                act.setToolTip("" if have else tr("Needs {command}, which is not installed (or not on the PATH)",
+                                                  command=conform.COMMAND))
+        self.a_save.setText(tr("Save the redacted copy…") if not self.output()
+                            else tr("Save the redacted copy as {standard}…", standard=conform.label(self.output())))
 
     # ----------------------------------------------------------------- recent files
 
@@ -624,6 +677,7 @@ class MainWindow(QMainWindow):
         self.a_clean.blockSignals(True)
         self.a_clean.setChecked(prefs.clean)
         self.a_clean.blockSignals(False)
+        self._show_output()
         self._show_panel()
         if changed and self.result_box.isChecked():
             self.show_page(self.page, keep_view=True)

@@ -186,3 +186,11 @@ def test_find_text(tmp_path):
     assert len(find_text(doc, "john", whole_words=True)) == 2 and len(find_text(doc, "john")) == 3
     assert len(find_text(doc, "John", case=True)) == 1 and find_text(doc, "  ") == []
     assert text_under(page, found[0].rects[0]) == "John Doe"
+
+
+def test_conform_missing(sample, tmp_path, monkeypatch):
+    from py_redact import conform
+
+    monkeypatch.setattr(conform, "command", lambda: None)
+    with pytest.raises(conform.ConformError):
+        conform.convert(sample, tmp_path / "x.pdf", "a-2b")

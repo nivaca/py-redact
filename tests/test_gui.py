@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import shutil
+
 import pymupdf
 import pytest
 from PySide6.QtCore import QEvent, QPointF, Qt  # noqa: F401
@@ -221,3 +223,30 @@ def test_boxes_follow_the_page(window):
     window.select_page()
     window.delete_selected()
     assert window.boxes == []
+
+
+@pytest.mark.skipif(not shutil.which("py-pdfconform"), reason="py-pdfconform not installed")
+@pytest.mark.parametrize("standard", ["a-2b", "x-4"])
+def test_save_as_pdfa_or_pdfx(window, tmp_path, standard):
+    drag(window, (60, 105), (300, 126))
+    window.output_actions[standard].trigger()
+    assert window.output() == standard and settings.load().output == standard
+    assert "PDF/" in window.a_save.text()
+    out = tmp_path / "out.pdf"
+    assert window.save_to(out)
+    doc = pymupdf.open(out)
+    raw = out.read_bytes()
+    assert (b"pdfaid:part" in raw or b"pdfaid" in raw) if standard.startswith("a") else b"GTS_PDFX" in raw
+    assert "Person1" not in doc[0].get_text() and "PDF/" in window.statusBar().currentMessage()
+
+
+def test_pdfa_greyed_without_py_pdfconform(app, sample, tmp_path, monkeypatch):
+    from py_redact import conform
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(conform, "command", lambda: None)
+    settings.save(settings.Settings(output="a-2b"))  # (chosen when it was there)
+    w = MainWindow()
+    assert not w.output_actions["a-2b"].isEnabled() and w.output_actions[""].isChecked()
+    assert w.output() == "" and w.a_save.text() == "Save the redacted copy…"
+    w.close()

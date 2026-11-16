@@ -24,11 +24,12 @@ class Settings:
     clean: bool = False  # also remove metadata, hidden text, attachments, scripts
     images: str = "pixels"
     drawings: str = "covered"
+    output: str = ""  # '' for a plain PDF; else a standard of py-pdfconform: 'a-2b', 'x-4'... (see conform.py)
 
 
 DEFAULTS = Settings()
 KEYS = {"color": "redact_color", "clean": "redact_clean", "images": "redact_images",
-        "drawings": "redact_drawings"}
+        "drawings": "redact_drawings", "output": "redact_output"}
 
 
 def valid(name: str, value) -> bool:
@@ -40,6 +41,10 @@ def valid(name: str, value) -> bool:
         return value in IMAGES
     if name == "drawings":
         return value in DRAWINGS
+    if name == "output":
+        from .conform import STANDARDS
+
+        return value == "" or value in [s for s, _ in STANDARDS]
     return False
 
 

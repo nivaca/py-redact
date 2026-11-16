@@ -651,4 +651,70 @@
     <en>{count} boxes added</en>
     <tr>Se añadieron {count} recuadros</tr>
   </text>
+  <text>
+    <en>Making {standard} with {command}…</en>
+    <tr>Haciendo {standard} con {command}…</tr>
+  </text>
+  <text>
+    <en>Needs {command}, which is not installed (or not on the PATH)</en>
+    <tr>Necesita {command}, que no está instalado (o no está en el PATH)</tr>
+  </text>
+  <text>
+    <en>PDF</en>
+    <tr>PDF</tr>
+  </text>
+  <text>
+    <en>PDF/A and PDF/X can't be protected: the copy has no password</en>
+    <tr>PDF/A y PDF/X no admiten protección: la copia no tiene contraseña</tr>
+  </text>
+  <text>
+    <en>PDF/A and PDF/X need {command}, which is not installed (or not on the PATH)</en>
+    <tr>PDF/A y PDF/X necesitan {command}, que no está instalado (o no está en el PATH)</tr>
+  </text>
+  <text>
+    <en>PDF/A-1b (archiving, the oldest)</en>
+    <tr>PDF/A-1b (archivo, la más antigua)</tr>
+  </text>
+  <text>
+    <en>PDF/A-2b (archiving)</en>
+    <tr>PDF/A-2b (archivo)</tr>
+  </text>
+  <text>
+    <en>PDF/A-3b (archiving, with attachments)</en>
+    <tr>PDF/A-3b (archivo, con adjuntos)</tr>
+  </text>
+  <text>
+    <en>PDF/X-4 (printing)</en>
+    <tr>PDF/X-4 (imprenta)</tr>
+  </text>
+  <text>
+    <en>Save as</en>
+    <tr>Guardar como</tr>
+  </text>
+  <text>
+    <en>Save as:</en>
+    <tr>Guardar como:</tr>
+  </text>
+  <text>
+    <en>Save the redacted copy as {standard}…</en>
+    <tr>Guardar la copia censurada como {standard}…</tr>
+  </text>
+  <text>
+    <en>The redacted copy was saved as a plain PDF, but it could not be made {standard}: {error}</en>
+    <tr>La copia censurada se guardó como PDF corriente, pero no se pudo convertir en {standard}:
+
+{error}</tr>
+  </text>
+  <text>
+    <en>{command} could not make {standard}: {error}</en>
+    <tr>{command} no pudo hacer {standard}: {error}</tr>
+  </text>
+  <text>
+    <en>{command} is not installed (or not on the PATH)</en>
+    <tr>{command} no está instalado (o no está en el PATH)</tr>
+  </text>
+  <text>
+    <en>{command} took too long</en>
+    <tr>{command} tardó demasiado</tr>
+  </text>
 </interface>

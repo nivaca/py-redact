@@ -90,6 +90,13 @@ It needs Python 3.15, PyMuPDF (which does the redaction) and PySide6.
   whole image, or leave them) and to drawings (remove those wholly under a
   box, those it touches, or none); and whether to also remove metadata,
   hidden text, attachments and scripts. Text under a box is always removed.
+- *File ▸ Save as* chooses the kind of redacted copy: a plain PDF, PDF/A-1b,
+  PDF/A-2b, PDF/A-3b (for archiving) or PDF/X-4 (for printing). PDF/A and
+  PDF/X are made by the author's
+  [py-pdfconform](https://github.com/nivaca/py-pdfconform), which must be
+  installed and on the PATH; without it, those choices are greyed out. They
+  can't be password-protected, so the copy of a protected document comes out
+  without its password.
 - *View ▸ Show the result* (Ctrl+R) shows the page as it will be in the
   redacted copy.
 - Closing the window, or opening another file, with boxes not yet saved to a
