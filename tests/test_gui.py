@@ -23,6 +23,11 @@ def app():
 def window(app, sample, tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))  # (QSettings)
     w = MainWindow()
+
+    def warn(title, text):  # (a message box would wait for a click for ever)
+        raise AssertionError(f"warning shown: {title}: {text}")
+
+    w.warn = warn
     w.resize(1200, 800)
     w.show()
     app.processEvents()

@@ -35,8 +35,9 @@ def own_folders() -> list[Path]:
     out = []
     if sys.prefix != sys.base_prefix:
         out.append(Path(sys.prefix).resolve())
-    if os.environ.get("APPDIR"):
-        out.append(Path(os.environ["APPDIR"]).resolve())
+    for name in ("APPDIR", "VIRTUAL_ENV"):  # (also a virtual environment this program was started from)
+        if os.environ.get(name):
+            out.append(Path(os.environ[name]).resolve())
     return out
 
 

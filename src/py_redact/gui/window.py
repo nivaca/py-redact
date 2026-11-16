@@ -415,7 +415,7 @@ class MainWindow(QMainWindow):
         if code == interface.code():
             return
         if not interface.use(code):
-            QMessageBox.warning(self, tr("Language"),
+            self.warn(tr("Language"),
                                 tr("The language of the interface could not be changed: {error}",
                                    error=interface.error()))
             interface.use(config.get("interface"))
@@ -545,7 +545,7 @@ class MainWindow(QMainWindow):
                 check_ = conform.convert(target, target, standard, self.password)
             except conform.ConformError as e:
                 QApplication.restoreOverrideCursor()
-                QMessageBox.warning(self, conform.label(standard),
+                self.warn(conform.label(standard),
                                     tr("The redacted copy was saved as a plain PDF, but it could not be made "
                                        "{standard}:\n\n{error}", standard=conform.label(standard), error=e))
                 standard = ""
@@ -569,7 +569,7 @@ class MainWindow(QMainWindow):
             if self.password:
                 message += " — " + tr("PDF/A and PDF/X can't be protected: the copy has no password")
         if leaks:
-            QMessageBox.warning(self, tr("Check the redacted copy"),
+            self.warn(tr("Check the redacted copy"),
                                 tr("Some text can still be read under the boxes of {name}:", name=target.name)
                                 + "\n\n" + "\n".join(tr("Page {page}: {context}", page=p + 1, context=t)
                                                      for p, t in leaks[:10]))
@@ -1005,7 +1005,7 @@ class MainWindow(QMainWindow):
             if not error:
                 self.set_repeat(text.strip())
                 return
-            QMessageBox.warning(self, tr("Pages"), error)
+            self.warn(tr("Pages"), error)
             current = text
 
     def set_repeat(self, repeat: str):
@@ -1313,6 +1313,10 @@ class MainWindow(QMainWindow):
                 break
 
     # ----------------------------------------------------------------- messages
+
+    def warn(self, title: str, text: str):
+        """A warning the user must see (a modal message box)."""
+        QMessageBox.warning(self, title, text)
 
     def status(self, text: str, error: bool = False):
         self.statusBar().setStyleSheet("color: #c0392b;" if error else "")

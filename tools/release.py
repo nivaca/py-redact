@@ -101,6 +101,17 @@ def srpm() -> str:
     return f"build/rpm/SRPMS/{rpm_nvr()}.src.rpm"
 
 
+def outside_env() -> dict[str, str]:
+    """The environment without this project's virtual environment (uv run's), for the
+    RPM build: it builds and tests with Fedora's own Python and packages."""
+    venv = os.environ.get("VIRTUAL_ENV")
+    env = {k: v for k, v in os.environ.items() if k not in ("VIRTUAL_ENV", "UV_RUN_RECURSION_DEPTH")}
+    if venv:
+        env["PATH"] = os.pathsep.join(p for p in env.get("PATH", "").split(os.pathsep)
+                                      if not p.startswith(venv))
+    return env
+
+
 class Release:
     """The steps, run (or only shown) in order."""
 
@@ -131,7 +142,8 @@ class Release:
                 sys.exit("Nothing done.")
         for description, command in self.planned:
             print(f"\n==> {description}", flush=True)
-            if subprocess.run(command, cwd=ROOT).returncode != 0:
+            if subprocess.run(command, cwd=ROOT, env=outside_env() if command[0].startswith("packaging/")
+                              else None).returncode != 0:
                 sys.exit(f"release.py: failed: {shlex.join(command)}\nThe steps before it were done; after fixing "
                          "the cause, run the script again (with --redo if the tag was already moved).")
         print(f"\nReleased {TAG}.")
