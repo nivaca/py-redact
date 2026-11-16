@@ -1269,4 +1269,8 @@
     <en>py-pdfconform:</en>
     <tr>py-pdfconform:</tr>
   </text>
+  <text>
+    <en>Save the redacted copy as this, now and the next times</en>
+    <tr>Guardar la copia censurada así, ahora y las próximas veces</tr>
+  </text>
 </interface>

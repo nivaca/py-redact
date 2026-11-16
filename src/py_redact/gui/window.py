@@ -267,11 +267,12 @@ class MainWindow(QMainWindow):
         group = QActionGroup(self)
         self.output_actions = {}
         for value, name in [("", N_("PDF"))] + conform.STANDARDS:
-            act = QAction(tr(name), self, checkable=True)
+            act = QAction(tr(name) + "…", self, checkable=True)
             act.triggered.connect(lambda _=False, v=value: self.set_output(v))
             group.addAction(act)
             self.m_output.addAction(act)
             self.output_actions[value] = act
+            act.setStatusTip(tr("Save the redacted copy as this, now and the next times"))
         self._show_output()
         m.addSeparator()
         self._action(m, tr("Quit"), self.close, QKeySequence.StandardKey.Quit)
@@ -645,8 +646,12 @@ class MainWindow(QMainWindow):
         """The standard the redacted copy is made to ('' for a plain PDF)."""
         return self.prefs.output if self.prefs.output and conform.available() else ""
 
-    def set_output(self, value: str):
+    def set_output(self, value: str, save: bool = True):
+        """Make VALUE the kind of PDF of redacted copies (kept for the next times),
+        and, with SAVE, save the copy as that at once, as Save as does elsewhere."""
         self.set_prefs(dataclasses.replace(self.prefs, output=value))
+        if save and self.doc is not None and self.boxes:
+            self.save_dialog()
 
     def _show_output(self):
         """The Save as menu: what is chosen, and greyed out if py-pdfconform isn't there."""

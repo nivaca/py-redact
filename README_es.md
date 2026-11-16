@@ -327,9 +327,10 @@ Luego se revisa la copia: cada palabra que estaba debajo de un recuadro se
 busca, debajo del mismo recuadro, en la copia. Si alguna todavía se puede
 leer, un aviso dice dónde; si ninguna, lo dice la barra de estado.
 
-*Archivo ▸ Guardar como* elige la clase de PDF de la copia: un PDF
-corriente, PDF/A-1b, PDF/A-2b o PDF/A-3b (para archivo) o PDF/X-4 (para
-imprenta), hechos por py-pdfconform. PDF/A y PDF/X no admiten protección,
+*Archivo ▸ Guardar como* guarda la copia en el acto como PDF corriente,
+PDF/A-1b, PDF/A-2b o PDF/A-3b (para archivo) o PDF/X-4 (para imprenta),
+hechos por py-pdfconform; la clase elegida queda marcada, y Ctrl+S guarda
+así las veces siguientes. PDF/A y PDF/X no admiten protección,
 así que la copia de un documento protegido sale sin contraseña.
 
 Al cerrar la ventana, o al abrir otro documento, con recuadros que aún no se
@@ -479,7 +480,7 @@ Pruebas
 
     $ uv run pytest
 
-Hay 80 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 81 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando

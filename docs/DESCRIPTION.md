@@ -160,7 +160,7 @@ removes all of it.
 Testing
 -------
 
-The program has 80 tests (`uv run pytest`). The tests of the redaction make
+The program has 81 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use

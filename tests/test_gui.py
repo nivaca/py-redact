@@ -235,7 +235,10 @@ def test_boxes_follow_the_page(window):
 @pytest.mark.parametrize("standard", ["a-2b", "x-4"])
 def test_save_as_pdfa_or_pdfx(window, tmp_path, standard):
     drag(window, (60, 105), (300, 126))
+    asked = []
+    window.save_dialog = lambda: asked.append(window.output())
     window.output_actions[standard].trigger()
+    assert asked == [standard]  # (choosing it saves at once, as that)
     assert window.output() == standard and settings.load().output == standard
     assert "PDF/" in window.a_save.text()
     out = tmp_path / "out.pdf"
@@ -430,3 +433,17 @@ def test_pdfconform_setting_in_the_dialog(window, tmp_path):
     window.set_prefs(d.settings())
     assert settings.load().pdfconform == str(script) and window.output() == "a-2b"
     assert window.output_actions["a-2b"].isEnabled()
+
+
+def test_save_as_saves_at_once(window, monkeypatch):
+    from py_redact import conform
+
+    monkeypatch.setattr(conform, "command", lambda path=None: ["true"])
+    window._show_output()
+    asked = []
+    window.save_dialog = lambda: asked.append(window.output())
+    window.output_actions["a-3b"].trigger()  # (no boxes yet: it only becomes the choice)
+    assert asked == [] and window.output() == "a-3b"
+    drag(window, (60, 105), (300, 126))
+    window.output_actions["x-4"].trigger()
+    assert asked == ["x-4"] and window.output_actions["x-4"].isChecked()

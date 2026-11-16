@@ -315,9 +315,10 @@ The copy is then checked: every word that was under a mark is looked for,
 under the same mark, in the copy. If any can still be read, a warning says
 where; if none can, the status bar says so.
 
-*File ▸ Save as* chooses what kind of PDF the copy is: a plain PDF, PDF/A-1b,
-PDF/A-2b or PDF/A-3b (for archiving), or PDF/X-4 (for printing), made by
-py-pdfconform. PDF/A and PDF/X can't be protected, so the copy of a
+*File ▸ Save as* saves the copy at once as a plain PDF, PDF/A-1b, PDF/A-2b
+or PDF/A-3b (for archiving), or PDF/X-4 (for printing), made by
+py-pdfconform; the one chosen stays ticked, and Ctrl+S saves as it the next
+times. PDF/A and PDF/X can't be protected, so the copy of a
 protected document comes out without its password.
 
 Closing the window, or opening another document, with marks not yet saved
@@ -461,7 +462,7 @@ Testing
 
     $ uv run pytest
 
-There are 80 tests. They cover the redaction (of text, pictures, drawings,
+There are 81 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the
