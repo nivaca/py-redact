@@ -29,6 +29,9 @@ class Settings:
     clean: bool = False  # also remove metadata, hidden text, attachments, scripts
     images: str = "pixels"
     drawings: str = "covered"
+    pattern_language: str = "en"  # the forms of the patterns of Find and redact (see patterns.py)
+    mark_outline: str = "#d03030"  # of boxes not yet applied
+    mark_opacity: int = 60  # their fill, in % (100: as they will be once applied)
     output: str = ""  # '' for a plain PDF; else a standard of py-pdfconform: 'a-2b', 'x-4'... (see conform.py)
 
 
@@ -36,14 +39,19 @@ DEFAULTS = Settings()
 KEYS = {"color": "redact_color", "clean": "redact_clean", "images": "redact_images",
         "drawings": "redact_drawings", "output": "redact_output", "text": "box_text",
         "text_color": "box_text_color", "font_size": "box_font_size", "align": "box_align",
-        "repeat_text": "box_repeat_text"}
+        "repeat_text": "box_repeat_text", "pattern_language": "pattern_language",
+        "mark_outline": "mark_outline", "mark_opacity": "mark_opacity"}
 APPEARANCE = ("color", "text", "text_color", "font_size", "align", "repeat_text")  # (of new boxes)
 
 
 def valid(name: str, value) -> bool:
     if name == "color":
         return isinstance(value, str) and (value == "" or bool(COLOR.fullmatch(value.lower())))
-    if name == "text_color":
+    if name == "pattern_language":
+        return value in ("en", "es")
+    if name == "mark_opacity":
+        return isinstance(value, int) and not isinstance(value, bool) and 10 <= value <= 100
+    if name in ("text_color", "mark_outline"):
         return isinstance(value, str) and bool(COLOR.fullmatch(value.lower()))
     if name == "text":
         return isinstance(value, str) and "\n" not in value and len(value) <= 200
@@ -75,7 +83,7 @@ def load() -> Settings:
     for name, key in KEYS.items():
         value = params.get(key)
         if valid(name, value):
-            values[name] = value.lower() if name in ("color", "text_color") else value
+            values[name] = value.lower() if name in ("color", "text_color", "mark_outline") else value
     return dataclasses.replace(DEFAULTS, **values)
 
 

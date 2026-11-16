@@ -1,5 +1,7 @@
-"""Find and redact: look for a text (or a regular expression) on some pages,
-see where it is, and put boxes over all or some of the places found."""
+"""Find and redact: look for a word or phrase, several of them, or patterns
+(phone numbers, e-mail addresses...) on some pages, see where they are, and
+put boxes over all or some of the places found, whole or leaving some
+characters visible."""
 
 from __future__ import annotations
 
@@ -7,15 +9,17 @@ import re
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QPushButton, QVBoxLayout,
+    QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QPlainTextEdit, QPushButton, QSpinBox, QStackedWidget, QVBoxLayout, QWidget,
 )
 
 from ..interface import N_, ntr, tr
 from ..pagesel import check, parse_pages
-from ..redact import Match, find_text
+from .. import patterns
+from ..redact import Match, find_all
 
 # where to look: (value, its name); '*' is a list typed by the user
+MODES = [("one", N_("A word or phrase")), ("many", N_("Several words or phrases")), ("patterns", N_("Patterns"))]
 SCOPES = [("all", N_("All pages")), ("page", N_("This page")), ("from", N_("From this page to the end")),
           ("*", N_("These pages:"))]
 
@@ -32,9 +36,41 @@ class FindDialog(QDialog):
         self.window = window
         self.setWindowTitle(tr("Find and redact"))
         self.matches: list[Match] = []
+        self.mode = QComboBox()
+        for value, name in MODES:
+            self.mode.addItem(tr(name), value)
         self.query = QLineEdit()
         self.query.setPlaceholderText(tr("Text to find"))
         self.query.returnPressed.connect(self.search)
+        self.terms = QPlainTextEdit()
+        self.terms.setPlaceholderText(tr("One word or phrase on each line"))
+        self.terms.setTabChangesFocus(True)
+        read = QPushButton(tr("Read from a file…"))
+        read.setToolTip(tr("A text file with one word or phrase on each line"))
+        read.clicked.connect(self.read_terms)
+        self.pattern_list = QListWidget()
+        for key, name, _ in patterns.PATTERNS:
+            item = QListWidgetItem(tr(name))
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Unchecked)
+            item.setData(Qt.ItemDataRole.UserRole, key)
+            self.pattern_list.addItem(item)
+        self.language = QComboBox()
+        for value, name in patterns.LANGUAGES:
+            self.language.addItem(tr(name), value)
+        self.language.setCurrentIndex([v for v, _ in patterns.LANGUAGES].index(window.prefs.pattern_language))
+        self.language.setToolTip(tr("The forms of the patterns: of phone numbers, dates, identity numbers"))
+        self.language.currentIndexChanged.connect(self._language_changed)
+        self.partial = QCheckBox(tr("Leave some characters visible:"))
+        self.partial.setToolTip(tr("For instance the last four digits of a card number, so that it can still be "
+                                   "told apart"))
+        self.keep_start, self.keep_end = QSpinBox(), QSpinBox()
+        for box, text in ((self.keep_start, tr("the first ")), (self.keep_end, tr("the last "))):
+            box.setRange(0, 99)
+            box.setPrefix(text)
+            box.setEnabled(False)
+            self.partial.toggled.connect(box.setEnabled)
+        self.keep_end.setValue(4)
         self.case = QCheckBox(tr("Match case"))
         self.whole = QCheckBox(tr("Whole words"))
         self.regex = QCheckBox(tr("Regular expression"))
@@ -64,20 +100,54 @@ class FindDialog(QDialog):
         close = QPushButton(tr("Close"))
         close.clicked.connect(self.close)
 
-        form = QFormLayout()
-        row = QHBoxLayout()
-        row.addWidget(self.query, 1)
-        row.addWidget(find)
-        form.addRow(tr("Find:"), row)
+        one = QWidget()
+        lay = QVBoxLayout(one)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.query)
         options = QHBoxLayout()
         for w in (self.case, self.whole, self.regex):
             options.addWidget(w)
         options.addStretch(1)
-        form.addRow("", options)
+        lay.addLayout(options)
+        many = QWidget()
+        lay = QVBoxLayout(many)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.terms)
+        lay.addWidget(read, 0, Qt.AlignmentFlag.AlignLeft)
+        pats = QWidget()
+        lay = QVBoxLayout(pats)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.pattern_list)
+        row = QHBoxLayout()
+        row.addWidget(QLabel(tr("Forms:")))
+        row.addWidget(self.language, 1)
+        lay.addLayout(row)
+        self.pages_of_modes = QStackedWidget()
+        for w in (one, many, pats):
+            self.pages_of_modes.addWidget(w)
+        self.terms.setMaximumHeight(110)
+        self.pattern_list.setMaximumHeight(140)
+        self.mode.currentIndexChanged.connect(self.pages_of_modes.setCurrentIndex)
+        self.mode.currentIndexChanged.connect(lambda i: self.pages_of_modes.setMaximumHeight(
+            [self.query.sizeHint().height() * 2 + 8, 150, 180][i]))
+        self.pages_of_modes.setMaximumHeight(self.query.sizeHint().height() * 2 + 8)
+
+        form = QFormLayout()
+        row = QHBoxLayout()
+        row.addWidget(self.mode, 1)
+        row.addWidget(find)
+        form.addRow(tr("Find:"), row)
+        form.addRow("", self.pages_of_modes)
+        partial = QHBoxLayout()
+        partial.addWidget(self.partial)
+        partial.addWidget(self.keep_start)
+        partial.addWidget(self.keep_end)
+        partial.addStretch(1)
         where = QHBoxLayout()
         where.addWidget(self.scope)
         where.addWidget(self.pages, 1)
         form.addRow(tr("On:"), where)
+        form.addRow("", partial)
         buttons = QHBoxLayout()
         buttons.addWidget(self.b_all)
         buttons.addWidget(self.b_ticked)
@@ -88,12 +158,13 @@ class FindDialog(QDialog):
         lay.addWidget(self.results, 1)
         lay.addWidget(self.summary)
         lay.addLayout(buttons)
-        self.resize(560, 460)
+        self.resize(600, 560)
         self._enable()
 
     def start(self, text: str = "", scope: str = "all"):
         """Show the dialog, with TEXT to find (and found at once, if given)."""
         if text:
+            self.mode.setCurrentIndex(0)
             self.query.setText(text)
         self.scope.setCurrentIndex([v for v, _ in SCOPES].index(scope))
         self.show()
@@ -128,13 +199,15 @@ class FindDialog(QDialog):
         self.results.clear()
         self.matches = []
         doc = self.window.doc
-        if doc is None or not self.query.text().strip():
+        queries = self.queries()
+        if doc is None or not queries:
             self.summary.setText("")
             self._enable()
             return
+        keep = (self.keep_start.value(), self.keep_end.value()) if self.partial.isChecked() else (0, 0)
         try:
-            self.matches = find_text(doc, self.query.text(), self.page_list(), self.case.isChecked(),
-                                     self.whole.isChecked(), self.regex.isChecked())
+            self.matches = find_all(doc, queries, self.page_list(), self.case.isChecked(),
+                                    self.whole.isChecked() and self.mode.currentData() != "patterns", *keep)
         except re.error as e:
             self.summary.setText(tr("That regular expression can't be read: {error}", error=e))
             self._enable()
@@ -154,6 +227,39 @@ class FindDialog(QDialog):
                              + (ntr(", on {count} page", ", on {count} pages", pages) if self.matches else "")
                              if self.matches else tr("Not found"))
         self._enable()
+
+    def queries(self) -> list[tuple[str, bool]]:
+        """What to look for: [(text, whether it is a regular expression)]."""
+        mode = self.mode.currentData()
+        if mode == "one":
+            text = self.query.text()
+            return [(text, self.regex.isChecked())] if text.strip() else []
+        if mode == "many":
+            return [(line.strip(), False) for line in self.terms.toPlainText().splitlines() if line.strip()]
+        language = self.language.currentData()
+        return [(patterns.regex(self.pattern_list.item(r).data(Qt.ItemDataRole.UserRole), language), True)
+                for r in range(self.pattern_list.count())
+                if self.pattern_list.item(r).checkState() == Qt.CheckState.Checked]
+
+    def read_terms(self):
+        name, _ = QFileDialog.getOpenFileName(self, tr("Words or phrases to find"), self.window.last_dir(),
+                                              tr("Text files (*.txt);;All files (*)"))
+        if not name:
+            return
+        try:
+            with open(name, encoding="utf-8-sig") as f:
+                lines = [line.strip() for line in f if line.strip()]
+        except (OSError, UnicodeDecodeError) as e:
+            self.summary.setText(str(e))
+            return
+        old = [line for line in self.terms.toPlainText().splitlines() if line.strip()]
+        self.terms.setPlainText("\n".join(old + [x for x in lines if x not in old]))
+        self.summary.setText(ntr("{count} word or phrase read", "{count} words or phrases read", len(lines)))
+
+    def _language_changed(self):
+        import dataclasses
+
+        self.window.set_prefs(dataclasses.replace(self.window.prefs, pattern_language=self.language.currentData()))
 
     def ticked(self, all_: bool = False) -> list[Match]:
         return [self.matches[self.results.item(r).data(Qt.ItemDataRole.UserRole)]

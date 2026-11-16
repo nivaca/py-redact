@@ -346,3 +346,70 @@ def test_sanitize(window, tmp_path, monkeypatch):
     monkeypatch.setattr(w.QFileDialog, "getSaveFileName", lambda *a, **k: (str(out), ""))
     assert window.sanitize_dialog()
     assert "Person1" in pymupdf.open(out)[0].get_text()
+
+
+def test_find_several_and_patterns(window):
+    window.find_dialog()
+    f = window.finder
+    f.mode.setCurrentIndex(1)
+    f.terms.setPlainText("header1\nPerson2\n\nnothing like this")
+    f.search()
+    assert sorted(m.text for m in f.matches) == ["HEADER1", "Person2"]
+    f.mode.setCurrentIndex(2)
+    f.pattern_list.item(0).setCheckState(Qt.CheckState.Checked)  # (e-mail addresses: none in the sample)
+    f.search()
+    assert f.matches == [] and f.summary.text()
+
+
+def test_partial_marking(window):
+    window.find_dialog("Person1")
+    f = window.finder
+    whole = f.matches[0].rects[0]
+    f.partial.setChecked(True)
+    f.keep_start.setValue(0)
+    f.keep_end.setValue(1)
+    f.search()
+    assert f.matches[0].rects[0][2] < whole[2] - 3
+
+
+def test_redaction_codes_on_boxes(window):
+    drag(window, (60, 105), (300, 126))
+    window.toggle_code("(b)(6)")
+    window.toggle_code("(b)(7)(C)")
+    assert window.boxes[0].text == "(b)(6), (b)(7)(C)"
+    window.toggle_code("(b)(6)")
+    assert window.boxes[0].text == "(b)(7)(C)"
+
+
+def test_hover_shows_the_result(window):
+    drag(window, (60, 105), (300, 126))
+    from PySide6.QtWidgets import QGraphicsSceneHoverEvent
+
+    item = window.canvas.items_[0]
+    assert not item.preview
+    item.hoverEnterEvent(QGraphicsSceneHoverEvent(QEvent.Type.GraphicsSceneHoverEnter))
+    assert item.preview
+    window.canvas.grab()  # (painted as it will be)
+    item.hoverLeaveEvent(QGraphicsSceneHoverEvent(QEvent.Type.GraphicsSceneHoverLeave))
+    assert not item.preview
+
+
+def test_settings_dialog_keeps_what_it_does_not_show(window):
+    import dataclasses
+
+    from py_redact.gui.prefs import SettingsDialog
+    from py_redact.gui.window import color_name, swatch
+
+    window.set_prefs(dataclasses.replace(window.prefs, text="[name]", mark_opacity=80))
+    d = SettingsDialog(window.prefs, swatch, color_name, window)
+    assert d.opacity.value() == 80 and d.settings().text == "[name]"
+
+
+def test_remove_hidden_information(window, tmp_path, monkeypatch):
+    from py_redact.gui import hidden_dialog
+    from py_redact.gui import window as w
+
+    out = tmp_path / "clean.pdf"
+    monkeypatch.setattr(w.QFileDialog, "getSaveFileName", lambda *a, **k: (str(out), ""))
+    monkeypatch.setattr(hidden_dialog.HiddenDialog, "exec", lambda self: hidden_dialog.QDialog.DialogCode.Accepted)
+    assert window.hidden_dialog() and out.is_file()

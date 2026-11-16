@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from PySide6.QtGui import QColor
+import dataclasses
+
 from PySide6.QtWidgets import (
     QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout, QLabel, QPushButton,
-    QVBoxLayout,
+    QSpinBox, QVBoxLayout,
 )
 
 from ..interface import N_, tr
@@ -23,7 +25,15 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(tr("Settings"))
         self._swatch, self._color_name = swatch, color_name
+        self.original = settings
         self.color = settings.color
+        self.outline = settings.mark_outline
+        self.outline_button = QPushButton()
+        self.outline_button.clicked.connect(self._choose_outline)
+        self.opacity = QSpinBox()
+        self.opacity.setRange(10, 100)
+        self.opacity.setSuffix(" %")
+        self.opacity.setToolTip(tr("How much of what is under a box shows through it until it is applied"))
         self.color_button = QPushButton()
         self.color_button.clicked.connect(self._choose)
         self.images = QComboBox()
@@ -48,6 +58,9 @@ class SettingsDialog(QDialog):
         form.addRow(tr("Drawings under a box:"), self.drawings)
         form.addRow("", self.clean)
         form.addRow(tr("Save as:"), self.output)
+        form.addRow(QLabel("<b>" + tr("Boxes not yet applied") + "</b>"))
+        form.addRow(tr("Outline:"), self.outline_button)
+        form.addRow(tr("Fill opacity:"), self.opacity)
         note = QLabel(tr("Text under a box is always removed."))
         note.setStyleSheet("color: palette(placeholder-text);")
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -70,6 +83,10 @@ class SettingsDialog(QDialog):
         self.images.setCurrentIndex([v for v, _ in IMAGES].index(settings.images))
         self.drawings.setCurrentIndex([v for v, _ in DRAWINGS].index(settings.drawings))
         self.clean.setChecked(settings.clean)
+        self.outline = settings.mark_outline
+        self.outline_button.setIcon(self._swatch(self.outline))
+        self.outline_button.setText(self.outline)
+        self.opacity.setValue(settings.mark_opacity)
         values = [self.output.itemData(i) for i in range(self.output.count())]
         self.output.setCurrentIndex(values.index(settings.output) if conform.available() else 0)
 
@@ -83,6 +100,16 @@ class SettingsDialog(QDialog):
             self.color = chosen.name()
             self._show_color()
 
+    def _choose_outline(self):
+        chosen = QColorDialog.getColor(QColor(self.outline), self, tr("Outline"))
+        if chosen.isValid():
+            self.outline = chosen.name()
+            self.outline_button.setIcon(self._swatch(self.outline))
+            self.outline_button.setText(self.outline)
+
     def settings(self) -> Settings:
-        return Settings(color=self.color, clean=self.clean.isChecked(), images=self.images.currentData(),
-                        drawings=self.drawings.currentData(), output=self.output.currentData())
+        """The settings shown, with those the dialog doesn't show kept as they were."""
+        return dataclasses.replace(self.original, color=self.color, clean=self.clean.isChecked(),
+                                   images=self.images.currentData(), drawings=self.drawings.currentData(),
+                                   output=self.output.currentData(), mark_outline=self.outline,
+                                   mark_opacity=self.opacity.value())

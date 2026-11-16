@@ -897,4 +897,348 @@
     <en>{count} boxes are locked, and were kept</en>
     <tr>{count} recuadros están bloqueados y se conservaron</tr>
   </text>
+  <text>
+    <en>(found when the copy is written)</en>
+    <tr>(se encuentra al escribir la copia)</tr>
+  </text>
+  <text>
+    <en>(none)</en>
+    <tr>(nada)</tr>
+  </text>
+  <text>
+    <en>({count} found)</en>
+    <tr>({count} encontrados)</tr>
+  </text>
+  <text>
+    <en>A copy is saved without what is ticked; the document open is not changed, and its boxes are not applied.</en>
+    <tr>Se guarda una copia sin lo que está marcado; el documento abierto no cambia, y sus recuadros no se aplican.</tr>
+  </text>
+  <text>
+    <en>A text file with one word or phrase on each line</en>
+    <tr>Un archivo de texto con una palabra o frase en cada línea</tr>
+  </text>
+  <text>
+    <en>A word or phrase</en>
+    <tr>Una palabra o frase</tr>
+  </text>
+  <text>
+    <en>Add code</en>
+    <tr>Añadir código</tr>
+  </text>
+  <text>
+    <en>Add code…</en>
+    <tr>Añadir código…</tr>
+  </text>
+  <text>
+    <en>Add set</en>
+    <tr>Añadir conjunto</tr>
+  </text>
+  <text>
+    <en>Add set…</en>
+    <tr>Añadir conjunto…</tr>
+  </text>
+  <text>
+    <en>Attached files</en>
+    <tr>Archivos adjuntos</tr>
+  </text>
+  <text>
+    <en>Bank accounts (IBAN)</en>
+    <tr>Cuentas bancarias (IBAN)</tr>
+  </text>
+  <text>
+    <en>Bookmarks</en>
+    <tr>Marcadores</tr>
+  </text>
+  <text>
+    <en>Boxes not yet applied</en>
+    <tr>Recuadros aún sin aplicar</tr>
+  </text>
+  <text>
+    <en>Code sets</en>
+    <tr>Conjuntos de códigos</tr>
+  </text>
+  <text>
+    <en>Code sets (*.xml);;All files (*)</en>
+    <tr>Conjuntos de códigos (*.xml);;Todos los archivos (*)</tr>
+  </text>
+  <text>
+    <en>Codes</en>
+    <tr>Códigos</tr>
+  </text>
+  <text>
+    <en>Comments and markups</en>
+    <tr>Comentarios y marcas</tr>
+  </text>
+  <text>
+    <en>Copy set</en>
+    <tr>Copiar conjunto</tr>
+  </text>
+  <text>
+    <en>Copy set…</en>
+    <tr>Copiar conjunto…</tr>
+  </text>
+  <text>
+    <en>Credit card numbers</en>
+    <tr>Números de tarjeta de crédito</tr>
+  </text>
+  <text>
+    <en>Dates</en>
+    <tr>Fechas</tr>
+  </text>
+  <text>
+    <en>Deleted or unused content</en>
+    <tr>Contenido borrado o sin usar</tr>
+  </text>
+  <text>
+    <en>E-mail addresses</en>
+    <tr>Direcciones de correo</tr>
+  </text>
+  <text>
+    <en>Edit the codes…</en>
+    <tr>Editar los códigos…</tr>
+  </text>
+  <text>
+    <en>English (U.S. forms)</en>
+    <tr>Inglés (formas de EE. UU.)</tr>
+  </text>
+  <text>
+    <en>Export set</en>
+    <tr>Exportar conjunto</tr>
+  </text>
+  <text>
+    <en>Export set…</en>
+    <tr>Exportar conjunto…</tr>
+  </text>
+  <text>
+    <en>Fields and their values; they are flattened: what they show stays, as part of the page</en>
+    <tr>Los campos y sus valores; se aplanan: lo que muestran queda, como parte de la página</tr>
+  </text>
+  <text>
+    <en>Files attached to the document or to its pages</en>
+    <tr>Archivos adjuntos al documento o a sus páginas</tr>
+  </text>
+  <text>
+    <en>Fill opacity:</en>
+    <tr>Opacidad del relleno:</tr>
+  </text>
+  <text>
+    <en>For instance the last four digits of a card number, so that it can still be told apart</en>
+    <tr>Por ejemplo, los cuatro últimos dígitos de un número de tarjeta, para que aún se pueda distinguir</tr>
+  </text>
+  <text>
+    <en>Form fields</en>
+    <tr>Campos de formulario</tr>
+  </text>
+  <text>
+    <en>Forms:</en>
+    <tr>Formas:</tr>
+  </text>
+  <text>
+    <en>Hidden text</en>
+    <tr>Texto oculto</tr>
+  </text>
+  <text>
+    <en>How much of what is under a box shows through it until it is applied</en>
+    <tr>Cuánto de lo que hay debajo de un recuadro se ve a través de él hasta que se aplica</tr>
+  </text>
+  <text>
+    <en>Identity numbers</en>
+    <tr>Números de identidad</tr>
+  </text>
+  <text>
+    <en>Import set</en>
+    <tr>Importar conjunto</tr>
+  </text>
+  <text>
+    <en>Import set…</en>
+    <tr>Importar conjunto…</tr>
+  </text>
+  <text>
+    <en>Leave some characters visible:</en>
+    <tr>Dejar visibles algunos caracteres:</tr>
+  </text>
+  <text>
+    <en>Links to pages and web addresses, actions and scripts</en>
+    <tr>Enlaces a páginas y a direcciones web, acciones y scripts</tr>
+  </text>
+  <text>
+    <en>Links, actions and JavaScript</en>
+    <tr>Enlaces, acciones y JavaScript</tr>
+  </text>
+  <text>
+    <en>Metadata</en>
+    <tr>Metadatos</tr>
+  </text>
+  <text>
+    <en>Name of the set:</en>
+    <tr>Nombre del conjunto:</tr>
+  </text>
+  <text>
+    <en>No code (no text)</en>
+    <tr>Sin código (sin texto)</tr>
+  </text>
+  <text>
+    <en>Notes, highlights and other annotations (links are below)</en>
+    <tr>Notas, resaltados y otras anotaciones (los enlaces van más abajo)</tr>
+  </text>
+  <text>
+    <en>Objects that nothing uses any more, as earlier versions of the document leave them</en>
+    <tr>Objetos que ya nada usa, como los que dejan las versiones anteriores del documento</tr>
+  </text>
+  <text>
+    <en>One word or phrase on each line</en>
+    <tr>Una palabra o frase en cada línea</tr>
+  </text>
+  <text>
+    <en>Outline</en>
+    <tr>Contorno</tr>
+  </text>
+  <text>
+    <en>Outline:</en>
+    <tr>Contorno:</tr>
+  </text>
+  <text>
+    <en>Page thumbnails</en>
+    <tr>Miniaturas de las páginas</tr>
+  </text>
+  <text>
+    <en>Patterns</en>
+    <tr>Patrones</tr>
+  </text>
+  <text>
+    <en>Phone numbers</en>
+    <tr>Números de teléfono</tr>
+  </text>
+  <text>
+    <en>Read from a file…</en>
+    <tr>Leer de un archivo…</tr>
+  </text>
+  <text>
+    <en>Redaction code</en>
+    <tr>Código de censura</tr>
+  </text>
+  <text>
+    <en>Redaction codes</en>
+    <tr>Códigos de censura</tr>
+  </text>
+  <text>
+    <en>Remove and save a copy…</en>
+    <tr>Quitar y guardar una copia…</tr>
+  </text>
+  <text>
+    <en>Remove code</en>
+    <tr>Quitar código</tr>
+  </text>
+  <text>
+    <en>Remove hidden information</en>
+    <tr>Quitar información oculta</tr>
+  </text>
+  <text>
+    <en>Remove hidden information…</en>
+    <tr>Quitar información oculta…</tr>
+  </text>
+  <text>
+    <en>Remove set</en>
+    <tr>Quitar conjunto</tr>
+  </text>
+  <text>
+    <en>Rename code</en>
+    <tr>Cambiar el nombre del código</tr>
+  </text>
+  <text>
+    <en>Rename code…</en>
+    <tr>Cambiar el nombre del código…</tr>
+  </text>
+  <text>
+    <en>Rename set</en>
+    <tr>Cambiar el nombre del conjunto</tr>
+  </text>
+  <text>
+    <en>Rename set…</en>
+    <tr>Cambiar el nombre del conjunto…</tr>
+  </text>
+  <text>
+    <en>See what the document holds besides its pages (metadata, attachments, bookmarks, comments, hidden text…), and save a copy without what you choose</en>
+    <tr>Ver lo que el documento guarda además de sus páginas (metadatos, adjuntos, marcadores, comentarios, texto oculto…) y guardar una copia sin lo que se elija</tr>
+  </text>
+  <text>
+    <en>Several words or phrases</en>
+    <tr>Varias palabras o frases</tr>
+  </text>
+  <text>
+    <en>Small pictures of the pages, made before any redaction</en>
+    <tr>Imágenes pequeñas de las páginas, hechas antes de cualquier censura</tr>
+  </text>
+  <text>
+    <en>Spanish</en>
+    <tr>Español</tr>
+  </text>
+  <text>
+    <en>Text files (*.txt);;All files (*)</en>
+    <tr>Archivos de texto (*.txt);;Todos los archivos (*)</tr>
+  </text>
+  <text>
+    <en>Text that is not drawn (invisible), such as an OCR layer</en>
+    <tr>Texto que no se dibuja (invisible), como una capa de OCR</tr>
+  </text>
+  <text>
+    <en>The forms of the patterns: of phone numbers, dates, identity numbers</en>
+    <tr>Las formas de los patrones: de números de teléfono, fechas, números de identidad</tr>
+  </text>
+  <text>
+    <en>The outline, which may show headings of removed pages</en>
+    <tr>El índice, que puede mostrar títulos de páginas quitadas</tr>
+  </text>
+  <text>
+    <en>The sets that come with the program can be copied, then changed.</en>
+    <tr>Los conjuntos que vienen con el programa se pueden copiar y luego cambiar.</tr>
+  </text>
+  <text>
+    <en>The text written over the box:</en>
+    <tr>El texto que se escribe sobre el recuadro:</tr>
+  </text>
+  <text>
+    <en>There is a set called {name} already</en>
+    <tr>Ya hay un conjunto llamado {name}</tr>
+  </text>
+  <text>
+    <en>Title, author, subject, keywords, the program that made it (and the XMP)</en>
+    <tr>Título, autor, asunto, palabras clave, el programa que lo hizo (y el XMP)</tr>
+  </text>
+  <text>
+    <en>What this document holds besides what its pages show:</en>
+    <tr>Lo que este documento guarda además de lo que muestran sus páginas:</tr>
+  </text>
+  <text>
+    <en>Words or phrases to find</en>
+    <tr>Palabras o frases que buscar</tr>
+  </text>
+  <text>
+    <en>the first</en>
+    <tr>los primeros</tr>
+  </text>
+  <text>
+    <en>the last</en>
+    <tr>los últimos</tr>
+  </text>
+  <text>
+    <en>{count} word or phrase read</en>
+    <tr>Se leyó {count} palabra o frase</tr>
+  </text>
+  <text>
+    <en>{count} words or phrases read</en>
+    <tr>Se leyeron {count} palabras o frases</tr>
+  </text>
+  <text>
+    <en>{name} (built in)</en>
+    <tr>{name} (incluido)</tr>
+  </text>
+  <text>
+    <en>{name} (copy)</en>
+    <tr>{name} (copia)</tr>
+  </text>
+  <text>
+    <en>{path} cannot be read: {error}</en>
+    <tr>No se puede leer {path}: {error}</tr>
+  </text>
 </interface>

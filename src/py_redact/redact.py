@@ -259,12 +259,37 @@ class Match:
     context: str  # with some words around it
 
 
+def page_chars(page: pymupdf.Page) -> tuple[str, list]:
+    """The text of PAGE as find_text reads it, and for each of its characters
+    (block, line, rectangle as the page is shown), or None for a space put
+    between two lines. Runs of spaces are one space."""
+    text, where = [], []
+    raw = page.get_text("rawdict", flags=pymupdf.TEXTFLAGS_SEARCH & ~pymupdf.TEXT_PRESERVE_IMAGES)
+    for b, block in enumerate(raw.get("blocks", [])):
+        for n, line in enumerate(block.get("lines", [])):
+            if text and text[-1] != " ":
+                text.append(" ")
+                where.append(None)
+            for span in line.get("spans", []):
+                for ch in span.get("chars", []):
+                    c = ch["c"]
+                    if c.isspace():
+                        if text and text[-1] == " ":
+                            continue
+                        c = " "
+                    text.append(c)
+                    where.append((b, n, _shown(page, ch["bbox"])))
+    return "".join(text), where
+
+
 def find_text(doc: pymupdf.Document, query: str, pages: list[int] | None = None, case: bool = False,
-              whole_words: bool = False, regex: bool = False) -> list[Match]:
+              whole_words: bool = False, regex: bool = False, keep_start: int = 0, keep_end: int = 0) -> list[Match]:
     """Where QUERY is on PAGES (0-based; all if None) of DOC. The text of a page
-    is read as its words separated by single spaces, so a phrase is found
-    across line breaks and however the words are spaced. With REGEX, QUERY is a
-    regular expression (raises re.error if it is wrong)."""
+    is read with single spaces between its words and lines, so a phrase is found
+    across line breaks and however it is spaced. With REGEX, QUERY is a regular
+    expression (raises re.error if it is wrong). KEEP_START and KEEP_END leave
+    that many characters of each place found out of its boxes (the last four
+    digits of a card number stay visible, for instance)."""
     import re
 
     if not query.strip():
@@ -276,28 +301,43 @@ def find_text(doc: pymupdf.Document, query: str, pages: list[int] | None = None,
     out = []
     for number in (range(doc.page_count) if pages is None else pages):
         page = doc[number]
-        raw = page.get_text("words", sort=False)
-        found = words(page)
-        if not found:
-            continue
-        text, starts = "", []
-        for w in raw:
-            starts.append(len(text))
-            text += w[4] + " "
-        ends = [s + len(w[4]) for s, w in zip(starts, raw)]
+        text, where = page_chars(page)
         for m in found_re.finditer(text):
-            if m.end() <= m.start():
+            start, end = m.span()
+            if end <= start:
                 continue
-            first = next(i for i, e in enumerate(ends) if e > m.start())
-            last = max(i for i, s in enumerate(starts) if s < m.end())
-            if last < first:
+            real = [i for i in range(start, end) if where[i] is not None and not text[i].isspace()]
+            chosen = real[keep_start:len(real) - keep_end if keep_end else None]
+            if not chosen:
                 continue
-            before = " ".join(w[4] for w in raw[max(first - 4, 0):first])
-            after = " ".join(w[4] for w in raw[last + 1:last + 5])
+            lines: dict[tuple[int, int], pymupdf.Rect] = {}
+            for i in range(chosen[0], chosen[-1] + 1):
+                if where[i] is None:
+                    continue
+                b, n, r = where[i]
+                lines[(b, n)] = lines[(b, n)] | r if (b, n) in lines else pymupdf.Rect(r)
+            rects = tuple((round(r.x0 - 0.5, 2), round(r.y0 - 0.5, 2), round(r.x1 + 0.5, 2), round(r.y1 + 0.5, 2))
+                          for r in lines.values())
+            before = text[max(start - 40, 0):start].split(" ", 1)[-1] if start > 40 else text[:start]
+            after = text[end:end + 40].rsplit(" ", 1)[0] if len(text) > end + 40 else text[end:]
             snippet = m.group(0).strip()
-            context = " ".join(p for p in (before, f"[{snippet}]", after) if p)
-            out.append(Match(number, tuple(text_rects(found, first, last)), snippet, context))
+            context = " ".join(p for p in (before.strip(), f"[{snippet}]", after.strip()) if p)
+            out.append(Match(number, rects, snippet, context))
     return out
+
+
+def find_all(doc: pymupdf.Document, queries: list[tuple[str, bool]], pages: list[int] | None = None,
+             case: bool = False, whole_words: bool = False, keep_start: int = 0, keep_end: int = 0) -> list[Match]:
+    """Where any of QUERIES ((text, whether it is a regular expression)) is, in
+    page order; a place found by two of them is given once."""
+    seen, out = set(), []
+    for query, regex in queries:
+        for m in find_text(doc, query, pages, case, whole_words, regex, keep_start, keep_end):
+            key = (m.page, m.rects)
+            if key not in seen:
+                seen.add(key)
+                out.append(m)
+    return sorted(out, key=lambda m: (m.page, m.rects[0][1], m.rects[0][0]))
 
 
 def text_under(page: pymupdf.Page, rect: Rect) -> str:
@@ -350,7 +390,24 @@ def image_at(page: pymupdf.Page, x: float, y: float) -> Rect | None:
     return None
 
 
-def sanitize(source: Path, target: Path, password: str = "") -> None:
-    """SOURCE without its metadata, hidden text, attachments, scripts and links,
-    and nothing else changed, saved as TARGET."""
-    write_redacted(source, [], target, password, clean=True)
+def sanitize(source: Path, target: Path, password: str = "", kinds: set[str] | None = None) -> None:
+    """SOURCE without the KINDS of hidden information (see hidden.py; all if
+    None), and nothing else changed, saved as TARGET."""
+    from . import hidden
+
+    kinds = {k for k, _, _ in hidden.KINDS} if kinds is None else kinds
+    doc = open_pdf(source, password)
+    fd, tmp = tempfile.mkstemp(suffix=".pdf", dir=target.parent)
+    os.close(fd)
+    try:
+        hidden.remove(doc, kinds)
+        doc.save(tmp, garbage=4 if "unused" in kinds else 1, deflate=True, clean="unused" in kinds,
+                 encryption=pymupdf.PDF_ENCRYPT_KEEP if doc.needs_pass else pymupdf.PDF_ENCRYPT_NONE)
+        doc.close()
+        os.replace(tmp, target)
+    except BaseException as e:
+        doc.close()
+        Path(tmp).unlink(missing_ok=True)
+        if isinstance(e, (OSError, RuntimeError)):
+            raise RedactError(tr("{path} cannot be written: {error}", path=target, error=e)) from None
+        raise

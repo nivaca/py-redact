@@ -17,13 +17,15 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from .. import __version__, conform, config, interface, settings
+from .. import __version__, codes, conform, config, hidden, interface, settings
 from ..interface import N_, ntr, tr
 from ..pagesel import check
 from ..redact import Box, Match, PasswordError, RedactError, check_redacted, sanitize, text_under, Rect, boxes_on, open_pdf, preview_page, write_redacted
 from .canvas import PageCanvas, page_image
 from .find import FindDialog
 from .prefs import SettingsDialog
+from .codes_dialog import CodesDialog
+from .hidden_dialog import HiddenDialog
 from .props import PropertiesDialog
 
 RECENT = 10  # documents in File ▸ Open recent
@@ -253,6 +255,10 @@ class MainWindow(QMainWindow):
                                    "author and other metadata, text that isn't shown, attached files, "
                                    "JavaScript and links"))
         m.addAction(self.a_clean)
+        self.a_hidden = self._action(m, tr("Remove hidden information…"), self.hidden_dialog,
+                                     tip=tr("See what the document holds besides its pages (metadata, attachments, "
+                                            "bookmarks, comments, hidden text…), and save a copy without what you "
+                                            "choose"))
         self.a_sanitize = self._action(m, tr("Sanitize the document…"), self.sanitize_dialog,
                                        tip=tr("Save a copy without metadata, hidden text, attachments, scripts and "
                                               "links, and with nothing else changed (the boxes aren't applied)"))
@@ -586,7 +592,7 @@ class MainWindow(QMainWindow):
             self.status(str(e), error=True)
             return []
 
-    def sanitize_dialog(self) -> bool:
+    def sanitize_dialog(self, kinds: set[str] | None = None) -> bool:
         if self.path is None:
             return False
         default = Path(self.last_dir()) / f"{self.path.stem}-sanitized.pdf"
@@ -599,7 +605,7 @@ class MainWindow(QMainWindow):
             self.status(tr("Choose another name: the document stays open"), error=True)
             return False
         try:
-            sanitize(self.path, target, self.password)
+            sanitize(self.path, target, self.password, kinds)
         except RedactError as e:
             self.status(str(e), error=True)
             return False
@@ -829,7 +835,7 @@ class MainWindow(QMainWindow):
         self.a_clean.blockSignals(False)
         self._show_output()
         self._show_panel()
-        if changed and self.result_box.isChecked():
+        if self.doc is not None and (changed or not self.result_box.isChecked()):
             self.show_page(self.page, keep_view=True)
 
     def settings_dialog(self):
@@ -907,6 +913,7 @@ class MainWindow(QMainWindow):
                     act = menu.addAction(tr("Redact “{text}” wherever it is…", text=short),
                                          lambda: self.find_dialog(words_))
                     act.setToolTip(tr("Find the text under this box on every page, and mark it"))
+            self._codes_menu(menu, chosen)
             menu.addSeparator()
             menu.addAction(tr("Properties…"), self.properties_dialog)
             all_locked = all(b.locked for b in chosen)
@@ -941,6 +948,45 @@ class MainWindow(QMainWindow):
 
     def show_menu(self, menu: QMenu, where):
         menu.exec(where)
+
+    def _codes_menu(self, menu: QMenu, chosen: list[Box]):
+        """Redaction codes: each set, with its codes ticked if all the boxes have them."""
+        sub = menu.addMenu(tr("Redaction code"))
+        sub.setToolTipsVisible(True)
+        for name, entries in codes.all_sets().items():
+            group = sub.addMenu(name)
+            for code in entries:
+                act = group.addAction(code, lambda c=code: self.toggle_code(c))
+                act.setCheckable(True)
+                act.setChecked(all(code in codes.codes_of(b.text) for b in chosen))
+        sub.addSeparator()
+        if any(b.text for b in chosen):
+            sub.addAction(tr("No code (no text)"), lambda: self._change_selected(text=""))
+        sub.addAction(tr("Edit the codes…"), self.codes_dialog)
+
+    def toggle_code(self, code: str):
+        """Add CODE to the text of the selected boxes, or take it out if they all have it."""
+        have = all(code in codes.codes_of(self.boxes[i].text) for i in self.selected)
+        boxes = list(self.boxes)
+        for i in self.selected:
+            current = codes.codes_of(boxes[i].text)
+            if have:
+                current.remove(code)
+            elif code not in current:
+                current.append(code)
+            boxes[i] = dataclasses.replace(boxes[i], text=codes.SEPARATOR.join(current))
+        self.change(boxes, self.selected)
+
+    def codes_dialog(self):
+        CodesDialog(self).exec()
+
+    def hidden_dialog(self) -> bool:
+        if self.doc is None:
+            return False
+        dialog = HiddenDialog(hidden.inspect(self.doc), self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return False
+        return self.sanitize_dialog(dialog.kinds())
 
     def _edit_menu(self):
         """The Edit menu, as things are when it opens."""
@@ -1117,6 +1163,8 @@ class MainWindow(QMainWindow):
             self.canvas.show_page(self._preview_doc[0], [], [], editable=False, keep_view=keep_view)
         else:
             here = [(i, b, b.page == page) for i, b in enumerate(self.boxes) if b.on(page, self.count)]
+            self.canvas.mark_outline = QColor(self.prefs.mark_outline)
+            self.canvas.mark_opacity = self.prefs.mark_opacity
             self.canvas.show_page(self.doc[page], here, self.selected, keep_view=keep_view)
         self.page_spin.blockSignals(True)
         self.page_spin.setValue(page + 1)
@@ -1260,7 +1308,7 @@ class MainWindow(QMainWindow):
 
     def _enable(self):
         has = self.doc is not None
-        for w in (self.a_save, self.a_find, self.a_sanitize, self.a_select_all, self.a_clear_page, self.a_result, self.a_first, self.a_last,
+        for w in (self.a_save, self.a_find, self.a_sanitize, self.a_hidden, self.a_select_all, self.a_clear_page, self.a_result, self.a_first, self.a_last,
                   self.a_fit, self.a_fit_width, self.a_zoom_in, self.a_zoom_out, self.page_spin, self.result_box,
                   self.color_button):
             w.setEnabled(has)

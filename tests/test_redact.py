@@ -218,3 +218,80 @@ def test_image_at(tmp_path):
     pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 10, 10), False)
     page.insert_image(pymupdf.Rect(100, 100, 200, 150), pixmap=pix)
     assert image_at(page, 150, 120) == (100, 100, 200, 150) and image_at(page, 10, 10) is None
+
+
+def test_patterns():
+    import re
+
+    from py_redact import patterns
+
+    text = ("Call (555) 123-4567, +57 601 555 1234 or 612 345 678; a.b@x.co.uk; 4111 1111 1111 1111; "
+            "SSN 123-45-6789; 3/14/2024 and 14 de marzo de 2024; DNI 12345678Z; IBAN ES91 2100 0418 4502 0005 1332")
+    found = {(k, lang): re.findall(patterns.regex(k, lang), text) for k, _, _ in patterns.PATTERNS
+             for lang in ("en", "es")}
+    assert found[("email", "en")] == ["a.b@x.co.uk"]
+    assert "(555) 123-4567" in found[("phone", "en")]
+    assert found[("phone", "es")] == ["+57 601 555 1234", "612 345 678"]
+    assert "4111 1111 1111 1111" in found[("card", "en")]
+    assert found[("id", "en")] == ["123-45-6789"] and "12345678Z" in found[("id", "es")]
+    assert "14 de marzo de 2024" in found[("date", "es")] and "3/14/2024" in found[("date", "en")]
+    assert found[("iban", "en")] == ["ES91 2100 0418 4502 0005 1332"]
+
+
+def test_partial_and_several(tmp_path):
+    from py_redact import patterns
+    from py_redact.redact import find_all, find_text
+
+    doc = pymupdf.open()
+    doc.new_page().insert_text((72, 100), "Card 4111 1111 1111 1234 and mail a.b@x.org", fontsize=11)
+    whole = find_text(doc, patterns.regex("card"), regex=True)[0].rects[0]
+    part = find_text(doc, patterns.regex("card"), regex=True, keep_end=4)[0].rects[0]
+    assert part[0] == whole[0] and part[2] < whole[2] - 15
+    found = find_all(doc, [("card", False), ("mail", False), (patterns.regex("email"), True)])
+    assert [m.text for m in found] == ["Card", "mail", "a.b@x.org"]
+    path, out = tmp_path / "in.pdf", tmp_path / "out.pdf"
+    doc.save(path)
+    m = find_text(doc, patterns.regex("card"), regex=True, keep_end=4)[0]
+    write_redacted(path, [Box(0, r) for r in m.rects], out)
+    assert "1234" in texts(out)[0] and "4111" not in texts(out)[0]
+
+
+def test_codes(tmp_path):
+    from py_redact import codes
+
+    assert codes.toggle("(b)(6)", "(b)(7)(C)") == "(b)(6), (b)(7)(C)"
+    assert codes.toggle("(b)(6), (b)(7)(C)", "(b)(6)") == "(b)(7)(C)"
+    sets = {"Mine": ["Personal data", "Health"]}
+    assert codes.parse(codes.dump(sets)) == sets
+    codes.save_user_sets(sets)
+    assert codes.all_sets()["Mine"] == ["Personal data", "Health"] and "U.S. FOIA" in codes.all_sets()
+    codes.path().write_text("<broken")
+    assert codes.user_sets() == {}
+    with pytest.raises(codes.CodesError):
+        codes.parse("<other/>")
+
+
+def test_hidden_information(tmp_path):
+    from py_redact import hidden
+    from py_redact.redact import sanitize
+
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((72, 72), "seen")
+    page.insert_text((72, 100), "ocr layer", render_mode=3)
+    doc.set_metadata({"author": "Me"})
+    doc.embfile_add("a.txt", b"x")
+    doc.set_toc([[1, "Chapter", 1]])
+    page.add_text_annot((100, 100), "a note")
+    page.insert_link({"kind": pymupdf.LINK_URI, "from": pymupdf.Rect(0, 0, 50, 50), "uri": "https://example.org"})
+    path = tmp_path / "in.pdf"
+    doc.save(path)
+    found = hidden.inspect(pymupdf.open(path))
+    assert all(found[k] >= 1 for k in ("metadata", "attachments", "bookmarks", "comments", "hidden_text", "links"))
+    out = tmp_path / "out.pdf"
+    sanitize(path, out, kinds={"bookmarks", "hidden_text"})
+    after = hidden.inspect(pymupdf.open(out))
+    assert after["bookmarks"] == 0 and after["hidden_text"] == 0 and after["comments"] == 1
+    sanitize(path, out)
+    assert not any(v > 0 for v in hidden.inspect(pymupdf.open(out)).values())
+    assert pymupdf.open(out)[0].get_text() == "seen\n"

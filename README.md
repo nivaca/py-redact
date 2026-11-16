@@ -80,14 +80,23 @@ It needs Python 3.15, PyMuPDF (which does the redaction) and PySide6.
   removes what is under it and paints nothing), a text written over it
   (`REDACTED`, `[name]`) with its colour, size and alignment, repeated all
   along the box if wanted; a note, shown when the mouse is over the box; and
-  *Locked*, so that it can't be moved, resized or deleted. *Save as default
+  *Locked*, so that it can't be moved, resized or deleted. Holding the mouse
+  over a box shows it as it will be once applied.
+- Right-click a box ▸ *Redaction code* writes over it why it was redacted:
+  the codes of the U.S. FOIA or Privacy Act exemptions, or your own, several
+  on a box if needed (`(b)(6), (b)(7)(C)`). *Edit the codes…* makes and
+  changes your own code sets, and imports and exports them as XML files. *Save as default
   for new boxes* makes new boxes look the same.
-- *Tools ▸ Find and redact…* (Ctrl+F) looks for a text on all pages, this
-  page, from this page to the end, or a list of pages, with or without
-  matching case, as whole words, or as a regular expression (`\d+-\d+`,
-  `[\w.]+@[\w.]+`). It lists every place found with the words around it;
-  clicking one shows it on its page, and *Mark them all* or *Mark the ticked
-  ones* puts boxes over them. A phrase is found across line breaks.
+- *Tools ▸ Find and redact…* (Ctrl+F) looks for a word or phrase (matching
+  case, as whole words, or as a regular expression), for several words or
+  phrases at once (typed one on each line, or read from a text file), or for
+  patterns: e-mail addresses, phone numbers, credit card numbers, dates,
+  identity numbers and bank accounts (IBAN), in their U.S. or Spanish forms.
+  It looks on all pages, this page, from this page to the end, or a list of
+  pages, and lists every place found with the words around it; clicking one
+  shows it. *Mark them all* or *Mark the ticked ones* puts boxes over them,
+  whole or leaving some characters visible (the last four digits of a card
+  number, for instance). A phrase is found across line breaks.
 - Right-click a box for its pages (its own page only, all, odd, even, from
   it to the end, up to it, or a list such as `2-10, 15, LAST`), its colour,
   to make its colour the one of new boxes, and to redact the text under it
@@ -113,8 +122,11 @@ It needs Python 3.15, PyMuPDF (which does the redaction) and PySide6.
 - *Apply all redactions…*, at the top of the right-click menu, saves the
   redacted copy. The copy is then checked: if any word that was under a box
   can still be read there, a warning says where.
-- *File ▸ Sanitize the document…* saves a copy without metadata, hidden
-  text, attachments, scripts and links, with nothing else changed.
+- *File ▸ Remove hidden information…* shows what the document holds besides
+  its pages (metadata, attached files, bookmarks, comments, form fields,
+  hidden text, links and scripts, thumbnails, unused objects) and how much of
+  each, and saves a copy without what you tick. *File ▸ Sanitize the
+  document…* removes all of it at once.
 - Closing the window, or opening another file, with boxes not yet saved to a
   redacted copy asks first.
 

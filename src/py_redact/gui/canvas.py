@@ -29,19 +29,25 @@ class BoxItem(QGraphicsRectItem):
     """A box not yet applied: see-through, with a red outline (blue when
     selected), dashed if it goes on other pages; its text shown as it will be."""
 
-    def __init__(self, index: int, box: Box, own: bool, selected: bool):
+    def __init__(self, index: int, box: Box, own: bool, selected: bool, outline: QColor = OUTLINE,
+                 opacity: int = 60):
         super().__init__(QRectF(QPointF(box.rect[0], box.rect[1]), QPointF(box.rect[2], box.rect[3])))
         self.index = index
         self.box = box
         self.own = own
         self.chosen = selected
+        self.outline = QColor(outline)
+        self.preview = False  # (the mouse is over it: shown as it will be)
+        self.setAcceptHoverEvents(True)
         if box.color:
             fill = QColor(box.color)
-            fill.setAlpha(150)
+            fill.setAlpha(round(255 * opacity / 100))
             self.setBrush(QBrush(fill))
         else:  # (no colour: only the content goes)
-            self.setBrush(QBrush(QColor(208, 48, 48, 90), Qt.BrushStyle.BDiagPattern))
-        pen = QPen(SELECTED if selected else OUTLINE, 2 if selected else 1.5)
+            hatch = QColor(self.outline)
+            hatch.setAlpha(110)
+            self.setBrush(QBrush(hatch, Qt.BrushStyle.BDiagPattern))
+        pen = QPen(SELECTED if selected else self.outline, 2 if selected else 1.5)
         pen.setCosmetic(True)
         if not own or box.repeat.strip():
             pen.setStyle(Qt.PenStyle.DashLine)
@@ -57,11 +63,27 @@ class BoxItem(QGraphicsRectItem):
             tip = f"<b>{box.note}</b><br>{tip}"
         self.setToolTip(tip)
 
+    def hoverEnterEvent(self, event):
+        self.preview = True
+        self.update()
+        super().hoverEnterEvent(event)
+
+    def hoverLeaveEvent(self, event):
+        self.preview = False
+        self.update()
+        super().hoverLeaveEvent(event)
+
     def paint(self, painter, option, widget=None):
-        super().paint(painter, option, widget)
         from ..redact import overlay
 
         r = self.rect()
+        if self.preview:  # (as it will be once applied: opaque, or the bare page for no colour)
+            painter.fillRect(r, QColor(self.box.color) if self.box.color else QColor("white"))
+            painter.setPen(self.pen())
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRect(r)
+        else:
+            super().paint(painter, option, widget)
         text, size = overlay(self.box, pymupdf.Rect(r.left(), r.top(), r.right(), r.bottom()))
         if text:
             font = painter.font()
@@ -118,6 +140,7 @@ class PageCanvas(QGraphicsView):
         # 'text': dragging over text selects it, and elsewhere draws a box (Ctrl+drag always draws one);
         # 'box': dragging draws a box; 'hand': dragging scrolls. Boxes are moved in 'text' and 'box'.
         self.mode = "text"
+        self.mark_outline, self.mark_opacity = OUTLINE, 60  # (how boxes not yet applied look: Settings)
         self._words: list | None = None  # (of the page, when first needed)
         self.pixmap_item: QGraphicsPixmapItem | None = None
         self.sheet: QGraphicsRectItem | None = None
@@ -151,7 +174,7 @@ class PageCanvas(QGraphicsView):
         self._rendered = 0.0
         if editable:
             for index, box, own in boxes:
-                item = BoxItem(index, box, own, index in selected)
+                item = BoxItem(index, box, own, index in selected, self.mark_outline, self.mark_opacity)
                 self.scene().addItem(item)
                 self.items_.append(item)
         if not same:
