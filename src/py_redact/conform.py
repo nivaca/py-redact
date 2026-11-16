@@ -59,13 +59,47 @@ def clean_env() -> dict[str, str]:
     return env
 
 
-def command() -> str | None:
-    """The path of py-pdfconform, or None if it isn't on the PATH."""
-    return shutil.which(COMMAND, path=clean_env()["PATH"])
+# (where a script of the user's may be, though a session started from the desktop menu
+# often doesn't have these folders on its PATH)
+USER_FOLDERS = ("~/bin", "~/.local/bin")
 
 
-def available() -> bool:
-    return command() is not None
+def configured() -> str:
+    """The path of py-pdfconform given in the settings ('' for none)."""
+    from . import settings
+
+    return settings.load().pdfconform
+
+
+def find(path: str = "") -> Path | None:
+    """py-pdfconform: PATH if given (a file), or else the first of
+    py-pdfconform or py-pdfconform.py on the PATH or in ~/bin and ~/.local/bin."""
+    if path:
+        p = Path(path).expanduser()
+        return p if p.is_file() else None
+    folders = clean_env()["PATH"].split(os.pathsep) + [str(Path(f).expanduser()) for f in USER_FOLDERS]
+    for name in (COMMAND, COMMAND + ".py"):
+        found = shutil.which(name, path=os.pathsep.join(folders))
+        if found:
+            return Path(found)
+    return None
+
+
+def command(path: str | None = None) -> list[str] | None:
+    """How to run py-pdfconform (the one of the settings, or else the one found;
+    see find): [the script], or [python3, the script] for a script that can't
+    be run by itself; None if there is none."""
+    script = find(configured() if path is None else path)
+    if script is None:
+        return None
+    if os.access(script, os.X_OK):
+        return [str(script)]
+    python = shutil.which("python3", path=clean_env()["PATH"]) or "/usr/bin/python3"
+    return [python, str(script)]
+
+
+def available(path: str | None = None) -> bool:
+    return command(path) is not None
 
 
 def label(standard: str) -> str:
@@ -82,7 +116,7 @@ def convert(source: Path, target: Path, standard: str, password: str = "") -> st
         raise ConformError(standard)
     fd, tmp = tempfile.mkstemp(suffix=".pdf", dir=target.parent)
     os.close(fd)
-    args = [exe, "-t", standard, "-o", tmp] + (["-p", password] if password else []) + [str(source)]
+    args = [*exe, "-t", standard, "-o", tmp] + (["-p", password] if password else []) + [str(source)]
     try:
         r = subprocess.run(args, capture_output=True, text=True, timeout=TIMEOUT, env=clean_env())
         if r.returncode != 0 or not Path(tmp).stat().st_size:

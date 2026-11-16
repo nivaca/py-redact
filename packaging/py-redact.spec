@@ -78,6 +78,8 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
 - Complete documentation in English and Spanish: installing, updating,
   uninstalling, what is where, help, the language of the window, the history of
   the versions, background and sources
+- Settings say where py-pdfconform is; it is also looked for in ~/bin and
+  ~/.local/bin, and with the .py extension
 
 * Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.0-1
 - From Acrobat Pro: several words or phrases and patterns in Find and redact,

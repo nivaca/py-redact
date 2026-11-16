@@ -250,7 +250,7 @@ def test_pdfa_greyed_without_py_pdfconform(app, sample, tmp_path, monkeypatch):
     from py_redact import conform
 
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setattr(conform, "command", lambda: None)
+    monkeypatch.setattr(conform, "command", lambda path=None: None)
     settings.save(settings.Settings(output="a-2b"))  # (chosen when it was there)
     w = MainWindow()
     assert not w.output_actions["a-2b"].isEnabled() and w.output_actions[""].isChecked()
@@ -413,3 +413,20 @@ def test_remove_hidden_information(window, tmp_path, monkeypatch):
     monkeypatch.setattr(w.QFileDialog, "getSaveFileName", lambda *a, **k: (str(out), ""))
     monkeypatch.setattr(hidden_dialog.HiddenDialog, "exec", lambda self: hidden_dialog.QDialog.DialogCode.Accepted)
     assert window.hidden_dialog() and out.is_file()
+
+
+def test_pdfconform_setting_in_the_dialog(window, tmp_path):
+    from py_redact.gui.prefs import SettingsDialog
+    from py_redact.gui.window import color_name, swatch
+
+    script = tmp_path / "my-pdfconform"
+    script.write_text("#!/bin/sh\n")
+    d = SettingsDialog(window.prefs, swatch, color_name, window)
+    d.pdfconform.setText(str(tmp_path / "nothing"))
+    assert not d.output.model().item(2).isEnabled() and d.output.currentIndex() == 0
+    d.pdfconform.setText(str(script))
+    assert d.output.model().item(2).isEnabled() and str(script) in d.pdfconform_found.text()
+    d.output.setCurrentIndex(2)
+    window.set_prefs(d.settings())
+    assert settings.load().pdfconform == str(script) and window.output() == "a-2b"
+    assert window.output_actions["a-2b"].isEnabled()

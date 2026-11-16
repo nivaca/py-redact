@@ -6,8 +6,8 @@ from PySide6.QtGui import QColor
 import dataclasses
 
 from PySide6.QtWidgets import (
-    QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout, QLabel, QPushButton,
-    QSpinBox, QVBoxLayout,
+    QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QSpinBox, QVBoxLayout,
 )
 
 from ..interface import N_, tr
@@ -46,17 +46,27 @@ class SettingsDialog(QDialog):
         self.output.addItem(tr("PDF"), "")
         for value, name in conform.STANDARDS:
             self.output.addItem(tr(name), value)
-            if not conform.available():
-                self.output.model().item(self.output.count() - 1).setEnabled(False)
-        if not conform.available():
-            self.output.setToolTip(tr("PDF/A and PDF/X need {command}, which is not installed (or not on the PATH)",
-                                      command=conform.COMMAND))
+        self.pdfconform = QLineEdit()
+        self.pdfconform.setPlaceholderText(tr("Look for it on the PATH, in ~/bin and in ~/.local/bin"))
+        self.pdfconform.setToolTip(tr("The script py-pdfconform, which makes PDF/A and PDF/X (with or without "
+                                      "the .py extension); empty to look for it"))
+        self.pdfconform.textChanged.connect(self._show_pdfconform)
+        choose = QPushButton(tr("Choose…"))
+        choose.clicked.connect(self._choose_pdfconform)
+        self.pdfconform_found = QLabel()
+        self.pdfconform_found.setWordWrap(True)
+        self.pdfconform_found.setStyleSheet("color: palette(placeholder-text);")
         self.clean = QCheckBox(tr("Also remove metadata, hidden text, attachments and scripts"))
         form = QFormLayout()
         form.addRow(tr("Colour of new boxes:"), self.color_button)
         form.addRow(tr("Images under a box:"), self.images)
         form.addRow(tr("Drawings under a box:"), self.drawings)
         form.addRow("", self.clean)
+        row = QHBoxLayout()
+        row.addWidget(self.pdfconform, 1)
+        row.addWidget(choose)
+        form.addRow(tr("py-pdfconform:"), row)
+        form.addRow("", self.pdfconform_found)
         form.addRow(tr("Save as:"), self.output)
         form.addRow(QLabel("<b>" + tr("Boxes not yet applied") + "</b>"))
         form.addRow(tr("Outline:"), self.outline_button)
@@ -87,8 +97,11 @@ class SettingsDialog(QDialog):
         self.outline_button.setIcon(self._swatch(self.outline))
         self.outline_button.setText(self.outline)
         self.opacity.setValue(settings.mark_opacity)
+        self.pdfconform.setText(settings.pdfconform)
+        self._show_pdfconform()
         values = [self.output.itemData(i) for i in range(self.output.count())]
-        self.output.setCurrentIndex(values.index(settings.output) if conform.available() else 0)
+        self.output.setCurrentIndex(values.index(settings.output)
+                                    if conform.available(self.pdfconform.text().strip()) else 0)
 
     def _show_color(self):
         self.color_button.setIcon(self._swatch(self.color))
@@ -99,6 +112,32 @@ class SettingsDialog(QDialog):
         if chosen.isValid():
             self.color = chosen.name()
             self._show_color()
+
+    def _show_pdfconform(self, *_):
+        """Which py-pdfconform will be used, and PDF/A and PDF/X enabled only if there is one."""
+        path = self.pdfconform.text().strip()
+        found = conform.find(path)
+        if found is not None:
+            self.pdfconform_found.setText(tr("It will be {path}", path=found))
+        elif path:
+            self.pdfconform_found.setText(tr("There is no such file"))
+        else:
+            self.pdfconform_found.setText(tr("Not found: PDF/A and PDF/X can't be made until it is given here"))
+        for i in range(1, self.output.count()):
+            self.output.model().item(i).setEnabled(found is not None)
+        if found is None:
+            self.output.setCurrentIndex(0)
+
+    def _choose_pdfconform(self):
+        from pathlib import Path
+
+        from PySide6.QtWidgets import QFileDialog
+
+        start = self.pdfconform.text().strip() or str(Path.home() / "bin")
+        name, _ = QFileDialog.getOpenFileName(self, tr("Where is py-pdfconform?"), start,
+                                              tr("py-pdfconform (py-pdfconform py-pdfconform.py);;All files (*)"))
+        if name:
+            self.pdfconform.setText(name)
 
     def _choose_outline(self):
         chosen = QColorDialog.getColor(QColor(self.outline), self, tr("Outline"))
@@ -112,4 +151,5 @@ class SettingsDialog(QDialog):
         return dataclasses.replace(self.original, color=self.color, clean=self.clean.isChecked(),
                                    images=self.images.currentData(), drawings=self.drawings.currentData(),
                                    output=self.output.currentData(), mark_outline=self.outline,
+                                   pdfconform=self.pdfconform.text().strip(),
                                    mark_opacity=self.opacity.value())

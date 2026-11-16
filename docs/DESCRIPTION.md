@@ -104,7 +104,10 @@ find that text everywhere else.
 py-pdfconform, another program of mine, converts a PDF to PDF/A or PDF/X-4
 with Ghostscript and pikepdf, and checks the result. py-redact writes the
 redacted copy and then gives it to py-pdfconform, if it is installed; if not,
-those choices are greyed out.
+those choices are greyed out. A program started from the menu of the desktop
+often hasn't `~/bin` on its PATH, where a script like this one lives, so
+py-redact also looks there and in `~/.local/bin`, and the settings can say
+where the script is.
 
 This stage left one lesson. py-pdfconform starts with `#!/usr/bin/env
 python3`, so it runs with the first Python on the PATH; inside the
@@ -157,7 +160,7 @@ removes all of it.
 Testing
 -------
 
-The program has 78 tests (`uv run pytest`). The tests of the redaction make
+The program has 80 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use

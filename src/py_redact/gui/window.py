@@ -655,7 +655,7 @@ class MainWindow(QMainWindow):
             act.setChecked(value == self.output())
             if value:
                 act.setEnabled(have)
-                act.setToolTip("" if have else tr("Needs {command}, which is not installed (or not on the PATH)",
+                act.setToolTip("" if have else tr("Needs {command}: install it, or say where it is in Settings",
                                                   command=conform.COMMAND))
         self.a_save.setText(tr("Save the redacted copy…") if not self.output()
                             else tr("Save the redacted copy as {standard}…", standard=conform.label(self.output())))

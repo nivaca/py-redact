@@ -148,9 +148,14 @@ desktop session (it usually is). It is also offered for opening PDF files.
 ### PDF/A and PDF/X
 
 To save the redacted copy as PDF/A or PDF/X, py-redact uses another program
-of mine, [py-pdfconform](https://github.com/nivaca/py-pdfconform), which
-must be installed and on the PATH (it needs Ghostscript). Without it, those
-choices are greyed out and everything else works.
+of mine, [py-pdfconform](https://github.com/nivaca/py-pdfconform) (it needs
+Ghostscript). py-redact looks for it, as `py-pdfconform` or
+`py-pdfconform.py`, on the PATH and in `~/bin` and `~/.local/bin`; a program
+started from the menu of the desktop often doesn't have those two folders on
+its PATH. If it is elsewhere, give its path in *Settings ▸ Settings… ▸
+py-pdfconform*, which says which one will be used. A script that can't be
+run by itself is run with `python3`. Without it, those choices are greyed
+out and everything else works.
 
 ### Updating
 
@@ -339,7 +344,7 @@ tick *File ▸ Also remove metadata, hidden text, attachments and scripts*.
 * what happens to the drawings under a mark: remove those wholly under it
   (the usual), those it touches, or none;
 * whether to also remove metadata, hidden text, attachments and scripts;
-* what kind of PDF to save (see above);
+* what kind of PDF to save (see above), and where py-pdfconform is;
 * the outline colour and the opacity of the marks not yet applied.
 
 Text under a mark is always removed.
@@ -414,7 +419,7 @@ window (`interface`), the look of new marks (`redact_color`, `box_text`,
 `box_text_color`, `box_font_size`, `box_align`, `box_repeat_text`), what
 redaction does to pictures and drawings (`redact_images`, `redact_drawings`),
 whether to clean (`redact_clean`), what kind of PDF to save
-(`redact_output`), the forms of the patterns (`pattern_language`) and the
+(`redact_output`) and where py-pdfconform is (`pdfconform`), the forms of the patterns (`pattern_language`) and the
 look of marks not yet applied (`mark_outline`, `mark_opacity`). A value that
 is missing or wrong gives the usual one, so a file edited by hand never
 stops the program; deleting the file brings back all the usual values.
@@ -456,7 +461,7 @@ Testing
 
     $ uv run pytest
 
-There are 78 tests. They cover the redaction (of text, pictures, drawings,
+There are 80 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the
@@ -474,7 +479,12 @@ This is py-redact 0.4.1. `py-redact --version` says which one is installed.
   - The documentation is complete, in English and Spanish: what is needed,
     getting the program, a menu entry, updating, uninstalling, what is
     where, help, the language of the window, this history, background and
-    sources. The program is the same.
+    sources.
+  - *Settings ▸ Settings… ▸ py-pdfconform* says where py-pdfconform is,
+    and which one will be used; without it, py-redact also looks for it in
+    `~/bin` and `~/.local/bin` and with the `.py` extension. Before, started
+    from the menu of the desktop, it often didn't find it, and PDF/A and
+    PDF/X were always greyed out.
 - 0.4.0:
   - From Adobe Acrobat Pro: Find and redact looks for several words or
     phrases at once (typed, or read from a text file) and for patterns

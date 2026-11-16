@@ -42,7 +42,7 @@ Después de guardar, py-redact busca cada palabra que estaba debajo de un recuad
 
 ### PDF/A y PDF/X
 
-El paso a PDF/A o PDF/X-4 lo hace py-pdfconform, otro programa mío, que usa Ghostscript y pikepdf y revisa el resultado. py-redact escribe la copia censurada y se la pasa, si está instalado; si no, esas opciones aparecen desactivadas. py-pdfconform se ejecuta siempre sin el entorno de Python de py-redact (su entorno virtual o la AppImage), porque, si no, correría con un Python que no tiene pikepdf.
+El paso a PDF/A o PDF/X-4 lo hace py-pdfconform, otro programa mío, que usa Ghostscript y pikepdf y revisa el resultado. py-redact escribe la copia censurada y se la pasa, si está instalado; si no, esas opciones aparecen desactivadas. Un programa abierto desde el menú del escritorio a menudo no tiene en su PATH la carpeta `~/bin`, donde suele vivir un script como este, así que py-redact también lo busca allí y en `~/.local/bin`, y la configuración permite indicar dónde está. py-pdfconform se ejecuta siempre sin el entorno de Python de py-redact (su entorno virtual o la AppImage), porque, si no, correría con un Python que no tiene pikepdf.
 
 ### Proceso y distribución
 
@@ -52,7 +52,7 @@ El código se maneja con git, en un repositorio publicado en GitHub (https://git
 
 ## Validación
 
-Hay 78 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
+Hay 80 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
 
 La ventana se prueba manejándola como lo haría un usuario, con eventos del ratón sobre la página: dibujar, mover y redimensionar recuadros, seleccionar texto, hacer doble clic, cambiar de herramienta, buscar, marcar, guardar y abrir los menús del botón derecho. Un aviso que en uso normal esperaría un clic hace fallar la prueba en lugar de esperar. El paso a PDF/A y PDF/X se prueba cuando py-pdfconform está instalado.
 

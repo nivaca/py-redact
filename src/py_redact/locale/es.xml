@@ -644,20 +644,12 @@
     <tr>Haciendo {standard} con {command}…</tr>
   </text>
   <text>
-    <en>Needs {command}, which is not installed (or not on the PATH)</en>
-    <tr>Necesita {command}, que no está instalado (o no está en el PATH)</tr>
-  </text>
-  <text>
     <en>PDF</en>
     <tr>PDF</tr>
   </text>
   <text>
     <en>PDF/A and PDF/X can't be protected: the copy has no password</en>
     <tr>PDF/A y PDF/X no admiten protección: la copia no tiene contraseña</tr>
-  </text>
-  <text>
-    <en>PDF/A and PDF/X need {command}, which is not installed (or not on the PATH)</en>
-    <tr>PDF/A y PDF/X necesitan {command}, que no está instalado (o no está en el PATH)</tr>
   </text>
   <text>
     <en>PDF/A-1b (archiving, the oldest)</en>
@@ -1240,5 +1232,41 @@
   <text>
     <en>{path} cannot be read: {error}</en>
     <tr>No se puede leer {path}: {error}</tr>
+  </text>
+  <text>
+    <en>It will be {path}</en>
+    <tr>Será {path}</tr>
+  </text>
+  <text>
+    <en>Look for it on the PATH, in ~/bin and in ~/.local/bin</en>
+    <tr>Buscarlo en el PATH, en ~/bin y en ~/.local/bin</tr>
+  </text>
+  <text>
+    <en>Needs {command}: install it, or say where it is in Settings</en>
+    <tr>Necesita {command}: instálelo, o diga dónde está en la Configuración</tr>
+  </text>
+  <text>
+    <en>Not found: PDF/A and PDF/X can't be made until it is given here</en>
+    <tr>No se encontró: no se pueden hacer PDF/A ni PDF/X hasta que se indique aquí</tr>
+  </text>
+  <text>
+    <en>The script py-pdfconform, which makes PDF/A and PDF/X (with or without the .py extension); empty to look for it</en>
+    <tr>El script py-pdfconform, que hace los PDF/A y PDF/X (con la extensión .py o sin ella); vacío para buscarlo</tr>
+  </text>
+  <text>
+    <en>There is no such file</en>
+    <tr>No existe ese archivo</tr>
+  </text>
+  <text>
+    <en>Where is py-pdfconform?</en>
+    <tr>¿Dónde está py-pdfconform?</tr>
+  </text>
+  <text>
+    <en>py-pdfconform (py-pdfconform py-pdfconform.py);;All files (*)</en>
+    <tr>py-pdfconform (py-pdfconform py-pdfconform.py);;Todos los archivos (*)</tr>
+  </text>
+  <text>
+    <en>py-pdfconform:</en>
+    <tr>py-pdfconform:</tr>
   </text>
 </interface>

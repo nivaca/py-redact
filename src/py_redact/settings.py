@@ -33,6 +33,7 @@ class Settings:
     mark_outline: str = "#d03030"  # of boxes not yet applied
     mark_opacity: int = 60  # their fill, in % (100: as they will be once applied)
     output: str = ""  # '' for a plain PDF; else a standard of py-pdfconform: 'a-2b', 'x-4'... (see conform.py)
+    pdfconform: str = ""  # the path of py-pdfconform; '' to look for it (see conform.find)
 
 
 DEFAULTS = Settings()
@@ -40,13 +41,15 @@ KEYS = {"color": "redact_color", "clean": "redact_clean", "images": "redact_imag
         "drawings": "redact_drawings", "output": "redact_output", "text": "box_text",
         "text_color": "box_text_color", "font_size": "box_font_size", "align": "box_align",
         "repeat_text": "box_repeat_text", "pattern_language": "pattern_language",
-        "mark_outline": "mark_outline", "mark_opacity": "mark_opacity"}
+        "mark_outline": "mark_outline", "mark_opacity": "mark_opacity", "pdfconform": "pdfconform"}
 APPEARANCE = ("color", "text", "text_color", "font_size", "align", "repeat_text")  # (of new boxes)
 
 
 def valid(name: str, value) -> bool:
     if name == "color":
         return isinstance(value, str) and (value == "" or bool(COLOR.fullmatch(value.lower())))
+    if name == "pdfconform":
+        return isinstance(value, str) and "\n" not in value
     if name == "pattern_language":
         return value in ("en", "es")
     if name == "mark_opacity":

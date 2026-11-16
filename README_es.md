@@ -154,8 +154,13 @@ abrir archivos PDF.
 ### PDF/A y PDF/X
 
 Para guardar la copia censurada como PDF/A o PDF/X, py-redact usa otro
-programa mío, [py-pdfconform](https://github.com/nivaca/py-pdfconform), que
-debe estar instalado y en el PATH (necesita Ghostscript). Sin él, esas
+programa mío, [py-pdfconform](https://github.com/nivaca/py-pdfconform)
+(necesita Ghostscript). py-redact lo busca, como `py-pdfconform` o
+`py-pdfconform.py`, en el PATH y en `~/bin` y `~/.local/bin`; un programa
+abierto desde el menú del escritorio a menudo no tiene esas dos carpetas en
+su PATH. Si está en otra parte, se indica su ruta en *Configuración ▸
+Configuración… ▸ py-pdfconform*, que dice cuál se usará. Un script que no
+puede ejecutarse por sí mismo se ejecuta con `python3`. Sin él, esas
 opciones aparecen desactivadas y todo lo demás funciona.
 
 ### Actualizar
@@ -352,7 +357,7 @@ también metadatos, texto oculto, adjuntos y scripts*.
 * qué pasa con los dibujos debajo de un recuadro: quitar los que quedan del
   todo debajo (lo habitual), los que toca o ninguno;
 * si quitar también metadatos, texto oculto, adjuntos y scripts;
-* qué clase de PDF guardar (véase arriba);
+* qué clase de PDF guardar (véase arriba), y dónde está py-pdfconform;
 * el color del contorno y la opacidad de los recuadros aún sin aplicar.
 
 El texto debajo de un recuadro siempre se elimina.
@@ -430,7 +435,8 @@ ventana (`interface`), el aspecto de los recuadros nuevos (`redact_color`,
 `box_text`, `box_text_color`, `box_font_size`, `box_align`,
 `box_repeat_text`), lo que la censura hace con imágenes y dibujos
 (`redact_images`, `redact_drawings`), si sanear (`redact_clean`), la clase
-de PDF que se guarda (`redact_output`), las formas de los patrones
+de PDF que se guarda (`redact_output`) y dónde está py-pdfconform
+(`pdfconform`), las formas de los patrones
 (`pattern_language`) y el aspecto de los recuadros aún sin aplicar
 (`mark_outline`, `mark_opacity`). Un valor que falte o esté mal da el
 habitual, así que un archivo editado a mano nunca detiene el programa;
@@ -473,7 +479,7 @@ Pruebas
 
     $ uv run pytest
 
-Hay 78 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 80 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando
@@ -492,7 +498,12 @@ instalada.
   - La documentación está completa, en español y en inglés: qué se necesita,
     cómo conseguir el programa, una entrada en el menú, actualizar,
     desinstalar, qué hay dónde, ayuda, el idioma de la ventana, esta
-    historia, antecedentes y fuentes. El programa es el mismo.
+    historia, antecedentes y fuentes.
+  - *Configuración ▸ Configuración… ▸ py-pdfconform* dice dónde está
+    py-pdfconform, y cuál se usará; sin ello, py-redact lo busca también en
+    `~/bin` y `~/.local/bin` y con la extensión `.py`. Antes, abierto desde
+    el menú del escritorio, a menudo no lo encontraba, y PDF/A y PDF/X
+    aparecían siempre desactivados.
 - 0.4.0:
   - De Adobe Acrobat Pro: Buscar y censurar busca varias palabras o frases
     a la vez (escritas o leídas de un archivo de texto) y patrones

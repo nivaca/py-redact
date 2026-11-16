@@ -191,7 +191,7 @@ def test_find_text(tmp_path):
 def test_conform_missing(sample, tmp_path, monkeypatch):
     from py_redact import conform
 
-    monkeypatch.setattr(conform, "command", lambda: None)
+    monkeypatch.setattr(conform, "command", lambda path=None: None)
     with pytest.raises(conform.ConformError):
         conform.convert(sample, tmp_path / "x.pdf", "a-2b")
 
@@ -295,3 +295,24 @@ def test_hidden_information(tmp_path):
     sanitize(path, out)
     assert not any(v > 0 for v in hidden.inspect(pymupdf.open(out)).values())
     assert pymupdf.open(out)[0].get_text() == "seen\n"
+
+
+def test_finding_pdfconform(tmp_path, monkeypatch):
+    from py_redact import conform, settings
+
+    home = tmp_path / "home"
+    (home / "bin").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")  # (as a session started from the desktop menu may have it)
+    assert conform.find() is None and not conform.available()
+    script = home / "bin" / "py-pdfconform"
+    script.write_text("#!/bin/sh\n")
+    script.chmod(0o755)
+    assert conform.find() == script and conform.command() == [str(script)]
+    other = tmp_path / "elsewhere.py"  # (a script that can't be run by itself: run with python3)
+    other.write_text("print()\n")
+    settings.save(settings.Settings(pdfconform=str(other)))
+    cmd = conform.command()
+    assert cmd[-1] == str(other) and cmd[0].endswith("python3")
+    settings.save(settings.Settings(pdfconform=str(tmp_path / "missing")))
+    assert conform.command() is None
