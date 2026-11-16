@@ -75,8 +75,11 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
 
 %changelog
 * Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.3.0-1
-- Save the redacted copy as PDF/A or PDF/X-4 with py-pdfconform; icons in the
-  toolbar
+- Save the redacted copy as PDF/A or PDF/X-4 with py-pdfconform; icons in
+  the toolbar; redaction as in Xodo: one tool for text and areas, double-click
+  a word or an image, box properties (no fill, text over the box, note, locked,
+  save as default), apply from the right-click menu, the copy checked after
+  saving, sanitize the document, a hand tool
 
 * Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.2.0-1
 - Find and redact (a text or a regular expression, on some or all pages); the
