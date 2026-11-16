@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-redact
-Version:        0.2.0
+Version:        0.3.0
 Release:        1%{?dist}
 Summary:        Redact PDF documents: remove what lies under boxes drawn on their pages
 
@@ -74,6 +74,10 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
 %{_datadir}/icons/hicolor/*/apps/py-redact.*
 
 %changelog
+* Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.3.0-1
+- Save the redacted copy as PDF/A or PDF/X-4 with py-pdfconform; icons in the
+  toolbar
+
 * Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.2.0-1
 - Find and redact (a text or a regular expression, on some or all pages); the
   text tool is the one on startup; right-click menus that offer what fits where
