@@ -63,10 +63,35 @@ carta que escribe cada vez con nombres y números inventados, y las guarda en
 Instalación
 -----------
 
-Hay tres maneras de instalarlo: la AppImage (sin instalar nada), el paquete
-de Fedora o desde el código fuente. Todas están en las
+### Qué se necesita
+
+Linux. La AppImage no necesita nada más: trae su propio Python, Qt y
+PyMuPDF, y funciona con glibc 2.34 o posterior (Ubuntu 22.04, Debian 12,
+Fedora 35 y posteriores). El paquete de Fedora necesita Fedora 45 o
+posterior, y usa el Python, el PyMuPDF y el PySide6 de Fedora. Desde el
+código fuente hacen falta Python 3.15 o posterior y
+[uv](https://docs.astral.sh/uv/), que trae lo demás (PyMuPDF y PySide6).
+Para guardar PDF/A o PDF/X, cualquiera de ellos necesita
+[py-pdfconform](https://github.com/nivaca/py-pdfconform) (véase "PDF/A y
+PDF/X").
+
+### Conseguir el programa
+
+Cada versión está en las
 [versiones publicadas](https://github.com/nivaca/py-redact/releases), en
-GitHub y en [Codeberg](https://codeberg.org/nivaca/py-redact/releases).
+GitHub y en [Codeberg](https://codeberg.org/nivaca/py-redact/releases), con
+estos archivos:
+
+    py-redact-VERSIÓN-x86_64.AppImage     la AppImage
+    py-redact-VERSIÓN-1.fc45.noarch.rpm   el paquete de Fedora, firmado
+    RPM-GPG-KEY-py-redact                 la clave que lo firma
+    py-redact-VERSIÓN.zip                 el código fuente, en un zip
+    py_redact-VERSIÓN.tar.gz              el paquete fuente, para Python
+    py_redact-VERSIÓN-py3-none-any.whl    la rueda (wheel), para Python
+
+El código fuente también puede clonarse:
+
+    $ git clone https://github.com/nivaca/py-redact.git
 
 ### Una AppImage (cualquier Linux)
 
@@ -75,10 +100,10 @@ abre:
 
     $ chmod +x py-redact-*-x86_64.AppImage
     $ ./py-redact-*-x86_64.AppImage [archivo.pdf]
+    $ ./py-redact-*-x86_64.AppImage --version
 
-Lleva su propio Python, Qt y PyMuPDF, y funciona en Linux con glibc 2.34 o
-posterior (Ubuntu 22.04, Debian 12, Fedora 35 y posteriores). Programas como
-AppImageLauncher o Gear Lever la añaden al menú de aplicaciones.
+Programas como AppImageLauncher o Gear Lever la añaden al menú de
+aplicaciones.
 
 ### Fedora (Copr)
 
@@ -86,10 +111,10 @@ AppImageLauncher o Gear Lever la añaden al menú de aplicaciones.
     $ sudo dnf install py-redact
 
 Instala `py-redact`, una entrada en el menú (que también se ofrece para
-abrir archivos PDF) y sus iconos, con el Python, el PyMuPDF y el PySide6 de
-Fedora. Las actualizaciones llegan con `sudo dnf upgrade`. Los paquetes los
-construye y firma [Copr](https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/).
-Necesita Fedora 45 o posterior.
+abrir archivos PDF), sus iconos y estos documentos, con el Python, el
+PyMuPDF y el PySide6 de Fedora. Los paquetes los construye y firma
+[Copr](https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/), para
+Fedora 45 y Rawhide.
 
 Cada versión publicada trae además el RPM. Está firmado con la clave del
 autor, `RPM-GPG-KEY-py-redact`, que va adjunta a cada versión y está también
@@ -101,20 +126,89 @@ Su huella es `8187 0643 CA22 1AF9 0C30 554E BE68 32CD 3599 4948`:
 
 ### Desde el código fuente
 
-    $ git clone https://github.com/nivaca/py-redact
-    $ cd py-redact
+En la carpeta del código (clonado, o el zip descomprimido):
+
     $ uv sync
     $ uv run py-redact [archivo.pdf]
 
-Necesita Python 3.15 o posterior, [uv](https://docs.astral.sh/uv/) y, por
-medio de uv, PyMuPDF (que hace la censura) y PySide6 (la ventana).
+El primer `uv sync` crea un entorno virtual en `.venv` e instala en él
+PyMuPDF y PySide6; no se instala nada en otra parte. Para tener la orden
+`py-redact` en cualquier lugar, se instala como herramienta de uv, que la
+pone en `~/.local/bin`:
+
+    $ uv tool install .
+
+### Una entrada en el menú
+
+La AppImage (con AppImageLauncher o Gear Lever) y el paquete de Fedora
+tienen la suya. Para la herramienta de uv, se copian la entrada y los
+iconos a la carpeta de aplicaciones del usuario:
+
+    $ install -Dm644 packaging/py-redact.desktop ~/.local/share/applications/py-redact.desktop
+    $ cp -r src/py_redact/icons/linux/hicolor ~/.local/share/icons/
+
+La entrada ejecuta `py-redact`, así que `~/.local/bin` tiene que estar en el
+PATH de la sesión de escritorio (suele estarlo). También se ofrece para
+abrir archivos PDF.
 
 ### PDF/A y PDF/X
 
 Para guardar la copia censurada como PDF/A o PDF/X, py-redact usa otro
 programa mío, [py-pdfconform](https://github.com/nivaca/py-pdfconform), que
-debe estar instalado y en el PATH. Sin él, esas opciones aparecen
-desactivadas y todo lo demás funciona.
+debe estar instalado y en el PATH (necesita Ghostscript). Sin él, esas
+opciones aparecen desactivadas y todo lo demás funciona.
+
+### Actualizar
+
+El paquete de Fedora se actualiza con el resto del sistema, `sudo dnf
+upgrade`. La AppImage se reemplaza por la nueva. Desde el código, `git pull`
+(o el zip nuevo) y luego `uv sync`, o `uv tool install --reinstall .` para la
+herramienta de uv. La configuración y los códigos de censura se conservan.
+
+### Desinstalar
+
+    $ sudo dnf remove py-redact                  # el paquete de Fedora
+    $ sudo dnf copr disable nivaca/py-redact     # y su repositorio
+    $ uv tool uninstall py-redact                # la herramienta de uv
+
+La AppImage, o la carpeta del código, simplemente se borra, igual que la
+entrada del menú y los iconos copiados a mano
+(`~/.local/share/applications/py-redact.desktop`,
+`~/.local/share/icons/hicolor/*/apps/py-redact.*`). La configuración y los
+códigos de censura quedan en `~/.config/py-redact/` (véase "Configuración y
+archivos"), y pueden borrarse también si no se quieren.
+
+Qué hay dónde
+-------------
+
+    src/py_redact/          el programa (véase "Cómo funciona")
+      locale/es.xml         el español de la ventana
+      icons/                su icono, en todos los tamaños, y los de la barra
+    tests/                  las pruebas (véase "Pruebas")
+    docs/                   DESCRIPTION.md y DESCRIPCIÓN_es.md: cómo se hizo;
+                            img/: las capturas de este README
+    packaging/              el paquete de Fedora: su spec, build-rpm.sh, la
+                            entrada del menú, la clave pública, RELEASING.md
+    tools/                  scripts para hacer la AppImage, las capturas y
+                            las versiones publicadas
+    pyproject.toml          el proyecto de Python: versión, dependencias
+    uv.lock                 las versiones exactas de las dependencias
+
+Cada paquete lo hace una orden:
+
+    $ uv build                                   # la rueda y el paquete fuente, en dist/
+    $ uv run python tools/bundle-appimage.py     # la AppImage, en dist/
+    $ packaging/build-rpm.sh [--sign]            # el RPM, en build/rpm/
+    $ uv run python tools/screenshots.py         # las capturas, en docs/img/
+
+`tools/bundle-appimage.py` descarga, la primera vez, un Python hecho para
+AppImages ([python-appimage](https://github.com/niess/python-appimage)) y
+[appimagetool](https://github.com/AppImage/appimagetool), instala py-redact
+en ese Python, hace con él una censura para asegurarse de que funciona y
+escribe la AppImage. `packaging/build-rpm.sh` construye el RPM con el Python
+y los paquetes de Fedora, corriendo todas las pruebas; `--sign` lo firma.
+`tools/release.py` hace todo eso y publica una versión en GitHub, Codeberg y
+Copr; `packaging/RELEASING.md` cuenta cómo.
 
 Uso
 ---
@@ -283,6 +377,26 @@ nombres de sus botones.
 | Ctrl+0, Ctrl+9, Ctrl++, Ctrl+− | Ajustar la página, ajustar el ancho, acercar, alejar (también Ctrl+rueda) |
 | Ctrl+, | Configuración |
 
+### Ayuda
+
+Cada botón y cada opción de los menús dice qué hace cuando el ratón está
+encima, y los botones de la barra dan además su tecla. La línea bajo la
+página recuerda cómo marcar. *Ayuda ▸ Acerca de* dice la versión.
+
+### El idioma de la ventana
+
+La ventana está en español o en inglés: *Configuración ▸ Idioma* la cambia
+enseguida, sin cerrar el documento ni perder sus recuadros, y la elección se
+guarda (`interface` en el archivo de configuración). Los diálogos del propio
+Qt (abrir y guardar archivos, elegir un color) la siguen, cuando Qt tiene su
+traducción.
+
+Cada texto de la ventana se busca, por su inglés, en
+`src/py_redact/locale/es.xml`; el que no está ahí se muestra en inglés. Otro
+idioma solo necesita otro archivo allí, `locale/CÓDIGO.xml`, hecho como ese;
+entonces aparece en *Configuración ▸ Idioma*. Una prueba comprueba que el
+archivo español tenga todos los textos del programa, y ninguno más.
+
 Qué elimina la censura
 ----------------------
 
@@ -373,6 +487,99 @@ Versión
 
 Esta es la versión 0.4.0 de py-redact. `py-redact --version` dice cuál está
 instalada.
+
+- 0.4.0:
+  - De Adobe Acrobat Pro: Buscar y censurar busca varias palabras o frases
+    a la vez (escritas o leídas de un archivo de texto) y patrones
+    (direcciones de correo, números de teléfono, de tarjeta de crédito y de
+    identidad, fechas, IBAN), en sus formas de Estados Unidos o en las de
+    España y América Latina; puede dejar visibles algunos caracteres de
+    cada lugar.
+  - Códigos de censura: los conjuntos de la FOIA y la Privacy Act
+    estadounidenses, y los propios, varios en un recuadro; un editor hace,
+    copia, importa y exporta conjuntos.
+  - Con el ratón encima, un recuadro se ve como quedará una vez aplicado.
+  - *Archivo ▸ Quitar información oculta…* muestra lo que un documento
+    guarda además de sus páginas, clase por clase, y quita lo marcado;
+    *Sanear* lo quita todo.
+  - El color del contorno y la opacidad de los recuadros aún sin aplicar
+    son parte de la configuración.
+  - Esta documentación, en español y en inglés, con capturas de pantalla.
+  - *Configuración…* tiene la tecla Ctrl+,.
+- 0.3.0:
+  - De Xodo: una sola herramienta para texto y zonas (sobre un texto lo
+    selecciona, en otra parte dibuja un recuadro; Ctrl+arrastrar siempre
+    dibuja uno); un doble clic marca una palabra o una imagen; una
+    herramienta de mano.
+  - Las propiedades de un recuadro: un relleno de cualquier color o
+    ninguno, un texto escrito encima (color, tamaño, alineación,
+    repetición), una nota, un bloqueo y *Guardar como predeterminado para
+    los recuadros nuevos*.
+  - Los recuadros aún sin aplicar son transparentes, con un contorno rojo;
+    *Aplicar las N censuras…* está en el menú del botón derecho; la copia
+    se revisa al guardarla.
+  - *Archivo ▸ Sanear el documento…*.
+  - La copia puede guardarse como PDF/A-1b, PDF/A-2b, PDF/A-3b o PDF/X-4,
+    con py-pdfconform.
+  - Iconos en la barra de herramientas, del tema del escritorio o propios;
+    *Configuración ▸ Etiquetas en la barra de herramientas*.
+- 0.2.0:
+  - *Buscar y censurar*: una palabra, una frase o una expresión regular, en
+    todas las páginas o en algunas, aunque crucen un salto de línea.
+  - La herramienta de texto es la inicial, y también mueve recuadros.
+  - Menús del botón derecho que ofrecen lo que corresponde donde se abren
+    (una palabra, un recuadro con texto debajo, la página); un menú
+    *Herramientas*.
+  - El botón derecho sobre un recuadro da sus páginas y su color; un
+    recuadro nuevo ya no toma las páginas del anterior; el color de los
+    recuadros nuevos es parte de la configuración; un diálogo de
+    configuración (imágenes, dibujos, saneamiento); marcar texto.
+- 0.1.0:
+  - La primera versión: una ventana para dibujar recuadros en las páginas,
+    repetirlos en otras y elegir su color (también blanco), y guardar una
+    copia censurada; en español y en inglés; como AppImage y como RPM.
+
+Antecedentes
+------------
+
+Escribí py-redact como compañero de otros dos programas míos para
+documentos PDF, [py-foliation](https://github.com/nivaca/py-foliation), que
+cambia las etiquetas de página, y
+[py-imposition](https://github.com/nivaca/py-imposition), que impone páginas
+para la imprenta. Tiene su forma: la interfaz en dos idiomas, el archivo de
+configuración, los paquetes y la manera de publicarlos vienen de
+py-foliation, y las listas de páginas, de py-imposition. Cómo debía
+comportarse una herramienta de censura lo tomé de las de Xodo PDF Studio y
+Adobe Acrobat Pro, según las describen sus manuales. `docs/DESCRIPCIÓN_es.md`
+lo describe con más detalle.
+
+Fuentes
+-------
+
+- [PyMuPDF](https://pymupdf.readthedocs.io/), de Artifex Software, sobre la
+  biblioteca MuPDF: la censura, la lectura del texto y el dibujo de las
+  páginas. GNU AGPL 3.
+- [PySide6](https://doc.qt.io/qtforpython-6/), Qt para Python, de The Qt
+  Company: la ventana. GNU LGPL 3.
+- [py-pdfconform](https://github.com/nivaca/py-pdfconform), del autor, con
+  [Ghostscript](https://www.ghostscript.com/) y
+  [pikepdf](https://pikepdf.readthedocs.io/): PDF/A y PDF/X.
+- Xodo PDF Studio, *Redaction*, *Redaction Annotations*, *Applying
+  Redactions* y *Redaction Properties*, en las páginas de ayuda de Xodo
+  (<https://feedback.xodo.com/support/solutions>): la herramienta única para
+  texto y zonas, las propiedades de un recuadro, el aspecto de los recuadros
+  aún sin aplicar y la revisión del resultado.
+- Gbemi T., *Mastering Adobe Acrobat DC Pro: A Comprehensive Guide* (2024),
+  capítulo 13, "Advanced Editing": varias palabras y patrones en la
+  búsqueda, la censura de parte de una palabra, los códigos de censura, la
+  vista previa con el ratón y la eliminación de la información oculta.
+- Los códigos de la Freedom of Information Act estadounidense, 5 U.S.C.
+  § 552(b), y de la Privacy Act de 1974, 5 U.S.C. § 552a(d)(5), (j) y (k):
+  los dos conjuntos de códigos de censura que vienen con el programa.
+- Los iconos de la barra de herramientas siguen los nombres de la
+  [especificación de nombres de iconos de freedesktop](https://specifications.freedesktop.org/icon-naming-spec/),
+  para que se usen los del propio escritorio; los del programa, para cuando
+  el escritorio no los tiene, se dibujaron para él.
 
 Licencia
 --------

@@ -59,10 +59,34 @@ writes each time with made-up names and numbers, and saves them in
 Installation
 ------------
 
-There are three ways to install it: the AppImage (nothing to install), the
-Fedora package, or from the source. All of them are in the
+### What is needed
+
+Linux. The AppImage needs nothing else: it brings its own Python, Qt and
+PyMuPDF, and runs with glibc 2.34 or later (Ubuntu 22.04, Debian 12, Fedora
+35 and later). The Fedora package needs Fedora 45 or later, and brings in
+Fedora's own Python, PyMuPDF and PySide6. From the source, it needs Python
+3.15 or later and [uv](https://docs.astral.sh/uv/), which brings the rest
+(PyMuPDF and PySide6). To save PDF/A or PDF/X, any of them needs
+[py-pdfconform](https://github.com/nivaca/py-pdfconform) (see "PDF/A and
+PDF/X").
+
+### Getting the program
+
+Every version is in the
 [releases](https://github.com/nivaca/py-redact/releases), on GitHub and on
-[Codeberg](https://codeberg.org/nivaca/py-redact/releases).
+[Codeberg](https://codeberg.org/nivaca/py-redact/releases), with these
+files:
+
+    py-redact-VERSION-x86_64.AppImage     the AppImage
+    py-redact-VERSION-1.fc45.noarch.rpm   the Fedora package, signed
+    RPM-GPG-KEY-py-redact                 the key that signs it
+    py-redact-VERSION.zip                 the source, as a zip
+    py_redact-VERSION.tar.gz              the source package, for Python
+    py_redact-VERSION-py3-none-any.whl    the wheel, for Python
+
+The source can also be cloned:
+
+    $ git clone https://github.com/nivaca/py-redact.git
 
 ### An AppImage (any Linux)
 
@@ -71,21 +95,21 @@ it:
 
     $ chmod +x py-redact-*-x86_64.AppImage
     $ ./py-redact-*-x86_64.AppImage [file.pdf]
+    $ ./py-redact-*-x86_64.AppImage --version
 
-It holds its own Python, Qt and PyMuPDF, and runs on Linux with glibc 2.34
-or later (Ubuntu 22.04, Debian 12, Fedora 35 and later). Tools such as
-AppImageLauncher or Gear Lever add it to the menu of applications.
+Tools such as AppImageLauncher or Gear Lever add it to the menu of
+applications.
 
 ### Fedora (Copr)
 
     $ sudo dnf copr enable nivaca/py-redact
     $ sudo dnf install py-redact
 
-This installs `py-redact`, a menu entry (also offered for opening PDF files)
-and its icons, with Fedora's own Python, PyMuPDF and PySide6. Updates come
-with `sudo dnf upgrade`. The packages are built and signed by
-[Copr](https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/). It needs
-Fedora 45 or later.
+This installs `py-redact`, a menu entry (also offered for opening PDF files),
+its icons and these documents, with Fedora's own Python, PyMuPDF and
+PySide6. The packages are built and signed by
+[Copr](https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/), for
+Fedora 45 and Rawhide.
 
 Each release also has the RPM itself. It is signed with the author's key,
 `RPM-GPG-KEY-py-redact`, which is attached to each release and is also in
@@ -97,20 +121,88 @@ Its fingerprint is `8187 0643 CA22 1AF9 0C30 554E BE68 32CD 3599 4948`:
 
 ### From the source
 
-    $ git clone https://github.com/nivaca/py-redact
-    $ cd py-redact
+In the folder of the source (cloned, or the zip unpacked):
+
     $ uv sync
     $ uv run py-redact [file.pdf]
 
-It needs Python 3.15 or later, [uv](https://docs.astral.sh/uv/), and, through
-uv, PyMuPDF (which does the redaction) and PySide6 (the window).
+The first `uv sync` makes a virtual environment in `.venv` and installs
+PyMuPDF and PySide6 in it; nothing is installed elsewhere. To have the
+command `py-redact` everywhere, install it as a uv tool, which puts it in
+`~/.local/bin`:
+
+    $ uv tool install .
+
+### A menu entry
+
+The AppImage (through AppImageLauncher or Gear Lever) and the Fedora
+package have their own. For the uv tool, copy the menu entry and the icons
+to your folder of applications:
+
+    $ install -Dm644 packaging/py-redact.desktop ~/.local/share/applications/py-redact.desktop
+    $ cp -r src/py_redact/icons/linux/hicolor ~/.local/share/icons/
+
+The entry runs `py-redact`, so `~/.local/bin` must be on the PATH of the
+desktop session (it usually is). It is also offered for opening PDF files.
 
 ### PDF/A and PDF/X
 
 To save the redacted copy as PDF/A or PDF/X, py-redact uses another program
 of mine, [py-pdfconform](https://github.com/nivaca/py-pdfconform), which
-must be installed and on the PATH. Without it, those choices are greyed out
-and everything else works.
+must be installed and on the PATH (it needs Ghostscript). Without it, those
+choices are greyed out and everything else works.
+
+### Updating
+
+The Fedora package is updated with the rest of the system, `sudo dnf
+upgrade`. The AppImage is replaced by the new one. From the source, `git
+pull` (or the new zip) and then `uv sync`, or `uv tool install --reinstall .`
+for the uv tool. The settings and the redaction codes are kept.
+
+### Uninstalling
+
+    $ sudo dnf remove py-redact                  # the Fedora package
+    $ sudo dnf copr disable nivaca/py-redact     # and its repository
+    $ uv tool uninstall py-redact                # the uv tool
+
+The AppImage, or the folder of the source, is simply deleted, and so are the
+menu entry and the icons copied by hand
+(`~/.local/share/applications/py-redact.desktop`,
+`~/.local/share/icons/hicolor/*/apps/py-redact.*`). The settings and the
+redaction codes stay in `~/.config/py-redact/` (see "Settings and files"),
+to be deleted too if they are not wanted.
+
+What is where
+-------------
+
+    src/py_redact/          the program (see "How it works")
+      locale/es.xml         the Spanish of the window
+      icons/                its icon, in every size, and those of the toolbar
+    tests/                  the tests (see "Testing")
+    docs/                   DESCRIPTION.md and DESCRIPCIÓN_es.md: how it was
+                            made; img/: the screenshots of this README
+    packaging/              the Fedora package: its spec, build-rpm.sh, the
+                            menu entry, the public key, RELEASING.md
+    tools/                  scripts to make the AppImage, the screenshots and
+                            the releases
+    pyproject.toml          the Python project: version, dependencies
+    uv.lock                 the exact versions of the dependencies
+
+Each package is made by one command:
+
+    $ uv build                                   # the wheel and the source package, in dist/
+    $ uv run python tools/bundle-appimage.py     # the AppImage, in dist/
+    $ packaging/build-rpm.sh [--sign]            # the RPM, in build/rpm/
+    $ uv run python tools/screenshots.py         # the screenshots, in docs/img/
+
+`tools/bundle-appimage.py` downloads, the first time, a Python made for
+AppImages ([python-appimage](https://github.com/niess/python-appimage)) and
+[appimagetool](https://github.com/AppImage/appimagetool), installs py-redact
+in that Python, makes a redaction with it to be sure that it works, and
+writes the AppImage. `packaging/build-rpm.sh` builds the RPM with Fedora's
+own Python and packages, running all the tests; `--sign` signs it.
+`tools/release.py` does all of it and publishes a version on GitHub,
+Codeberg and Copr; `packaging/RELEASING.md` tells how.
 
 Usage
 -----
@@ -208,7 +300,7 @@ wherever else it is.
 
 ### Applying the redactions
 
-*File ▸ Save the redacted copy…* (Ctrl+S), or *Apply all redactions…* at
+*File ▸ Save the redacted copy…* (Ctrl+S), or *Apply all N redactions…* at
 the top of the right-click menu, writes a copy of the document
 (`NAME-redacted.pdf`) with what is under the marks removed. The original is
 not changed, unless you choose its own name, and then it is asked first. A
@@ -271,6 +363,26 @@ buttons.
 | PgUp, PgDn, Ctrl+Home, Ctrl+End | Previous, next, first and last page |
 | Ctrl+0, Ctrl+9, Ctrl++, Ctrl+− | Fit the page, fit the width, zoom in, zoom out (also Ctrl+wheel) |
 | Ctrl+, | Settings |
+
+### Help
+
+Every button and menu item says what it does when the mouse is over it, and
+the toolbar's tooltips give the key. The line under the page reminds how to
+mark. *Help ▸ About* says the version.
+
+### The language of the window
+
+The window is in English or in Spanish: *Settings ▸ Language* changes it at
+once, without closing the document or losing its marks, and the choice is
+kept (`interface` in the configuration file). The dialogs of Qt itself (to
+open and save files, to choose a colour) follow it, when Qt has their
+translation.
+
+Each text of the window is looked for, by its English, in
+`src/py_redact/locale/es.xml`; a text that isn't there is shown in English.
+Another language needs only another file there, `locale/CODE.xml`, made like
+that one; it then appears in *Settings ▸ Language*. A test checks that the
+Spanish file has every text of the program, and no other.
 
 What redaction removes
 ----------------------
@@ -357,6 +469,92 @@ Version
 -------
 
 This is py-redact 0.4.0. `py-redact --version` says which one is installed.
+
+- 0.4.0:
+  - From Adobe Acrobat Pro: Find and redact looks for several words or
+    phrases at once (typed, or read from a text file) and for patterns
+    (e-mail addresses, phone numbers, credit card numbers, dates, identity
+    numbers, IBAN), in their U.S. forms or in those of Spain and Latin
+    America; it can leave some characters of each place visible.
+  - Redaction codes: the U.S. FOIA and Privacy Act sets, and your own,
+    several on a mark; an editor makes, copies, imports and exports sets.
+  - A mark shows as it will be once applied when the mouse is over it.
+  - *File ▸ Remove hidden information…* lists what a document holds besides
+    its pages, kind by kind, and removes what is ticked; *Sanitize* removes
+    all of it.
+  - The outline colour and the opacity of marks not yet applied are
+    settings.
+  - This documentation, in English and Spanish, with screenshots.
+  - *Settings…* has the key Ctrl+,.
+- 0.3.0:
+  - From Xodo: one tool for text and areas (over text it selects the text,
+    elsewhere it draws a box; Ctrl+drag always draws a box); a double click
+    marks a word or a picture; a hand tool.
+  - The properties of a mark: a fill of any colour or none, a text written
+    over it (colour, size, alignment, repeated), a note, a lock, and *Save
+    as default for new boxes*.
+  - Marks not yet applied are see-through with a red outline; *Apply all N
+    redactions…* is in the right-click menu; the copy is checked after
+    saving.
+  - *File ▸ Sanitize the document…*.
+  - The copy can be saved as PDF/A-1b, PDF/A-2b, PDF/A-3b or PDF/X-4, with
+    py-pdfconform.
+  - Icons in the toolbar, from the desktop's theme or the program's own;
+    *Settings ▸ Labels in the toolbar*.
+- 0.2.0:
+  - *Find and redact*: a word, a phrase or a regular expression, on all
+    pages or some, across line breaks.
+  - The text tool is the one on startup, and it also moves marks.
+  - Right-click menus that offer what fits where they are opened (a word, a
+    mark with text under it, the page); a *Tools* menu.
+  - Right-click a mark for its pages and colour; a new mark no longer takes
+    the pages of the one before; the colour of new marks is a setting; a
+    settings dialog (pictures, drawings, cleaning); marking text.
+- 0.1.0:
+  - The first version: a window to draw marks on the pages, repeat them on
+    other pages and choose their colour (white included), and save a
+    redacted copy; in English and Spanish; as an AppImage and an RPM.
+
+Background
+----------
+
+I wrote py-redact as a companion to two other programs of mine for PDF
+documents, [py-foliation](https://github.com/nivaca/py-foliation), which
+changes the page labels, and [py-imposition](https://github.com/nivaca/py-imposition),
+which imposes pages for printing. It has their shape: the interface in two
+languages, the configuration file, the packages and the way they are
+published came from py-foliation, and the lists of pages from
+py-imposition. How a redaction tool should behave came from those of Xodo
+PDF Studio and Adobe Acrobat Pro, as their manuals describe them.
+`docs/DESCRIPTION.md` tells the whole story.
+
+Sources
+-------
+
+- [PyMuPDF](https://pymupdf.readthedocs.io/), by Artifex Software, on the
+  MuPDF library: the redaction, the reading of the text and the drawing of
+  the pages. GNU AGPL 3.
+- [PySide6](https://doc.qt.io/qtforpython-6/), Qt for Python, by The Qt
+  Company: the window. GNU LGPL 3.
+- [py-pdfconform](https://github.com/nivaca/py-pdfconform), by the author,
+  with [Ghostscript](https://www.ghostscript.com/) and
+  [pikepdf](https://pikepdf.readthedocs.io/): PDF/A and PDF/X.
+- Xodo PDF Studio, *Redaction*, *Redaction Annotations*, *Applying
+  Redactions* and *Redaction Properties*, in the help pages of Xodo
+  (<https://feedback.xodo.com/support/solutions>): the single tool for text
+  and areas, the properties of a mark, the look of marks not yet applied,
+  and checking the result.
+- Gbemi T., *Mastering Adobe Acrobat DC Pro: A Comprehensive Guide* (2024),
+  chapter 13, "Advanced Editing": several words and patterns in the search,
+  marking part of a word, redaction codes, the preview under the mouse, and
+  removing hidden information.
+- The codes of the U.S. Freedom of Information Act, 5 U.S.C. § 552(b), and
+  of the Privacy Act of 1974, 5 U.S.C. § 552a(d)(5), (j) and (k): the two
+  sets of redaction codes that come with the program.
+- The icons of the toolbar follow the names of the
+  [freedesktop icon naming specification](https://specifications.freedesktop.org/icon-naming-spec/),
+  so the desktop's own icons are used; the program's own, for when the
+  desktop has none, were drawn for it.
 
 Licensing
 ---------
