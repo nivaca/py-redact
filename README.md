@@ -474,8 +474,12 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 0.4.1. `py-redact --version` says which one is installed.
+This is py-redact 0.4.2. `py-redact --version` says which one is installed.
 
+- 0.4.2:
+  - *File ▸ Save as* saves at once in the kind of PDF chosen (PDF, PDF/A,
+    PDF/X), which stays ticked for the next times; before, it only chose
+    it, and *Save* had to be chosen after.
 - 0.4.1:
   - The documentation is complete, in English and Spanish: what is needed,
     getting the program, a menu entry, updating, uninstalling, what is

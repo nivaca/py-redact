@@ -492,9 +492,13 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 0.4.1 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 0.4.2 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 0.4.2:
+  - *Archivo ▸ Guardar como* guarda en el acto en la clase de PDF elegida
+    (PDF, PDF/A, PDF/X), que queda marcada para las veces siguientes;
+    antes solo la elegía, y luego había que elegir *Guardar*.
 - 0.4.1:
   - La documentación está completa, en español y en inglés: qué se necesita,
     cómo conseguir el programa, una entrada en el menú, actualizar,
