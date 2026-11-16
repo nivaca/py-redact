@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The interface of py-redact in Spanish: each <text> gives an English text of the
+     program (<en>) and its translation (<tr>). See src/py_redact/interface.py.
+     tests/test_interface.py checks that every text of the program is here, and nothing else. -->
+<interface code="es" name="Spanish" native="Español">
+  <text>
+    <en>The settings of py-redact. Delete this file to use the usual values.</en>
+    <tr>La configuración de py-redact. Borre este archivo para usar los valores habituales.</tr>
+  </text>
+  <text>
+    <en>Drawn on page {page}, repeated on: {pages}</en>
+    <tr>Dibujado en la página {page}, repetido en: {pages}</tr>
+  </text>
+  <text>
+    <en>Only on this page</en>
+    <tr>Solo en esta página</tr>
+  </text>
+  <text>
+    <en>Black</en>
+    <tr>Negro</tr>
+  </text>
+  <text>
+    <en>White</en>
+    <tr>Blanco</tr>
+  </text>
+  <text>
+    <en>Grey</en>
+    <tr>Gris</tr>
+  </text>
+  <text>
+    <en>Only the page where it was drawn</en>
+    <tr>Solo la página donde se dibujó</tr>
+  </text>
+  <text>
+    <en>All pages</en>
+    <tr>Todas las páginas</tr>
+  </text>
+  <text>
+    <en>Odd pages</en>
+    <tr>Páginas impares</tr>
+  </text>
+  <text>
+    <en>Even pages</en>
+    <tr>Páginas pares</tr>
+  </text>
+  <text>
+    <en>These pages:</en>
+    <tr>Estas páginas:</tr>
+  </text>
+  <text>
+    <en>The pages; the number after ● is how many boxes a page has</en>
+    <tr>Las páginas; el número después de ● es cuántos recuadros tiene cada una</tr>
+  </text>
+  <text>
+    <en>Page</en>
+    <tr>Página</tr>
+  </text>
+  <text>
+    <en>Show the result</en>
+    <tr>Mostrar el resultado</tr>
+  </text>
+  <text>
+    <en>The page as it will be in the redacted copy (the boxes can't be changed while it is shown)</en>
+    <tr>La página tal como quedará en la copia censurada (mientras se muestra, los recuadros no se pueden cambiar)</tr>
+  </text>
+  <text>
+    <en>Drag on the page to draw a box. Drag a box to move it, or its edges to resize it; Ctrl+click adds to the selection, Shift+drag draws over other boxes.</en>
+    <tr>Arrastre sobre la página para dibujar un recuadro. Arrastre un recuadro para moverlo, o sus bordes para cambiar su tamaño; Ctrl+clic lo añade a la selección, Mayús+arrastrar dibuja encima de otros recuadros.</tr>
+  </text>
+  <text>
+    <en>Other colour…</en>
+    <tr>Otro color…</tr>
+  </text>
+  <text>
+    <en>1-5, 8, 10-</en>
+    <tr>1-5, 8, 10-</tr>
+  </text>
+  <text>
+    <en>Pages and ranges, separated by commas: 3, 5-9, 12- (to the end), LAST, LAST-1</en>
+    <tr>Páginas e intervalos, separados por comas: 3, 5-9, 12- (hasta el final), LAST, LAST-1</tr>
+  </text>
+  <text>
+    <en>Delete</en>
+    <tr>Borrar</tr>
+  </text>
+  <text>
+    <en>Colour:</en>
+    <tr>Color:</tr>
+  </text>
+  <text>
+    <en>Pages:</en>
+    <tr>Páginas:</tr>
+  </text>
+  <text>
+    <en>&amp;File</en>
+    <tr>&amp;Archivo</tr>
+  </text>
+  <text>
+    <en>Open…</en>
+    <tr>Abrir…</tr>
+  </text>
+  <text>
+    <en>Open recent</en>
+    <tr>Abrir reciente</tr>
+  </text>
+  <text>
+    <en>Save the redacted copy…</en>
+    <tr>Guardar la copia censurada…</tr>
+  </text>
+  <text>
+    <en>Write a copy of the document with what is under the boxes removed</en>
+    <tr>Escribir una copia del documento sin lo que hay debajo de los recuadros</tr>
+  </text>
+  <text>
+    <en>Also remove metadata, hidden text, attachments and scripts</en>
+    <tr>Quitar también metadatos, texto oculto, adjuntos y scripts</tr>
+  </text>
+  <text>
+    <en>Remove as well what the document holds besides its pages: its title, author and other metadata, text that isn't shown, attached files, JavaScript and links</en>
+    <tr>Quitar también lo que el documento guarda además de sus páginas: el título, el autor y otros metadatos, el texto que no se ve, los archivos adjuntos, el JavaScript y los enlaces</tr>
+  </text>
+  <text>
+    <en>Quit</en>
+    <tr>Salir</tr>
+  </text>
+  <text>
+    <en>&amp;Edit</en>
+    <tr>&amp;Editar</tr>
+  </text>
+  <text>
+    <en>Undo</en>
+    <tr>Deshacer</tr>
+  </text>
+  <text>
+    <en>Redo</en>
+    <tr>Rehacer</tr>
+  </text>
+  <text>
+    <en>Delete the selected boxes</en>
+    <tr>Borrar los recuadros seleccionados</tr>
+  </text>
+  <text>
+    <en>Select the boxes of this page</en>
+    <tr>Seleccionar los recuadros de esta página</tr>
+  </text>
+  <text>
+    <en>Select none</en>
+    <tr>No seleccionar ninguno</tr>
+  </text>
+  <text>
+    <en>Delete the boxes drawn on this page</en>
+    <tr>Borrar los recuadros dibujados en esta página</tr>
+  </text>
+  <text>
+    <en>Delete all the boxes</en>
+    <tr>Borrar todos los recuadros</tr>
+  </text>
+  <text>
+    <en>&amp;View</en>
+    <tr>&amp;Ver</tr>
+  </text>
+  <text>
+    <en>Previous page</en>
+    <tr>Página anterior</tr>
+  </text>
+  <text>
+    <en>Next page</en>
+    <tr>Página siguiente</tr>
+  </text>
+  <text>
+    <en>First page</en>
+    <tr>Primera página</tr>
+  </text>
+  <text>
+    <en>Last page</en>
+    <tr>Última página</tr>
+  </text>
+  <text>
+    <en>Fit the page</en>
+    <tr>Ajustar la página</tr>
+  </text>
+  <text>
+    <en>Fit the width</en>
+    <tr>Ajustar el ancho</tr>
+  </text>
+  <text>
+    <en>Zoom in</en>
+    <tr>Acercar</tr>
+  </text>
+  <text>
+    <en>Zoom out</en>
+    <tr>Alejar</tr>
+  </text>
+  <text>
+    <en>&amp;Settings</en>
+    <tr>Co&amp;nfiguración</tr>
+  </text>
+  <text>
+    <en>Language</en>
+    <tr>Idioma</tr>
+  </text>
+  <text>
+    <en>&amp;Help</en>
+    <tr>A&amp;yuda</tr>
+  </text>
+  <text>
+    <en>About</en>
+    <tr>Acerca de</tr>
+  </text>
+  <text>
+    <en>Tools</en>
+    <tr>Herramientas</tr>
+  </text>
+  <text>
+    <en>Open PDF</en>
+    <tr>Abrir PDF</tr>
+  </text>
+  <text>
+    <en>PDF files (*.pdf)</en>
+    <tr>Archivos PDF (*.pdf)</tr>
+  </text>
+  <text>
+    <en>Opened {path} ({count} page)</en>
+    <tr>Se abrió {path} ({count} página)</tr>
+  </text>
+  <text>
+    <en>Opened {path} ({count} pages)</en>
+    <tr>Se abrió {path} ({count} páginas)</tr>
+  </text>
+  <text>
+    <en>That password is not right. The password of {name}:</en>
+    <tr>Esa contraseña no es correcta. La contraseña de {name}:</tr>
+  </text>
+  <text>
+    <en>{name} is protected. Its password:</en>
+    <tr>{name} está protegido. Su contraseña:</tr>
+  </text>
+  <text>
+    <en>Password</en>
+    <tr>Contraseña</tr>
+  </text>
+  <text>
+    <en>Save the redacted copy</en>
+    <tr>Guardar la copia censurada</tr>
+  </text>
+  <text>
+    <en>Saved {path} ({count} area redacted)</en>
+    <tr>Se guardó {path} ({count} zona censurada)</tr>
+  </text>
+  <text>
+    <en>Saved {path} ({count} areas redacted)</en>
+    <tr>Se guardó {path} ({count} zonas censuradas)</tr>
+  </text>
+  <text>
+    <en>The colour of the boxes</en>
+    <tr>El color de los recuadros</tr>
+  </text>
+  <text>
+    <en>Its page</en>
+    <tr>Su página</tr>
+  </text>
+  <text>
+    <en>Unsaved boxes</en>
+    <tr>Recuadros sin guardar</tr>
+  </text>
+  <text>
+    <en>The boxes haven't been applied to a redacted copy. Save one before going on?</en>
+    <tr>Los recuadros no se han aplicado a ninguna copia censurada. ¿Guardar una antes de seguir?</tr>
+  </text>
+  <text>
+    <en>About py-redact</en>
+    <tr>Acerca de py-redact</tr>
+  </text>
+  <text>
+    <en>&lt;b&gt;py-redact {version}&lt;/b&gt;&lt;p&gt;Redacts PDF documents: what lies under the boxes drawn on their pages is removed for good, and the boxes are filled with a colour.&lt;/p&gt;&lt;p&gt;By {author}.&lt;/p&gt;&lt;p&gt;Licensed under the GNU General Public License, version 3 or later.&lt;/p&gt;</en>
+    <tr>&lt;b&gt;py-redact {version}&lt;/b&gt;&lt;p&gt;Censura documentos PDF: lo que hay debajo de los recuadros dibujados en sus páginas se elimina definitivamente, y los recuadros se rellenan con un color.&lt;/p&gt;&lt;p&gt;Por {author}.&lt;/p&gt;&lt;p&gt;Bajo la Licencia Pública General de GNU, versión 3 o posterior.&lt;/p&gt;</tr>
+  </text>
+  <text>
+    <en>Goes on</en>
+    <tr>Va en</tr>
+  </text>
+  <text>
+    <en>Colour</en>
+    <tr>Color</tr>
+  </text>
+  <text>
+    <en>Size (mm)</en>
+    <tr>Tamaño (mm)</tr>
+  </text>
+  <text>
+    <en>The language of the interface could not be changed: {error}</en>
+    <tr>No se pudo cambiar el idioma de la interfaz: {error}</tr>
+  </text>
+  <text>
+    <en>{path} not found</en>
+    <tr>No se encontró {path}</tr>
+  </text>
+  <text>
+    <en>There are no boxes to redact</en>
+    <tr>No hay recuadros que censurar</tr>
+  </text>
+  <text>
+    <en>A box has pages that can't be read: {error}</en>
+    <tr>Un recuadro tiene páginas que no se pueden leer: {error}</tr>
+  </text>
+  <text>
+    <en>{width} × {height} mm, {left} mm from the left and {top} mm from the top</en>
+    <tr>{width} × {height} mm, a {left} mm de la izquierda y {top} mm de arriba</tr>
+  </text>
+  <text>
+    <en>(several)</en>
+    <tr>(varios)</tr>
+  </text>
+  <text>
+    <en>Could not keep the setting: {error}</en>
+    <tr>No se pudo guardar la configuración: {error}</tr>
+  </text>
+  <text>
+    <en>Replace the original</en>
+    <tr>Reemplazar el original</tr>
+  </text>
+  <text>
+    <en>The redacted copy will take the place of {name}, and what is under the boxes will be lost for good. Go on?</en>
+    <tr>La copia censurada ocupará el lugar de {name}, y lo que hay debajo de los recuadros se perderá definitivamente. ¿Seguir?</tr>
+  </text>
+  <text>
+    <en>Clear the list</en>
+    <tr>Vaciar la lista</tr>
+  </text>
+  <text>
+    <en>Delete the {count} box of the document?</en>
+    <tr>¿Borrar el {count} recuadro del documento?</tr>
+  </text>
+  <text>
+    <en>Delete the {count} boxes of the document?</en>
+    <tr>¿Borrar los {count} recuadros del documento?</tr>
+  </text>
+  <text>
+    <en>Boxes</en>
+    <tr>Recuadros</tr>
+  </text>
+  <text>
+    <en>{count} box selected</en>
+    <tr>{count} recuadro seleccionado</tr>
+  </text>
+  <text>
+    <en>{count} boxes selected</en>
+    <tr>{count} recuadros seleccionados</tr>
+  </text>
+  <text>
+    <en>New boxes</en>
+    <tr>Recuadros nuevos</tr>
+  </text>
+  <text>
+    <en>{path} is protected by a password</en>
+    <tr>{path} está protegido con contraseña</tr>
+  </text>
+  <text>
+    <en>{token} is not a page number</en>
+    <tr>{token} no es un número de página</tr>
+  </text>
+  <text>
+    <en>{path} is not a PDF</en>
+    <tr>{path} no es un PDF</tr>
+  </text>
+  <text>
+    <en>{path} cannot be read as a PDF: {error}</en>
+    <tr>{path} no se puede leer como PDF: {error}</tr>
+  </text>
+  <text>
+    <en>{path} cannot be written: {error}</en>
+    <tr>No se puede escribir {path}: {error}</tr>
+  </text>
+</interface>

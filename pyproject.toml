@@ -1,0 +1,31 @@
+[project]
+name = "py-redact"
+version = "0.1.0"
+description = "Redact PDF documents: remove what lies under boxes drawn on their pages"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Nicolas Vaughan", email = "nivaca@fastmail.com" }
+]
+requires-python = ">=3.15"
+keywords = ["pdf", "redaction", "redact", "anonymize", "censor"]
+dependencies = [
+    "pymupdf>=1.26",
+    "pyside6-essentials>=6.10",
+]
+
+[project.gui-scripts]
+py-redact = "py_redact.gui:main"
+
+[build-system]
+requires = ["uv_build>=0.10,<0.14"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore:'typing.ByteString':DeprecationWarning"]

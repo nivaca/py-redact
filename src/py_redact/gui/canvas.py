@@ -1,0 +1,303 @@
+"""The page being redacted, and its boxes: drawn by dragging on the page,
+moved by dragging them, resized by dragging their edges and corners."""
+
+from __future__ import annotations
+
+import pymupdf
+from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
+from PySide6.QtGui import QBrush, QColor, QCursor, QImage, QPainter, QPen, QPixmap
+from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView
+
+from ..interface import tr
+from ..redact import Box, Rect, normalized
+
+SCENE_MARGIN = 12  # points around the page
+MIN_SIZE = 2.0  # points: a smaller drag is a click
+GRIP = 6  # pixels from an edge where dragging resizes
+MAX_PIXELS = 40_000_000  # the largest rendering of a page
+SELECTED = QColor(42, 127, 255)
+OUTLINE = QColor(128, 128, 128)
+
+
+def page_image(page: pymupdf.Page, scale: float) -> QImage:
+    pix = page.get_pixmap(matrix=pymupdf.Matrix(scale, scale), alpha=False)
+    return QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format.Format_RGB888).copy()
+
+
+class BoxItem(QGraphicsRectItem):
+    def __init__(self, index: int, box: Box, own: bool, selected: bool):
+        super().__init__(QRectF(QPointF(box.rect[0], box.rect[1]), QPointF(box.rect[2], box.rect[3])))
+        self.index = index
+        self.box = box
+        self.own = own
+        self.chosen = selected
+        fill = QColor(box.color)
+        fill.setAlpha(170)
+        self.setBrush(QBrush(fill))
+        pen = QPen(SELECTED if selected else OUTLINE, 2 if selected else 1)
+        pen.setCosmetic(True)
+        if not own or box.repeat.strip():
+            pen.setStyle(Qt.PenStyle.DashLine)
+        self.setPen(pen)
+        self.setZValue(2 if selected else 1)
+        if box.repeat.strip():
+            tip = tr("Drawn on page {page}, repeated on: {pages}", page=box.page + 1, pages=box.repeat)
+        else:
+            tip = tr("Only on this page")
+        self.setToolTip(tip)
+
+    def paint(self, painter, option, widget=None):
+        super().paint(painter, option, widget)
+        if self.chosen:  # (the corners, of a fixed size on the screen)
+            scale = painter.worldTransform().m11() or 1
+            side = 7 / scale
+            r = self.rect()
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(SELECTED)
+            for corner in (r.topLeft(), r.topRight(), r.bottomLeft(), r.bottomRight()):
+                painter.drawRect(QRectF(corner.x() - side / 2, corner.y() - side / 2, side, side))
+
+
+class PageCanvas(QGraphicsView):
+    """A page and its boxes. The boxes are identified by their index in the
+    window's list; what the user does is reported with the signals."""
+
+    drawn = Signal(tuple)  # Rect: a new box
+    edited = Signal(int, tuple)  # index, Rect: a box moved or resized
+    picked = Signal(list, bool)  # indices clicked; whether to add them to the selection
+    zoom_changed = Signal(float)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setScene(QGraphicsScene(self))
+        self.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        self.setDragMode(QGraphicsView.DragMode.NoDrag)
+        self.setMouseTracking(True)
+        self.setBackgroundBrush(self.palette().dark())
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.page: pymupdf.Page | None = None
+        self.page_size = QRectF()
+        self.editable = True
+        self.fit = "page"  # 'page', 'width' or '' (a zoom of its own)
+        self.pixmap_item: QGraphicsPixmapItem | None = None
+        self.sheet: QGraphicsRectItem | None = None
+        self.items_: list[BoxItem] = []
+        self._drag: dict | None = None
+        self._rendered = 0.0
+        self.render_timer = QTimer(self, singleShot=True, interval=120)
+        self.render_timer.timeout.connect(self._render)
+
+    # ----------------------------------------------------------------- page and boxes
+
+    def show_page(self, page: pymupdf.Page | None, boxes: list[tuple[int, Box, bool]], selected: list[int],
+                  editable: bool = True, keep_view: bool = False):
+        """PAGE, with BOXES: (index, box, whether it was drawn on this page)."""
+        same = keep_view and page is not None and self.page is not None and QRectF(*page.rect) == self.page_size
+        self.scene().clear()
+        self.items_, self.pixmap_item, self.sheet, self._drag = [], None, None, None
+        self.page = page
+        self.editable = editable
+        if page is None:
+            self.page_size = QRectF()
+            return
+        self.page_size = QRectF(*page.rect)
+        self.scene().setSceneRect(self.page_size.adjusted(-SCENE_MARGIN, -SCENE_MARGIN, SCENE_MARGIN, SCENE_MARGIN))
+        self.sheet = self.scene().addRect(self.page_size, QPen(Qt.PenStyle.NoPen), QBrush(Qt.GlobalColor.white))
+        self.pixmap_item = QGraphicsPixmapItem()
+        self.pixmap_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
+        self.scene().addItem(self.pixmap_item)
+        self._rendered = 0.0
+        if editable:
+            for index, box, own in boxes:
+                item = BoxItem(index, box, own, index in selected)
+                self.scene().addItem(item)
+                self.items_.append(item)
+        if not same:
+            self.apply_fit()
+        self._render()
+
+    def zoom(self) -> float:
+        return self.transform().m11()
+
+    def _render(self):
+        if self.page is None or self.pixmap_item is None:
+            return
+        scale = self.zoom() * self.devicePixelRatioF()
+        w, h = self.page_size.width() * scale, self.page_size.height() * scale
+        if w * h > MAX_PIXELS:
+            scale *= (MAX_PIXELS / (w * h)) ** 0.5
+        if abs(scale - self._rendered) < 1e-3:
+            return
+        self._rendered = scale
+        self.pixmap_item.setPixmap(QPixmap.fromImage(page_image(self.page, scale)))
+        self.pixmap_item.setScale(1 / scale)
+
+    # ----------------------------------------------------------------- zoom
+
+    def set_zoom(self, factor: float, fit: str = ""):
+        factor = max(0.05, min(factor, 16))
+        self.fit = fit
+        self.resetTransform()
+        self.scale(factor, factor)
+        self.render_timer.start()
+        self.zoom_changed.emit(factor)
+
+    def apply_fit(self):
+        if self.page_size.isEmpty() or not self.fit:
+            return
+        room = self.viewport().size()
+        margin = 2 * SCENE_MARGIN + 4  # (points around the page, and a few pixels)
+        by_width = (room.width() - 4) / (self.page_size.width() + margin)
+        by_height = (room.height() - 4) / (self.page_size.height() + margin)
+        self.set_zoom(by_width if self.fit == "width" else min(by_width, by_height), self.fit)
+
+    def zoom_by(self, factor: float):
+        self.set_zoom(self.zoom() * factor)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.apply_fit()
+
+    def wheelEvent(self, event):
+        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+            factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15
+            z = max(0.05, min(self.zoom() * factor, 16))
+            self.scale(z / self.zoom(), z / self.zoom())
+            self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
+            self.fit = ""
+            self.render_timer.start()
+            self.zoom_changed.emit(z)
+            event.accept()
+        else:
+            super().wheelEvent(event)
+
+    # ----------------------------------------------------------------- the mouse
+
+    def _hit(self, pos) -> tuple[BoxItem | None, str]:
+        """The box at POS (view coordinates), and the edges grabbed ('' to move
+        it; else some of 'l', 't', 'r', 'b')."""
+        point = self.mapToScene(pos)
+        grip = GRIP / (self.zoom() or 1)
+        found = None
+        for item in sorted(self.items_, key=lambda i: -i.zValue()):
+            if item.rect().adjusted(-grip, -grip, grip, grip).contains(point):
+                found = item
+                break
+        if found is None:
+            return None, ""
+        r = found.rect()
+        edges = ""
+        if abs(point.x() - r.left()) <= grip:
+            edges += "l"
+        elif abs(point.x() - r.right()) <= grip:
+            edges += "r"
+        if abs(point.y() - r.top()) <= grip:
+            edges += "t"
+        elif abs(point.y() - r.bottom()) <= grip:
+            edges += "b"
+        if not edges and not r.contains(point):
+            return None, ""
+        return found, edges
+
+    @staticmethod
+    def _cursor(edges: str) -> Qt.CursorShape:
+        if edges in ("lt", "rb"):
+            return Qt.CursorShape.SizeFDiagCursor
+        if edges in ("rt", "lb"):
+            return Qt.CursorShape.SizeBDiagCursor
+        if edges in ("l", "r"):
+            return Qt.CursorShape.SizeHorCursor
+        if edges in ("t", "b"):
+            return Qt.CursorShape.SizeVerCursor
+        return Qt.CursorShape.SizeAllCursor
+
+    def _clamp(self, point: QPointF) -> QPointF:
+        r = self.page_size
+        return QPointF(min(max(point.x(), r.left()), r.right()), min(max(point.y(), r.top()), r.bottom()))
+
+    def mousePressEvent(self, event):
+        if not self.editable or self.page is None or event.button() != Qt.MouseButton.LeftButton:
+            super().mousePressEvent(event)
+            return
+        add = bool(event.modifiers() & Qt.KeyboardModifier.ControlModifier)
+        item, edges = (None, "") if event.modifiers() & Qt.KeyboardModifier.ShiftModifier \
+            else self._hit(event.position().toPoint())
+        start = self.mapToScene(event.position().toPoint())
+        if item is None:
+            if not add:
+                self.picked.emit([], False)
+            start = self._clamp(start)
+            rect = QGraphicsRectItem(QRectF(start, start))
+            pen = QPen(SELECTED, 1, Qt.PenStyle.DashLine)
+            pen.setCosmetic(True)
+            rect.setPen(pen)
+            rect.setZValue(3)
+            self.scene().addItem(rect)
+            self._drag = {"kind": "draw", "start": start, "item": rect}
+        else:
+            if not item.chosen or add:
+                self.picked.emit([item.index], add)
+                item = next((i for i in self.items_ if i.index == item.index), None)
+                if item is None or add:
+                    self._drag = None
+                    return
+            self._drag = {"kind": "edit", "start": start, "item": item, "edges": edges,
+                          "rect": QRectF(item.rect()), "moved": False}
+        event.accept()
+
+    def mouseMoveEvent(self, event):
+        drag = self._drag
+        if drag is None:
+            if self.editable and self.page is not None:
+                item, edges = self._hit(event.position().toPoint())
+                self.viewport().setCursor(QCursor(self._cursor(edges) if item else Qt.CursorShape.CrossCursor))
+            super().mouseMoveEvent(event)
+            return
+        point = self.mapToScene(event.position().toPoint())
+        if drag["kind"] == "draw":
+            drag["item"].setRect(QRectF(drag["start"], self._clamp(point)).normalized())
+        else:
+            r = QRectF(drag["rect"])
+            delta = point - drag["start"]
+            if not drag["edges"]:
+                r.translate(delta)
+                # (kept on the page)
+                dx = max(self.page_size.left() - r.left(), 0) + min(self.page_size.right() - r.right(), 0)
+                dy = max(self.page_size.top() - r.top(), 0) + min(self.page_size.bottom() - r.bottom(), 0)
+                r.translate(dx, dy)
+            else:
+                p = self._clamp(point)
+                if "l" in drag["edges"]:
+                    r.setLeft(p.x())
+                if "r" in drag["edges"]:
+                    r.setRight(p.x())
+                if "t" in drag["edges"]:
+                    r.setTop(p.y())
+                if "b" in drag["edges"]:
+                    r.setBottom(p.y())
+                r = r.normalized()
+            drag["item"].setRect(r)
+            drag["moved"] = True
+        event.accept()
+
+    def mouseReleaseEvent(self, event):
+        drag, self._drag = self._drag, None
+        if drag is None or event.button() != Qt.MouseButton.LeftButton:
+            super().mouseReleaseEvent(event)
+            return
+        r = drag["item"].rect().normalized()
+        if drag["kind"] == "draw":
+            self.scene().removeItem(drag["item"])
+            if r.width() >= MIN_SIZE and r.height() >= MIN_SIZE:
+                self.drawn.emit(self._rect(r))
+        elif drag["moved"] and r.width() >= MIN_SIZE and r.height() >= MIN_SIZE:
+            self.edited.emit(drag["item"].index, self._rect(r))
+        elif drag["moved"]:
+            drag["item"].setRect(drag["rect"])
+        event.accept()
+
+    @staticmethod
+    def _rect(r: QRectF) -> Rect:
+        return normalized((round(r.left(), 2), round(r.top(), 2), round(r.right(), 2), round(r.bottom(), 2)))
