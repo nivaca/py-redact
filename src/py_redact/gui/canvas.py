@@ -9,7 +9,7 @@ from PySide6.QtGui import QBrush, QColor, QCursor, QImage, QPainter, QPen, QPixm
 from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView
 
 from ..interface import tr
-from ..redact import Box, Rect, normalized
+from ..redact import Box, Rect, nearest_word, normalized, text_rects, words
 
 SCENE_MARGIN = 12  # points around the page
 MIN_SIZE = 2.0  # points: a smaller drag is a click
@@ -66,6 +66,8 @@ class PageCanvas(QGraphicsView):
     edited = Signal(int, tuple)  # index, Rect: a box moved or resized
     picked = Signal(list, bool)  # indices clicked; whether to add them to the selection
     zoom_changed = Signal(float)
+    text_chosen = Signal(list)  # [Rect]: the lines of the text selected
+    menu_asked = Signal(int, object)  # index of the box (-1: none), the place on the screen (QPoint)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -80,6 +82,8 @@ class PageCanvas(QGraphicsView):
         self.page_size = QRectF()
         self.editable = True
         self.fit = "page"  # 'page', 'width' or '' (a zoom of its own)
+        self.mode = "box"  # 'box': dragging draws boxes; 'text': it selects text
+        self._words: list | None = None  # (of the page, when first needed)
         self.pixmap_item: QGraphicsPixmapItem | None = None
         self.sheet: QGraphicsRectItem | None = None
         self.items_: list[BoxItem] = []
@@ -96,6 +100,8 @@ class PageCanvas(QGraphicsView):
         same = keep_view and page is not None and self.page is not None and QRectF(*page.rect) == self.page_size
         self.scene().clear()
         self.items_, self.pixmap_item, self.sheet, self._drag = [], None, None, None
+        if page is not self.page:
+            self._words = None
         self.page = page
         self.editable = editable
         if page is None:
@@ -217,7 +223,47 @@ class PageCanvas(QGraphicsView):
         r = self.page_size
         return QPointF(min(max(point.x(), r.left()), r.right()), min(max(point.y(), r.top()), r.bottom()))
 
+    def contextMenuEvent(self, event):
+        if not self.editable or self.page is None:
+            return
+        item, _ = self._hit(event.pos())
+        if item is not None and not item.chosen:
+            self.picked.emit([item.index], False)
+        self.menu_asked.emit(item.index if item else -1, event.globalPos())
+        event.accept()
+
+    def page_words(self) -> list:
+        if self._words is None:
+            self._words = words(self.page) if self.page is not None else []
+        return self._words
+
+    def _text_selection(self, start: QPointF, end: QPointF) -> list[Rect]:
+        found = self.page_words()
+        a = nearest_word(found, start.x(), start.y())
+        b = nearest_word(found, end.x(), end.y())
+        return [] if a is None else text_rects(found, a, b)
+
+    def _show_text(self, rects: list[Rect]):
+        for item in self._drag["marks"]:
+            self.scene().removeItem(item)
+        color = QColor(SELECTED)
+        color.setAlpha(90)
+        self._drag["marks"] = [self.scene().addRect(QRectF(QPointF(r[0], r[1]), QPointF(r[2], r[3])),
+                                                    QPen(Qt.PenStyle.NoPen), QBrush(color)) for r in rects]
+        for item in self._drag["marks"]:
+            item.setZValue(3)
+        self._drag["rects"] = rects
+
     def mousePressEvent(self, event):
+        if (self.editable and self.page is not None and self.mode == "text"
+                and event.button() == Qt.MouseButton.LeftButton):
+            start = self.mapToScene(event.position().toPoint())
+            self.picked.emit([], False)
+            self._drag = {"kind": "text", "start": start, "marks": [], "rects": []}
+            if not self.page_words():
+                self._drag = None
+            event.accept()
+            return
         if not self.editable or self.page is None or event.button() != Qt.MouseButton.LeftButton:
             super().mousePressEvent(event)
             return
@@ -250,13 +296,17 @@ class PageCanvas(QGraphicsView):
     def mouseMoveEvent(self, event):
         drag = self._drag
         if drag is None:
-            if self.editable and self.page is not None:
+            if self.editable and self.page is not None and self.mode == "text":
+                self.viewport().setCursor(QCursor(Qt.CursorShape.IBeamCursor))
+            elif self.editable and self.page is not None:
                 item, edges = self._hit(event.position().toPoint())
                 self.viewport().setCursor(QCursor(self._cursor(edges) if item else Qt.CursorShape.CrossCursor))
             super().mouseMoveEvent(event)
             return
         point = self.mapToScene(event.position().toPoint())
-        if drag["kind"] == "draw":
+        if drag["kind"] == "text":
+            self._show_text(self._text_selection(drag["start"], point))
+        elif drag["kind"] == "draw":
             drag["item"].setRect(QRectF(drag["start"], self._clamp(point)).normalized())
         else:
             r = QRectF(drag["rect"])
@@ -286,6 +336,16 @@ class PageCanvas(QGraphicsView):
         drag, self._drag = self._drag, None
         if drag is None or event.button() != Qt.MouseButton.LeftButton:
             super().mouseReleaseEvent(event)
+            return
+        if drag["kind"] == "text":
+            point = self.mapToScene(event.position().toPoint())
+            moved = (point - drag["start"]).manhattanLength() * self.zoom() > 3
+            rects = self._text_selection(drag["start"], point) if moved else []
+            for item in drag["marks"]:
+                self.scene().removeItem(item)
+            if rects:
+                self.text_chosen.emit(rects)
+            event.accept()
             return
         r = drag["item"].rect().normalized()
         if drag["kind"] == "draw":

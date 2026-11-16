@@ -61,12 +61,23 @@ It needs Python 3.15, PyMuPDF (which does the redaction) and PySide6.
 - Drag on the page to draw a box. Drag a box to move it, or its edges and
   corners to resize it. Ctrl+click adds a box to the selection; Shift+drag
   draws a new box over others.
-- The panel on the right gives the colour and the pages of the selected
-  boxes. With no box selected, it gives those of the boxes you draw next.
+- *Select text* (T) marks text instead: drag over it, and a box is made over
+  each of its lines. *Draw boxes* (B) goes back to drawing.
+- Right-click a box for its pages (its own page only, all, odd, even, from
+  it to the end, or a list such as `2-10, 15, LAST`), its colour, and to make
+  its colour the one of new boxes. Right-click the page for the colour of new
+  boxes.
+- A new box is always on its own page only, whatever the box before it was
+  repeated on, and has the colour of new boxes.
+- *Settings ▸ Settings…* keeps, in the configuration file: the colour of new
+  boxes; what happens to images under a box (blank that part, remove the
+  whole image, or leave them) and to drawings (remove those wholly under a
+  box, those it touches, or none); and whether to also remove metadata,
+  hidden text, attachments and scripts. Text under a box is always removed.
 - *View ▸ Show the result* (Ctrl+R) shows the page as it will be in the
   redacted copy.
-- *File ▸ Also remove metadata, hidden text, attachments and scripts* cleans
-  the rest of the document as well when the copy is saved.
+- Closing the window, or opening another file, with boxes not yet saved to a
+  redacted copy asks first.
 
 The interface is in English and Spanish (*Settings ▸ Language*).
 

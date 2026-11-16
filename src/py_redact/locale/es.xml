@@ -64,8 +64,8 @@
     <tr>La página tal como quedará en la copia censurada (mientras se muestra, los recuadros no se pueden cambiar)</tr>
   </text>
   <text>
-    <en>Drag on the page to draw a box. Drag a box to move it, or its edges to resize it; Ctrl+click adds to the selection, Shift+drag draws over other boxes.</en>
-    <tr>Arrastre sobre la página para dibujar un recuadro. Arrastre un recuadro para moverlo, o sus bordes para cambiar su tamaño; Ctrl+clic lo añade a la selección, Mayús+arrastrar dibuja encima de otros recuadros.</tr>
+    <en>Drag on the page to draw a box (B), or over text to mark it (T). Drag a box to move it, or its edges to resize it; right-click it for its pages and colour.</en>
+    <tr>Arrastre sobre la página para dibujar un recuadro (B), o sobre un texto para marcarlo (T). Arrastre un recuadro para moverlo, o sus bordes para cambiar su tamaño; con el botón derecho, sus páginas y su color.</tr>
   </text>
   <text>
     <en>Other colour…</en>
@@ -370,5 +370,113 @@
   <text>
     <en>{path} cannot be written: {error}</en>
     <tr>No se puede escribir {path}: {error}</tr>
+  </text>
+  <text>
+    <en>Blank the part under the box</en>
+    <tr>Dejar en blanco la parte debajo del recuadro</tr>
+  </text>
+  <text>
+    <en>Colour of new boxes</en>
+    <tr>Color de los recuadros nuevos</tr>
+  </text>
+  <text>
+    <en>Colour of new boxes:</en>
+    <tr>Color de los recuadros nuevos:</tr>
+  </text>
+  <text>
+    <en>Delete the box</en>
+    <tr>Borrar el recuadro</tr>
+  </text>
+  <text>
+    <en>Delete the {count} boxes</en>
+    <tr>Borrar los {count} recuadros</tr>
+  </text>
+  <text>
+    <en>Dragging on the page draws a box</en>
+    <tr>Arrastrar sobre la página dibuja un recuadro</tr>
+  </text>
+  <text>
+    <en>Dragging over text selects it, and a box is made over each of its lines</en>
+    <tr>Arrastrar sobre un texto lo selecciona, y se hace un recuadro sobre cada una de sus líneas</tr>
+  </text>
+  <text>
+    <en>Draw boxes</en>
+    <tr>Dibujar recuadros</tr>
+  </text>
+  <text>
+    <en>Drawings under a box:</en>
+    <tr>Dibujos debajo de un recuadro:</tr>
+  </text>
+  <text>
+    <en>From page {page} to the end</en>
+    <tr>De la página {page} hasta el final</tr>
+  </text>
+  <text>
+    <en>Images under a box:</en>
+    <tr>Imágenes debajo de un recuadro:</tr>
+  </text>
+  <text>
+    <en>Leave the drawings as they are</en>
+    <tr>Dejar los dibujos como están</tr>
+  </text>
+  <text>
+    <en>Leave the images as they are</en>
+    <tr>Dejar las imágenes como están</tr>
+  </text>
+  <text>
+    <en>Make {color} the colour of new boxes</en>
+    <tr>Usar {color} para los recuadros nuevos</tr>
+  </text>
+  <text>
+    <en>New boxes will be {color}</en>
+    <tr>Color de los recuadros nuevos: {color}</tr>
+  </text>
+  <text>
+    <en>Pages</en>
+    <tr>Páginas</tr>
+  </text>
+  <text>
+    <en>Remove the whole image</en>
+    <tr>Quitar la imagen entera</tr>
+  </text>
+  <text>
+    <en>Remove those a box touches</en>
+    <tr>Quitar los que toca un recuadro</tr>
+  </text>
+  <text>
+    <en>Remove those wholly under a box</en>
+    <tr>Quitar los que quedan del todo debajo de un recuadro</tr>
+  </text>
+  <text>
+    <en>Select text</en>
+    <tr>Seleccionar texto</tr>
+  </text>
+  <text>
+    <en>Settings</en>
+    <tr>Configuración</tr>
+  </text>
+  <text>
+    <en>Settings…</en>
+    <tr>Configuración…</tr>
+  </text>
+  <text>
+    <en>Text under a box is always removed.</en>
+    <tr>El texto debajo de un recuadro siempre se elimina.</tr>
+  </text>
+  <text>
+    <en>These pages…</en>
+    <tr>Estas páginas…</tr>
+  </text>
+  <text>
+    <en>Up to page {page}</en>
+    <tr>Hasta la página {page}</tr>
+  </text>
+  <text>
+    <en>{count} line of text marked</en>
+    <tr>{count} línea de texto marcada</tr>
+  </text>
+  <text>
+    <en>{count} lines of text marked</en>
+    <tr>{count} líneas de texto marcadas</tr>
   </text>
 </interface>

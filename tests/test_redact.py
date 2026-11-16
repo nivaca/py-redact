@@ -6,7 +6,9 @@ import pymupdf
 import pytest
 
 from py_redact.pagesel import PageError, check, parse_pages
-from py_redact.redact import Box, PasswordError, RedactError, open_pdf, preview_page, rgb, write_redacted
+from py_redact.redact import (
+    Box, PasswordError, RedactError, nearest_word, open_pdf, preview_page, rgb, text_rects, words, write_redacted,
+)
 
 HEADER = (60, 40, 300, 66)
 NAME = (60, 105, 300, 126)
@@ -135,3 +137,38 @@ def test_preview_leaves_the_document(sample):
     doc = pymupdf.open(sample)
     one = preview_page(doc, 3, [Box(0, NAME, repeat="all")])
     assert "Person4" not in one[0].get_text() and "Person4" in doc[3].get_text()
+
+
+def test_text_rects(sample):
+    page = pymupdf.open(sample)[0]
+    found = words(page)
+    a, b = nearest_word(found, 75, 115), nearest_word(found, 150, 118)
+    assert len(text_rects(found, a, b)) == 1 and len(text_rects(found, 0, len(found) - 1)) == 3
+
+
+@pytest.mark.parametrize("images", ["pixels", "whole", "none"])
+def test_image_modes(tmp_path, images):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 20, 20), False)
+    pix.set_rect(pix.irect, (255, 0, 0))
+    page.insert_image(pymupdf.Rect(100, 100, 300, 300), pixmap=pix)
+    path, out = tmp_path / "in.pdf", tmp_path / "out.pdf"
+    doc.save(path)
+    write_redacted(path, [Box(0, (100, 100, 150, 150), "#00ff00")], out, images=images)
+    page = pymupdf.open(out)[0]
+    assert len(page.get_images()) == (0 if images == "whole" else 1)
+    assert page.get_pixmap().pixel(250, 250) == ((255, 255, 255) if images == "whole" else (255, 0, 0))
+
+
+def test_settings_survive_a_bad_file():
+    from py_redact import config, settings
+
+    path = config.config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('[parameters]\nredact_color = "red"\nredact_images = "whole"\nredact_clean = "yes"\n')
+    assert settings.load() == settings.Settings(images="whole")
+    path.write_text("not toml [")
+    assert settings.load() == settings.DEFAULTS
+    settings.save(settings.Settings(color="#ff0000", clean=True))
+    assert settings.load() == settings.Settings(color="#ff0000", clean=True)

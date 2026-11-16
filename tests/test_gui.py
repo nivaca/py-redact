@@ -6,8 +6,9 @@ import pymupdf
 import pytest
 from PySide6.QtCore import QEvent, QPointF, Qt
 from PySide6.QtGui import QMouseEvent
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 
+from py_redact import settings
 from py_redact.gui.window import MainWindow
 
 
@@ -76,8 +77,10 @@ def test_colour_and_repeat_then_save(window, tmp_path):
     window.set_repeat("nonsense")
     assert window.boxes[0].repeat == "2-"
     window.pick([], False)
-    drag(window, (60, 105), (300, 126))  # (new boxes take the last colour and pages)
-    assert (window.boxes[1].color, window.boxes[1].repeat) == ("#ffffff", "2-")
+    drag(window, (60, 105), (300, 126))
+    # (a new box takes neither the pages nor the colour of the one before: only the default colour)
+    assert (window.boxes[1].color, window.boxes[1].repeat) == ("#000000", "")
+    window.set_repeat("2-")
     window.result_box.setChecked(True)
     window.result_box.setChecked(False)
     out = tmp_path / "out.pdf"
@@ -85,6 +88,47 @@ def test_colour_and_repeat_then_save(window, tmp_path):
     assert not window.is_modified()
     pages = [p.get_text() for p in pymupdf.open(out)]
     assert "HEADER1" in pages[0] and not any("HEADER" in t or "Person" in t for t in pages[1:])
+
+
+def test_default_colour_is_kept(window):
+    drag(window, (60, 40), (300, 66))
+    window.set_color("#ff0000")
+    window.set_default_color(window.boxes[0].color)  # (Make red the colour of new boxes)
+    window.pick([], False)
+    drag(window, (60, 105), (300, 126))
+    assert window.boxes[1].color == "#ff0000"
+    assert settings.load().color == "#ff0000"
+    window.pick([], False)
+    window.set_color("#ffffff")  # (nothing selected: the default)
+    assert settings.load().color == "#ffffff" and [b.color for b in window.boxes] == ["#ff0000", "#ff0000"]
+
+
+def test_select_text(window):
+    window.set_tool("text")
+    drag(window, (75, 115), (150, 118))  # (over "Name: Person1")
+    assert len(window.boxes) == 1 and window.boxes[0].page == 0
+    x0, y0, x1, y1 = window.boxes[0].rect
+    assert x0 < 73 and x1 > 150 and y0 < 112 and y1 > 120
+    window.set_tool("box")
+    out = window.path.with_name("t.pdf")
+    assert window.save_to(out)
+    text = pymupdf.open(out)[0].get_text()
+    assert "Person1" not in text and "HEADER1" in text and "Body text stays" in text
+
+
+def test_select_text_over_lines(window):
+    window.set_tool("text")
+    drag(window, (75, 55), (110, 300))  # (from the header to the body: three lines)
+    assert len(window.boxes) == 3
+
+
+def test_quitting_asks_until_saved(window, tmp_path, monkeypatch):
+    asked = []
+    monkeypatch.setattr(window, "ask_unsaved", lambda: asked.append(1) or QMessageBox.StandardButton.Cancel)
+    drag(window, (60, 40), (300, 66))
+    assert not window.close() and asked == [1] and window.isVisible()
+    assert window.save_to(tmp_path / "out.pdf")
+    assert window.close() and asked == [1]
 
 
 def test_boxes_follow_the_page(window):

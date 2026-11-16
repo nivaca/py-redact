@@ -11,17 +11,18 @@ import pymupdf
 from PySide6.QtCore import QByteArray, QSettings, QSize, Qt, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QImage, QKeySequence, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QAbstractItemView, QApplication, QCheckBox, QColorDialog, QComboBox, QFileDialog, QFormLayout, QHBoxLayout,
+    QAbstractItemView, QApplication, QCheckBox, QColorDialog, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout,
     QHeaderView, QInputDialog, QLabel, QLineEdit, QListView, QListWidget, QListWidgetItem, QMainWindow, QMenu,
     QMessageBox, QPushButton, QSpinBox, QSplitter, QTableWidget, QTableWidgetItem, QToolBar, QToolButton,
     QVBoxLayout, QWidget,
 )
 
-from .. import __version__, config, interface
+from .. import __version__, config, interface, settings
 from ..interface import N_, ntr, tr
 from ..pagesel import check
 from ..redact import Box, PasswordError, RedactError, Rect, boxes_on, open_pdf, preview_page, write_redacted
 from .canvas import PageCanvas, page_image
+from .prefs import SettingsDialog
 
 RECENT = 10  # documents in File ▸ Open recent
 AUTHOR = '<a href="https://nicolasvaughan.org">Nicolas Vaughan</a>'
@@ -93,8 +94,7 @@ class MainWindow(QMainWindow):
         self.undo_stack: list[list[Box]] = []
         self.redo_stack: list[list[Box]] = []
         self.selected: list[int] = []  # indices in self.boxes
-        self.color = self.settings.value("color", "#000000")
-        self.repeat = ""  # the pages of new boxes
+        self.prefs = settings.load()  # (the default colour of new boxes, and how boxes are redacted)
         self._preview_doc: pymupdf.Document | None = None
         self._thumbs: dict[int, QImage] = {}  # page -> its picture, without the boxes
         self._rows: list[int] = []  # row of the table -> index of its box
@@ -126,6 +126,8 @@ class MainWindow(QMainWindow):
         self.canvas.drawn.connect(self.add_box)
         self.canvas.edited.connect(self.move_box)
         self.canvas.picked.connect(self.pick)
+        self.canvas.text_chosen.connect(self.add_text_boxes)
+        self.canvas.menu_asked.connect(self.box_menu)
         self.canvas.zoom_changed.connect(lambda z: self.zoom_label.setText(f"{z * 100:.0f} %"))
         self.page_spin = QSpinBox()
         self.page_spin.setMinimum(1)
@@ -146,8 +148,8 @@ class MainWindow(QMainWindow):
         lay.setContentsMargins(4, 4, 4, 4)
         lay.addLayout(top)
         lay.addWidget(self.canvas, 1)
-        hint = QLabel(tr("Drag on the page to draw a box. Drag a box to move it, or its edges to resize it; "
-                         "Ctrl+click adds to the selection, Shift+drag draws over other boxes."))
+        hint = QLabel(tr("Drag on the page to draw a box (B), or over text to mark it (T). Drag a box to move it, or "
+                         "its edges to resize it; right-click it for its pages and colour."))
         hint.setWordWrap(True)
         hint.setStyleSheet("color: palette(placeholder-text);")
         lay.addWidget(hint)
@@ -227,6 +229,8 @@ class MainWindow(QMainWindow):
                                    tr("Write a copy of the document with what is under the boxes removed"))
         self.a_clean = QAction(tr("Also remove metadata, hidden text, attachments and scripts"), self,
                                checkable=True)
+        self.a_clean.setChecked(self.prefs.clean)
+        self.a_clean.toggled.connect(lambda on: self.set_prefs(dataclasses.replace(self.prefs, clean=on)))
         self.a_clean.setToolTip(tr("Remove as well what the document holds besides its pages: its title, "
                                    "author and other metadata, text that isn't shown, attached files, "
                                    "JavaScript and links"))
@@ -247,6 +251,18 @@ class MainWindow(QMainWindow):
         self.a_clear_page = self._action(m, tr("Delete the boxes drawn on this page"), self.delete_page)
         self.a_clear_all = self._action(m, tr("Delete all the boxes"), self.delete_all)
 
+        m.addSeparator()
+        tools = QActionGroup(self)
+        self.a_tool_box = self._action(m, tr("Draw boxes"), lambda: self.set_tool("box"), "B",
+                                       tr("Dragging on the page draws a box"))
+        self.a_tool_text = self._action(m, tr("Select text"), lambda: self.set_tool("text"), "T",
+                                        tr("Dragging over text selects it, and a box is made over each of its "
+                                           "lines"))
+        for act in (self.a_tool_box, self.a_tool_text):
+            act.setCheckable(True)
+            tools.addAction(act)
+        self.a_tool_box.setChecked(True)
+
         m = self.menuBar().addMenu(tr("&View"))
         self.a_result = self._action(m, tr("Show the result"), self.result_box.toggle, "Ctrl+R")
         m.addSeparator()
@@ -265,6 +281,7 @@ class MainWindow(QMainWindow):
                                        QKeySequence.StandardKey.ZoomOut)
 
         m = self.menuBar().addMenu(tr("&Settings"))
+        self._action(m, tr("Settings…"), self.settings_dialog, QKeySequence.StandardKey.Preferences)
         lang = m.addMenu(tr("Language"))
         group = QActionGroup(self)
         for code, name in interface.names().items():
@@ -279,7 +296,8 @@ class MainWindow(QMainWindow):
         bar = QToolBar(tr("Tools"))
         bar.setObjectName("tools")
         bar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
-        for act in (self.a_open, self.a_save, None, self.a_undo, self.a_redo, self.a_delete, None, self.a_prev,
+        for act in (self.a_open, self.a_save, None, self.a_tool_box, self.a_tool_text, None, self.a_undo,
+                    self.a_redo, self.a_delete, None, self.a_prev,
                     self.a_next, None, self.a_fit, self.a_fit_width, self.a_zoom_out, self.a_zoom_in):
             if act is None:
                 bar.addSeparator()
@@ -298,13 +316,10 @@ class MainWindow(QMainWindow):
         split = self.settings.value("splitter")
         if isinstance(split, QByteArray):
             self.splitter.restoreState(split)
-        self.a_clean.setChecked(self.settings.value("clean", "false") == "true")
 
     def save_settings(self):
         self.settings.setValue("geometry", self.saveGeometry())
         self.settings.setValue("splitter", self.splitter.saveState())
-        self.settings.setValue("clean", "true" if self.a_clean.isChecked() else "false")
-        self.settings.setValue("color", self.color)
         self.settings.sync()
 
     def closeEvent(self, event):
@@ -317,11 +332,11 @@ class MainWindow(QMainWindow):
     def export_state(self) -> dict:
         """What a new window needs to carry on with the same document."""
         return {"path": self.path, "password": self.password, "boxes": self.boxes, "saved": self.saved,
-                "undo": self.undo_stack, "redo": self.redo_stack, "page": self.page, "color": self.color,
-                "repeat": self.repeat}
+                "undo": self.undo_stack, "redo": self.redo_stack, "page": self.page,
+                "tool": self.canvas.mode}
 
     def adopt_state(self, state: dict):
-        self.color, self.repeat = state["color"], state["repeat"]
+        self.set_tool(state["tool"])
         if state["path"] is None or not self._load(state["path"], state["password"]):
             self.refresh()
             return
@@ -451,7 +466,8 @@ class MainWindow(QMainWindow):
             self.doc.close()
             self.doc = None
         try:
-            done = write_redacted(self.path, self.boxes, target, self.password, self.a_clean.isChecked())
+            done = write_redacted(self.path, self.boxes, target, self.password, self.prefs.clean,
+                                  self.prefs.images, self.prefs.drawings)
         except RedactError as e:
             if replacing:
                 self._load(self.path, self.password)
@@ -519,8 +535,20 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def add_box(self, rect: Rect):
-        box = Box(self.page, rect, self.color, self.repeat)
+        """A new box, of the default colour, only on the page shown (it never takes the pages of another)."""
+        box = Box(self.page, rect, self.prefs.color)
         self.change(self.boxes + [box], [len(self.boxes)])
+
+    def add_text_boxes(self, rects: list[Rect]):
+        """A box over each line of the text selected."""
+        new = [Box(self.page, r, self.prefs.color) for r in rects]
+        self.change(self.boxes + new, list(range(len(self.boxes), len(self.boxes) + len(new))))
+        self.status(ntr("{count} line of text marked", "{count} lines of text marked", len(new)))
+
+    def set_tool(self, tool: str):
+        self.canvas.mode = tool
+        (self.a_tool_text if tool == "text" else self.a_tool_box).setChecked(True)
+        self.canvas.viewport().unsetCursor()
 
     def move_box(self, index: int, rect: Rect):
         boxes = list(self.boxes)
@@ -554,16 +582,108 @@ class MainWindow(QMainWindow):
             self._remove(lambda b: False)
 
     def set_color(self, color: str):
-        self.color = color
+        """The colour of the selected boxes; with none selected, the default colour of new boxes."""
         if self.selected:
             self._change_selected(color=color)
         else:
-            self._show_panel()
+            self.set_default_color(color)
+
+    def set_default_color(self, color: str):
+        self.set_prefs(dataclasses.replace(self.prefs, color=color))
+        self.status(tr("New boxes will be {color}", color=color_name(color)))
 
     def choose_color(self):
-        chosen = QColorDialog.getColor(QColor(self.color), self, tr("The colour of the boxes"))
+        current = self.boxes[self.selected[0]].color if self.selected else self.prefs.color
+        chosen = QColorDialog.getColor(QColor(current), self, tr("The colour of the boxes"))
         if chosen.isValid():
             self.set_color(chosen.name())
+
+    # ----------------------------------------------------------------- settings
+
+    def set_prefs(self, prefs: settings.Settings):
+        """Use PREFS, and keep them in the configuration file."""
+        changed = (prefs.images, prefs.drawings) != (self.prefs.images, self.prefs.drawings)
+        self.prefs = prefs
+        try:
+            settings.save(prefs)
+        except (OSError, ValueError) as e:
+            self.status(tr("Could not keep the setting: {error}", error=e), error=True)
+        self.a_clean.blockSignals(True)
+        self.a_clean.setChecked(prefs.clean)
+        self.a_clean.blockSignals(False)
+        self._show_panel()
+        if changed and self.result_box.isChecked():
+            self.show_page(self.page, keep_view=True)
+
+    def settings_dialog(self):
+        dialog = SettingsDialog(self.prefs, swatch, color_name, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.set_prefs(dialog.settings())
+
+    # ----------------------------------------------------------------- the menu of a box
+
+    def box_menu(self, index: int, where):
+        """The menu of the boxes selected (INDEX: the one clicked), or of the page if INDEX is -1."""
+        menu = QMenu(self)
+        if index >= 0 and self.selected:
+            chosen = [self.boxes[i] for i in self.selected]
+            repeats = {b.repeat.strip().lower() for b in chosen}
+            pages = menu.addMenu(tr("Pages"))
+            group = QActionGroup(pages)
+            for value, name in REPEATS[:4]:
+                act = pages.addAction(tr(name), lambda v=value: self.set_repeat(v))
+                act.setCheckable(True)
+                act.setChecked(repeats == {value})
+                group.addAction(act)
+            pages.addSeparator()
+            page = chosen[0].page + 1
+            pages.addAction(tr("From page {page} to the end", page=page), lambda: self.set_repeat(f"{page}-"))
+            pages.addAction(tr("Up to page {page}", page=page), lambda: self.set_repeat(f"1-{page}"))
+            act = pages.addAction(tr("These pages…"), self.ask_pages)
+            act.setCheckable(True)
+            act.setChecked(len(repeats) == 1 and repeats.pop() not in ("", "all", "odd", "even"))
+            group.addAction(act)
+            colors = menu.addMenu(tr("Colour"))
+            for value, name in SWATCHES:
+                colors.addAction(swatch(value), tr(name), lambda v=value: self._change_selected(color=v))
+            colors.addSeparator()
+            colors.addAction(tr("Other colour…"), self.choose_color)
+            color = chosen[0].color
+            act = menu.addAction(swatch(color), tr("Make {color} the colour of new boxes", color=color_name(color)),
+                                 lambda: self.set_default_color(color))
+            act.setEnabled(color != self.prefs.color)
+            menu.addSeparator()
+            menu.addAction(ntr("Delete the box", "Delete the {count} boxes", len(chosen)), self.delete_selected)
+        else:
+            colors = menu.addMenu(swatch(self.prefs.color), tr("Colour of new boxes"))
+            for value, name in SWATCHES:
+                colors.addAction(swatch(value), tr(name), lambda v=value: self.set_default_color(v))
+            colors.addSeparator()
+            colors.addAction(tr("Other colour…"), self.choose_color)
+            menu.addAction(self.a_tool_box)
+            menu.addAction(self.a_tool_text)
+            menu.addSeparator()
+            menu.addAction(tr("Settings…"), self.settings_dialog)
+        menu.exec(where)
+
+    def ask_pages(self):
+        if not self.selected:
+            return
+        current = self.boxes[self.selected[0]].repeat
+        if current.lower() in ("", "all", "odd", "even"):
+            current = f"{self.boxes[self.selected[0]].page + 1}-"
+        while True:
+            text, ok = QInputDialog.getText(self, tr("Pages"),
+                                            tr("Pages and ranges, separated by commas: 3, 5-9, 12- (to the end), "
+                                               "LAST, LAST-1"), QLineEdit.EchoMode.Normal, current)
+            if not ok or not text.strip():
+                return
+            error = check(text)
+            if not error:
+                self.set_repeat(text.strip())
+                return
+            QMessageBox.warning(self, tr("Pages"), error)
+            current = text
 
     def set_repeat(self, repeat: str):
         error = check(repeat) if repeat.strip() else ""
@@ -571,7 +691,6 @@ class MainWindow(QMainWindow):
             self.status(error, error=True)
             self._show_panel()
             return
-        self.repeat = repeat
         if self.selected:
             self._change_selected(repeat=repeat)
         else:
@@ -580,8 +699,10 @@ class MainWindow(QMainWindow):
     def _repeat_chosen(self, row: int):
         value = self.repeat_combo.itemData(row)
         if value == "*":
-            current = self.boxes[self.selected[0]].repeat if self.selected else self.repeat
-            if current in ("", "all", "odd", "even"):
+            if not self.selected:
+                return
+            current = self.boxes[self.selected[0]].repeat
+            if current.lower() in ("", "all", "odd", "even"):
                 current = f"{self.page + 1}-"
             self.repeat_edit.setText(current)
             self.set_repeat(current)
@@ -669,7 +790,7 @@ class MainWindow(QMainWindow):
             self._preview_doc.close()
             self._preview_doc = None
         if self.result_box.isChecked():
-            self._preview_doc = preview_page(self.doc, page, self.boxes)
+            self._preview_doc = preview_page(self.doc, page, self.boxes, self.prefs.images, self.prefs.drawings)
             self.canvas.show_page(self._preview_doc[0], [], [], editable=False, keep_view=keep_view)
         else:
             here = [(i, b, b.page == page) for i, b in enumerate(self.boxes) if b.on(page, self.count)]
@@ -796,7 +917,7 @@ class MainWindow(QMainWindow):
             repeats = {b.repeat.strip() for b in chosen}
         else:
             self.panel_title.setText("<b>" + tr("New boxes") + "</b>")
-            colors, repeats = {self.color}, {self.repeat}
+            colors, repeats = {self.prefs.color}, {""}
         color = colors.pop() if len(colors) == 1 else None
         self.color_button.setIcon(swatch(color) if color else QIcon())
         self.color_button.setText(color_name(color) if color else tr("(several)"))
@@ -810,12 +931,15 @@ class MainWindow(QMainWindow):
         typed = row == values.index("*")
         self.repeat_edit.setEnabled(typed)
         self.repeat_edit.setText(repeat if typed else "")
+        # (new boxes are always only on their own page: their pages are given once they are there)
+        self.repeat_combo.setEnabled(self.doc is not None and bool(chosen))
+        self.repeat_edit.setEnabled(typed and bool(chosen))
 
     def _enable(self):
         has = self.doc is not None
         for w in (self.a_save, self.a_select_all, self.a_clear_page, self.a_result, self.a_first, self.a_last,
                   self.a_fit, self.a_fit_width, self.a_zoom_in, self.a_zoom_out, self.page_spin, self.result_box,
-                  self.color_button, self.repeat_combo):
+                  self.color_button):
             w.setEnabled(has)
         self.a_save.setEnabled(has and bool(self.boxes))
         self.a_clear_all.setEnabled(bool(self.boxes))
