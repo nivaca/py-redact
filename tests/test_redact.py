@@ -316,3 +316,50 @@ def test_finding_pdfconform(tmp_path, monkeypatch):
     assert cmd[-1] == str(other) and cmd[0].endswith("python3")
     settings.save(settings.Settings(pdfconform=str(tmp_path / "missing")))
     assert conform.command() is None
+
+
+def test_bookmark_leaks_and_removal(tmp_path):
+    from py_redact.redact import bookmark_leaks, remove_bookmarks
+
+    doc = pymupdf.open()
+    for text in ("Creating headers", "Creating watermarks"):
+        doc.new_page().insert_text((72, 100), text, fontsize=14)
+    doc.set_toc([[1, "Chapter 4", 1], [2, "Creating headers", 1], [2, "Creating watermarks", 2],
+                 [3, "Watermark sizes", 2], [1, "The end", 1]])
+    path, out = tmp_path / "in.pdf", tmp_path / "out.pdf"
+    doc.save(path)
+    boxes = [Box(1, (60, 80, 300, 110))]
+    write_redacted(path, boxes, out)
+    leaks = bookmark_leaks(path, out, boxes)
+    assert [(i, t) for i, t, _ in leaks] == [(2, "Creating watermarks")] and "watermarks" in leaks[0][2]
+    remove_bookmarks(out, {i for i, _, _ in leaks})
+    assert pymupdf.open(out).get_toc() == [[1, "Chapter 4", 1], [2, "Creating headers", 1], [1, "The end", 1]]
+    remove_bookmarks(out)
+    assert pymupdf.open(out).get_toc() == []
+
+
+def test_bookmark_to_no_page(tmp_path):
+    from py_redact.redact import bookmark_leaks
+
+    doc = pymupdf.open()
+    doc.new_page().insert_text((72, 100), "Only page", fontsize=14)
+    doc.set_toc([[1, "Gone chapter", -1], [1, "Here", 1]])
+    path = tmp_path / "in.pdf"
+    doc.save(path)
+    assert [t for _, t, _ in bookmark_leaks(path, path, [])] == ["Gone chapter"]
+
+
+def test_page_labels_are_hidden_information(tmp_path):
+    from py_redact import hidden
+    from py_redact.redact import sanitize
+
+    doc = pymupdf.open()
+    for _ in range(3):
+        doc.new_page()
+    doc.set_page_labels([{"startpage": 0, "prefix": "", "style": "D", "firstpagenum": 82}])
+    path, out = tmp_path / "in.pdf", tmp_path / "out.pdf"
+    doc.save(path)
+    assert hidden.inspect(pymupdf.open(path))["page_labels"] == 1
+    sanitize(path, out, kinds={"page_labels"})
+    copy = pymupdf.open(out)
+    assert hidden.inspect(copy)["page_labels"] == 0 and copy[0].get_label() == ""

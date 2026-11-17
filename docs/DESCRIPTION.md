@@ -137,6 +137,16 @@ saving: every word that was under a mark in the original is
 looked for under the same mark in the copy, leaving aside the text written
 over the mark, and a warning says where any can still be read.
 
+A document redacted well can still give itself away through its outline: a
+heading under a mark often lives on as the title of a bookmark, and a
+bookmark may point to pages that were taken out of an excerpt. So the
+bookmarks of the copy are checked as well, before anything else is done to
+it, such as making it PDF/A. A title is named if it has a word that was
+under a mark and nowhere else in the original, or if more than half of its
+words were under marks; the second rule matters when a running head still
+shows the same words. The user is asked whether to remove those bookmarks,
+all of them, or none.
+
 7. Patterns, codes and hidden information
 -----------------------------------------
 
@@ -151,7 +161,8 @@ exemption under which it was redacted; the U.S. FOIA and Privacy Act sets
 come with the program, and the user's own sets are kept in an XML file,
 which can be exported and imported. With the mouse over a mark, the mark is
 shown as it will be once applied. "Remove hidden information" lists what a
-document holds besides its pages (metadata, attachments, bookmarks,
+document holds besides its pages (metadata, attachments, bookmarks, page
+labels,
 comments, form fields, hidden text, links and scripts, thumbnails, unused
 objects) and how much of each, and removes what is ticked; "Sanitize"
 removes all of it.
@@ -159,7 +170,7 @@ removes all of it.
 Testing
 -------
 
-The program has 80 tests (`uv run pytest`). The tests of the redaction make
+The program has 84 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use

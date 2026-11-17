@@ -28,6 +28,11 @@ def window(app, sample, tmp_path, monkeypatch):
         raise AssertionError(f"warning shown: {title}: {text}")
 
     w.warn = warn
+
+    def ask_bookmarks(name, leaks):  # (likewise)
+        raise AssertionError(f"bookmarks asked about: {leaks}")
+
+    w.ask_bookmarks = ask_bookmarks
     w.resize(1200, 800)
     w.show()
     app.processEvents()
@@ -437,3 +442,29 @@ def test_pdfconform_setting_in_the_dialog(window, tmp_path):
     assert str(script) in d.pdfconform_found.text()
     window.set_prefs(d.settings())
     assert settings.load().pdfconform == str(script) and window.output_actions["a-2b"].isEnabled()
+
+
+def test_bookmarks_that_give_away_are_asked_about(app, tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    doc = pymupdf.open()
+    for text in ("Introduction", "Secret project Nightjar"):
+        page = doc.new_page()
+        page.insert_text((72, 100), text, fontsize=14)
+        page.insert_text((72, 300), "Body text stays", fontsize=12)
+    doc.set_toc([[1, "Introduction", 1], [1, "Secret project Nightjar", 2], [2, "Its budget", 2]])
+    path = tmp_path / "in.pdf"
+    doc.save(path)
+    w = MainWindow()
+    w.warn = lambda *a: (_ for _ in ()).throw(AssertionError(a))
+    asked = []
+    w.ask_bookmarks = lambda name, leaks: asked.append([t for _, t, _ in leaks]) or "these"
+    assert w.open_path(path)
+    w.show_page(1)
+    drag(w, (60, 80), (400, 110))  # (over the title of page 2)
+    out = tmp_path / "out.pdf"
+    assert w.save_to(out)
+    assert asked == [["Secret project Nightjar"]]
+    assert pymupdf.open(out).get_toc() == [[1, "Introduction", 1]]  # (and the bookmark under it went too)
+    assert "bookmark" in w.statusBar().currentMessage()
+    w.boxes = w.saved = []
+    w.close()

@@ -14,6 +14,8 @@ KINDS = [
     ("metadata", N_("Metadata"), N_("Title, author, subject, keywords, the program that made it (and the XMP)")),
     ("attachments", N_("Attached files"), N_("Files attached to the document or to its pages")),
     ("bookmarks", N_("Bookmarks"), N_("The outline, which may show headings of removed pages")),
+    ("page_labels", N_("Page labels"), N_("The numbers a viewer shows for the pages (82, 83…), which may tell where "
+                                          "the pages came from; without them they are 1, 2, 3…")),
     ("comments", N_("Comments and markups"), N_("Notes, highlights and other annotations (links are below)")),
     ("forms", N_("Form fields"), N_("Fields and their values; they are flattened: what they show stays, as "
                                     "part of the page")),
@@ -42,6 +44,7 @@ def inspect(doc: pymupdf.Document) -> dict[str, int]:
     found["metadata"] = len(meta) + (1 if doc.get_xml_metadata().strip() else 0)
     found["attachments"] = doc.embfile_count()
     found["bookmarks"] = len(doc.get_toc(simple=True))
+    found["page_labels"] = len(doc.get_page_labels())
     for page in doc:
         for annot in page.annots() or []:
             if annot.type[0] == pymupdf.PDF_ANNOT_FILE_ATTACHMENT:
@@ -83,3 +86,5 @@ def remove(doc: pymupdf.Document, kinds: set[str]) -> None:
         doc.set_metadata({})
     if "bookmarks" in kinds:
         doc.set_toc([])
+    if "page_labels" in kinds:
+        doc.set_page_labels([])

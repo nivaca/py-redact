@@ -411,3 +411,98 @@ def sanitize(source: Path, target: Path, password: str = "", kinds: set[str] | N
         if isinstance(e, (OSError, RuntimeError)):
             raise RedactError(tr("{path} cannot be written: {error}", path=target, error=e)) from None
         raise
+
+
+# Words too common to say anything about what was redacted (English and Spanish)
+COMMON_WORDS = frozenset("""
+a an and are as at be but by for from has have in is it its of on or that the this to was were will with
+al con de del el en es la las lo los o para por que se sin su sus un una uno y
+""".split())
+
+
+def _plain_words(text: str) -> list[str]:
+    import re
+
+    return [w for w in re.findall(r"\w+", text.casefold()) if len(w) >= 3 and w not in COMMON_WORDS]
+
+
+def bookmark_leaks(source: Path, target: Path, boxes: list[Box], password: str = "") -> list[tuple[int, str, str]]:
+    """The bookmarks of TARGET (the redacted copy of SOURCE) that may give
+    away what was redacted: [(their index in the outline, their title, why)].
+    A bookmark is named if it points to no page of the document, or if its
+    title tells what was under the boxes in SOURCE: it has a word that was
+    under a box and nowhere else in SOURCE, or more than half of its words
+    were under boxes ("Creating watermarks", over a redacted heading)."""
+    under: set[str] = set()
+    elsewhere: set[str] = set()  # (the words of SOURCE outside the boxes)
+    before = open_pdf(source, password)
+    try:
+        for number in range(before.page_count):
+            page = before[number]
+            hidden_counts: dict[str, int] = {}  # (the words under the boxes of the page, with how many times)
+            for box in boxes_on(boxes, number, before.page_count):
+                area = page_rect(page, box.rect)
+                if area is not None:
+                    shown = tuple((area * page.rotation_matrix).normalize())
+                    for w in _plain_words(text_under(page, shown)):
+                        hidden_counts[w] = hidden_counts.get(w, 0) + 1
+            under |= hidden_counts.keys()
+            # (a word of the page is also elsewhere if it is there more times than under the boxes)
+            counts: dict[str, int] = {}
+            for w in _plain_words(page.get_text()):
+                counts[w] = counts.get(w, 0) + 1
+            elsewhere |= {w for w, n in counts.items() if n > hidden_counts.get(w, 0)}
+    finally:
+        before.close()
+    after = open_pdf(target, password)
+    try:
+        out = []
+        for i, (_level, title, page, *_rest) in enumerate(after.get_toc(simple=False)):
+            title = " ".join(title.split())
+            all_words = list(dict.fromkeys(_plain_words(title)))
+            words = [w for w in all_words if w in under]
+            telling = any(w not in elsewhere for w in words) or (all_words and len(words) * 2 > len(all_words))
+            if words and telling:
+                out.append((i, title, tr("it has words that were under the boxes: {words}", words=", ".join(words))))
+            elif not 1 <= page <= after.page_count:
+                out.append((i, title, tr("it points to no page of the document")))
+        return out
+    finally:
+        after.close()
+
+
+def remove_bookmarks(path: Path, which: set[int] | None = None, password: str = "") -> None:
+    """Take out of PATH the bookmarks WHICH (their indices in the outline;
+    all if None), and the bookmarks under them, saving it again (safely)."""
+    doc = open_pdf(path, password)
+    fd, tmp = tempfile.mkstemp(suffix=".pdf", dir=path.parent)
+    os.close(fd)
+    try:
+        if which is None:
+            doc.set_toc([])
+        else:
+            toc, keep, cut_level = doc.get_toc(simple=False), [], None
+            for i, item in enumerate(toc):
+                level = item[0]
+                if cut_level is not None and level > cut_level:
+                    continue  # (under a bookmark taken out)
+                cut_level = level if i in which else None
+                if i not in which:
+                    keep.append(item)
+            # (levels must go down one at a time: a bookmark whose parent went is raised)
+            fixed, last = [], 0
+            for item in keep:
+                item = [min(item[0], last + 1)] + list(item[1:])
+                fixed.append(item)
+                last = item[0]
+            doc.set_toc(fixed)
+        doc.save(tmp, garbage=4, deflate=True,
+                 encryption=pymupdf.PDF_ENCRYPT_KEEP if doc.needs_pass else pymupdf.PDF_ENCRYPT_NONE)
+        doc.close()
+        os.replace(tmp, path)
+    except BaseException as e:
+        doc.close()
+        Path(tmp).unlink(missing_ok=True)
+        if isinstance(e, (OSError, RuntimeError, ValueError)):
+            raise RedactError(tr("{path} cannot be written: {error}", path=path, error=e)) from None
+        raise

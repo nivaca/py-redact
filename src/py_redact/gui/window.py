@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
 from .. import __version__, codes, conform, config, hidden, interface, settings
 from ..interface import N_, ntr, tr
 from ..pagesel import check
-from ..redact import Box, Match, PasswordError, RedactError, check_redacted, sanitize, text_under, Rect, boxes_on, open_pdf, preview_page, write_redacted
+from ..redact import Box, Match, PasswordError, RedactError, bookmark_leaks, check_redacted, remove_bookmarks, sanitize, text_under, Rect, boxes_on, open_pdf, preview_page, write_redacted
 from .canvas import PageCanvas, page_image
 from .find import FindDialog
 from .prefs import SettingsDialog
@@ -544,6 +544,8 @@ class MainWindow(QMainWindow):
                 self.refresh()
             self.status(str(e), error=True)
             return False
+        # (before PDF/A or PDF/X: changing the copy afterwards could undo its conformance)
+        bookmarks = "" if replacing else self.check_bookmarks(target)
         check_ = ""
         if standard and not conform.available():
             self.warn(conform.label(standard), tr("The redacted copy was saved as a plain PDF: {command} is not "
@@ -588,8 +590,49 @@ class MainWindow(QMainWindow):
                                                      for p, t in leaks[:10]))
         elif not replacing:
             message += " — " + tr("checked: nothing under the boxes can be read")
+        if bookmarks:
+            message += " — " + bookmarks
         self.status(message)
         return True
+
+    def check_bookmarks(self, target: Path) -> str:
+        """Look for bookmarks of TARGET that give away what was redacted, and
+        take them out if the user wants. Returns what was done, for the status bar."""
+        try:
+            leaks = bookmark_leaks(self.path, target, self.boxes, self.password)
+        except RedactError as e:
+            self.status(str(e), error=True)
+            return ""
+        if not leaks:
+            return ""
+        choice = self.ask_bookmarks(target.name, leaks)
+        if not choice:
+            return ntr("{count} bookmark that gives away what was redacted was kept",
+                       "{count} bookmarks that give away what was redacted were kept", len(leaks))
+        try:
+            remove_bookmarks(target, None if choice == "all" else {i for i, _, _ in leaks}, self.password)
+        except RedactError as e:
+            self.status(str(e), error=True)
+            return ""
+        return tr("all the bookmarks were removed") if choice == "all" \
+            else ntr("{count} bookmark was removed", "{count} bookmarks were removed", len(leaks))
+
+    def ask_bookmarks(self, name: str, leaks: list[tuple[int, str, str]]) -> str:
+        """What to do with bookmarks that give away what was redacted: 'these'
+        (remove them), 'all' (remove all the bookmarks) or '' (keep them)."""
+        box = QMessageBox(QMessageBox.Icon.Warning, tr("Check the redacted copy"),
+                          ntr("A bookmark of {name} may give away what was redacted:",
+                              "{count} bookmarks of {name} may give away what was redacted:", len(leaks),
+                              name=name)
+                          + "\n\n" + "\n".join(f"• “{title}”: {why}" for _, title, why in leaks[:12]),
+                          QMessageBox.StandardButton.NoButton, self)
+        these = box.addButton(ntr("Remove it", "Remove them", len(leaks)), QMessageBox.ButtonRole.AcceptRole)
+        everything = box.addButton(tr("Remove all the bookmarks"), QMessageBox.ButtonRole.DestructiveRole)
+        box.addButton(tr("Keep them"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(these)
+        box.exec()
+        clicked = box.clickedButton()
+        return "these" if clicked is these else "all" if clicked is everything else ""
 
     def check_copy(self, target: Path) -> list[tuple[int, str]]:
         """What can still be read under the boxes in TARGET (see redact.check_redacted)."""

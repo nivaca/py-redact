@@ -315,6 +315,14 @@ The copy is then checked: every word that was under a mark is looked for,
 under the same mark, in the copy. If any can still be read, a warning says
 where; if none can, the status bar says so.
 
+The bookmarks of the copy are checked too, before anything else is done to
+it: a bookmark may name what was redacted (a heading under a mark, kept as
+the title of a bookmark), or point to a page the document doesn't have. A
+title is named if it has a word that was under a mark and appears nowhere
+else in the document, or if more than half of its words were under marks.
+For such bookmarks, a question offers to remove them, to remove all the
+bookmarks, or to keep them.
+
 *File ▸ Save as* saves the copy, this once, as the kind of PDF chosen there:
 a plain PDF, PDF/A-1b, PDF/A-2b or PDF/A-3b (for archiving), or PDF/X-4
 (for printing), made by py-pdfconform. Choosing it saves at once, and
@@ -328,7 +336,9 @@ to a redacted copy, asks first.
 
 *File ▸ Remove hidden information…* shows what the document holds besides
 what its pages show, and how much of each: metadata, attached files,
-bookmarks, comments and markups, form fields, hidden text (such as the text
+bookmarks, page labels (the numbers a viewer shows for the pages, such as
+82, 83…, which may tell where they came from), comments and markups, form
+fields, hidden text (such as the text
 layer of a scanned page), links, actions and JavaScript, page thumbnails,
 and objects that nothing uses any more. It saves a copy without what you
 tick, and doesn't apply the marks. *File ▸ Sanitize the document…* removes
@@ -462,7 +472,7 @@ Testing
 
     $ uv run pytest
 
-There are 80 tests. They cover the redaction (of text, pictures, drawings,
+There are 84 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the

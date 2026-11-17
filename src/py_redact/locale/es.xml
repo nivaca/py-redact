@@ -1269,4 +1269,64 @@
     <en>Write a copy of the document with what is under the boxes removed, as a plain PDF (File &gt; Save as: PDF/A or PDF/X)</en>
     <tr>Escribir una copia del documento sin lo que hay debajo de los recuadros, como PDF corriente (Archivo &gt; Guardar como: PDF/A o PDF/X)</tr>
   </text>
+  <text>
+    <en>A bookmark of {name} may give away what was redacted:</en>
+    <tr>Un marcador de {name} puede revelar lo que se censuró:</tr>
+  </text>
+  <text>
+    <en>Keep them</en>
+    <tr>Conservarlos</tr>
+  </text>
+  <text>
+    <en>Page labels</en>
+    <tr>Etiquetas de página</tr>
+  </text>
+  <text>
+    <en>Remove all the bookmarks</en>
+    <tr>Quitar todos los marcadores</tr>
+  </text>
+  <text>
+    <en>Remove it</en>
+    <tr>Quitarlo</tr>
+  </text>
+  <text>
+    <en>Remove them</en>
+    <tr>Quitarlos</tr>
+  </text>
+  <text>
+    <en>The numbers a viewer shows for the pages (82, 83…), which may tell where the pages came from; without them they are 1, 2, 3…</en>
+    <tr>Los números que un visor muestra para las páginas (82, 83…), que pueden decir de dónde salieron; sin ellos son 1, 2, 3…</tr>
+  </text>
+  <text>
+    <en>all the bookmarks were removed</en>
+    <tr>se quitaron todos los marcadores</tr>
+  </text>
+  <text>
+    <en>it has words that were under the boxes: {words}</en>
+    <tr>tiene palabras que estaban debajo de los recuadros: {words}</tr>
+  </text>
+  <text>
+    <en>it points to no page of the document</en>
+    <tr>no lleva a ninguna página del documento</tr>
+  </text>
+  <text>
+    <en>{count} bookmark that gives away what was redacted was kept</en>
+    <tr>se conservó {count} marcador que revela lo que se censuró</tr>
+  </text>
+  <text>
+    <en>{count} bookmark was removed</en>
+    <tr>se quitó {count} marcador</tr>
+  </text>
+  <text>
+    <en>{count} bookmarks of {name} may give away what was redacted:</en>
+    <tr>{count} marcadores de {name} pueden revelar lo que se censuró:</tr>
+  </text>
+  <text>
+    <en>{count} bookmarks that give away what was redacted were kept</en>
+    <tr>se conservaron {count} marcadores que revelan lo que se censuró</tr>
+  </text>
+  <text>
+    <en>{count} bookmarks were removed</en>
+    <tr>se quitaron {count} marcadores</tr>
+  </text>
 </interface>

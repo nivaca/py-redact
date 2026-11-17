@@ -327,6 +327,15 @@ Luego se revisa la copia: cada palabra que estaba debajo de un recuadro se
 busca, debajo del mismo recuadro, en la copia. Si alguna todavía se puede
 leer, un aviso dice dónde; si ninguna, lo dice la barra de estado.
 
+También se revisan los marcadores de la copia, antes de hacerle cualquier
+otra cosa: un marcador puede nombrar lo que se censuró (un título que quedó
+debajo de un recuadro, conservado como título de un marcador) o llevar a una
+página que el documento no tiene. Un título se señala si tiene una palabra
+que estaba debajo de un recuadro y no aparece en ninguna otra parte del
+documento, o si más de la mitad de sus palabras estaban debajo de
+recuadros. Para esos marcadores, una pregunta ofrece quitarlos, quitar todos
+los marcadores o conservarlos.
+
 *Archivo ▸ Guardar como* guarda la copia, esa vez, en la clase de PDF que se
 elija allí: PDF corriente, PDF/A-1b, PDF/A-2b o PDF/A-3b (para archivo) o
 PDF/X-4 (para imprenta), hechos por py-pdfconform. Elegirla guarda en el
@@ -341,7 +350,9 @@ han guardado en una copia censurada, se pregunta antes.
 
 *Archivo ▸ Quitar información oculta…* muestra lo que el documento guarda
 además de lo que muestran sus páginas, y cuánto de cada cosa: metadatos,
-archivos adjuntos, marcadores, comentarios y marcas, campos de formulario,
+archivos adjuntos, marcadores, etiquetas de página (los números que un
+visor muestra para las páginas, como 82, 83…, que pueden decir de dónde
+salieron), comentarios y marcas, campos de formulario,
 texto oculto (como la capa de texto de una página escaneada), enlaces,
 acciones y JavaScript, miniaturas de las páginas y objetos que ya nada usa.
 Guarda una copia sin lo que se marque, y no aplica los recuadros. *Archivo ▸
@@ -480,7 +491,7 @@ Pruebas
 
     $ uv run pytest
 
-Hay 80 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 84 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando
