@@ -118,31 +118,30 @@ click that never came. Now py-pdfconform is always run without py-redact's
 environment, the RPM is built outside it, and in the tests a warning fails
 instead of waiting.
 
-6. What came from Xodo
-----------------------
+6. One tool, and marks with properties
+--------------------------------------
 
-The help pages of Xodo PDF Studio about redaction gave a list of things to
-do. There is now one tool for text and areas: over text a drag selects it,
+There is now one tool for text and areas: over text a drag selects it,
 elsewhere it draws a box, and Ctrl+drag always draws a box. A double click
 marks one word, or a whole picture. A mark has properties: a fill of any
 colour or none at all (the content goes, and nothing is painted), a text
 written over it with its colour, size and alignment, repeated along the
 mark if wanted, a note shown under the mouse, and a lock; and these can be
 saved as the look of new marks. Marks not yet applied are see-through with
-a red outline, as in Xodo. "Apply all redactions" is at the top of the
-right-click menu. A hand tool moves the page.
+a red outline. "Apply all redactions" is at the top of the right-click menu.
+A hand tool moves the page.
 
-Xodo also says how to check, by hand, that a document was redacted well: by
-selecting text, by searching, by moving the marks. py-redact does it by
-itself after saving: every word that was under a mark in the original is
+A redacted document can be checked by hand: by selecting text, by
+searching, by moving the marks away. py-redact does it by itself after
+saving: every word that was under a mark in the original is
 looked for under the same mark in the copy, leaving aside the text written
 over the mark, and a warning says where any can still be read.
 
-7. What came from Acrobat Pro
------------------------------
+7. Patterns, codes and hidden information
+-----------------------------------------
 
-A chapter about the redaction tools of Adobe Acrobat Pro gave the last
-group. Find and redact can now look for several words or phrases at once,
+The last group widened the search and what is removed. Find and redact can
+now look for several words or phrases at once,
 typed or read from a file, and for patterns: e-mail addresses, phone
 numbers, card numbers, dates, identity numbers and bank accounts, in their
 U.S. forms or in those of Spain and Latin America. Because the search works

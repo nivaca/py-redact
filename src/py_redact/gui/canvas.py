@@ -16,7 +16,7 @@ MIN_SIZE = 2.0  # points: a smaller drag is a click
 GRIP = 6  # pixels from an edge where dragging resizes
 MAX_PIXELS = 40_000_000  # the largest rendering of a page
 SELECTED = QColor(42, 127, 255)
-OUTLINE = QColor(208, 48, 48)  # (marks not yet applied: red, as in Xodo)
+OUTLINE = QColor(208, 48, 48)  # (marks not yet applied: red)
 NEAR_TEXT = 3.0  # points: a drag that starts this close to a word selects text
 
 

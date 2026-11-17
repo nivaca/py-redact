@@ -90,14 +90,14 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
   ~/.local/bin, and with the .py extension
 
 * Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.0-1
-- From Acrobat Pro: several words or phrases and patterns in Find and redact,
+- Several words or phrases and patterns in Find and redact,
   partial marking, redaction codes, a preview under the mouse, Remove hidden
   information kind by kind; documentation in English and Spanish (README,
   DESCRIPTION)
 
 * Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.3.0-1
 - Save the redacted copy as PDF/A or PDF/X-4 with py-pdfconform; icons in
-  the toolbar; redaction as in Xodo: one tool for text and areas, double-click
+  the toolbar; one tool for text and areas, double-click
   a word or an image, box properties (no fill, text over the box, note, locked,
   save as default), apply from the right-click menu, the copy checked after
   saving, sanitize the document, a hand tool

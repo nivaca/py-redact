@@ -1,5 +1,5 @@
-"""Patterns to find, as Acrobat's "Search and remove text" has them: phone
-numbers, e-mail addresses, card numbers, dates... Each is a regular
+"""Patterns to find: phone numbers, e-mail addresses, card numbers,
+dates... Each is a regular
 expression, in the forms used where the language of the patterns is spoken
 (Settings: English, the U.S. forms; Spanish, those of Spain and Latin
 America). They are written for the text as find_text reads it: words

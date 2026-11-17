@@ -19,9 +19,8 @@ cualquiera puede seleccionarlo, copiarlo o buscarlo. py-redact lo saca del
 archivo y, al guardar, revisa la copia para asegurarse de que nada de lo que
 estaba debajo de un recuadro pueda leerse todavía.
 
-Tiene una ventana, en español y en inglés, y funciona en Linux. La manera
-de marcar sigue la de Xodo y la de Adobe Acrobat Pro: se arrastra sobre un
-texto para marcarlo, o en otra parte para dibujar un recuadro; se buscan y
+Tiene una ventana, en español y en inglés, y funciona en Linux. Se arrastra
+sobre un texto para marcarlo, o en otra parte para dibujar un recuadro; se buscan y
 marcan todos los lugares donde aparece una palabra, una lista de palabras o
 un patrón (números de teléfono, direcciones de correo, números de tarjeta,
 fechas, números de identidad, cuentas bancarias); un recuadro se repite en
@@ -226,8 +225,8 @@ lista de recuadros y el color y las páginas de los seleccionados.
 
 ### Marcar
 
-La ventana empieza con la herramienta *Censurar* (T), que funciona como las
-de Xodo y Acrobat:
+La ventana empieza con la herramienta *Censurar* (T), que marca por igual
+texto y zonas:
 
 * Arrastrar sobre un texto lo selecciona, y se hace un recuadro sobre cada
   una de sus líneas.
@@ -517,7 +516,7 @@ instalada.
     el menú del escritorio, a menudo no lo encontraba, y PDF/A y PDF/X
     aparecían siempre desactivados.
 - 0.4.0:
-  - De Adobe Acrobat Pro: Buscar y censurar busca varias palabras o frases
+  - Buscar y censurar busca varias palabras o frases
     a la vez (escritas o leídas de un archivo de texto) y patrones
     (direcciones de correo, números de teléfono, de tarjeta de crédito y de
     identidad, fechas, IBAN), en sus formas de Estados Unidos o en las de
@@ -535,7 +534,7 @@ instalada.
   - Esta documentación, en español y en inglés, con capturas de pantalla.
   - *Configuración…* tiene la tecla Ctrl+,.
 - 0.3.0:
-  - De Xodo: una sola herramienta para texto y zonas (sobre un texto lo
+  - Una sola herramienta para texto y zonas (sobre un texto lo
     selecciona, en otra parte dibuja un recuadro; Ctrl+arrastrar siempre
     dibuja uno); un doble clic marca una palabra o una imagen; una
     herramienta de mano.
@@ -576,10 +575,8 @@ cambia las etiquetas de página, y
 [py-imposition](https://github.com/nivaca/py-imposition), que impone páginas
 para la imprenta. Tiene su forma: la interfaz en dos idiomas, el archivo de
 configuración, los paquetes y la manera de publicarlos vienen de
-py-foliation, y las listas de páginas, de py-imposition. Cómo debía
-comportarse una herramienta de censura lo tomé de las de Xodo PDF Studio y
-Adobe Acrobat Pro, según las describen sus manuales. `docs/DESCRIPCIÓN_es.md`
-lo describe con más detalle.
+py-foliation, y las listas de páginas, de py-imposition.
+`docs/DESCRIPCIÓN_es.md` lo describe con más detalle.
 
 Fuentes
 -------
@@ -592,15 +589,6 @@ Fuentes
 - [py-pdfconform](https://github.com/nivaca/py-pdfconform), del autor, con
   [Ghostscript](https://www.ghostscript.com/) y
   [pikepdf](https://pikepdf.readthedocs.io/): PDF/A y PDF/X.
-- Xodo PDF Studio, *Redaction*, *Redaction Annotations*, *Applying
-  Redactions* y *Redaction Properties*, en las páginas de ayuda de Xodo
-  (<https://feedback.xodo.com/support/solutions>): la herramienta única para
-  texto y zonas, las propiedades de un recuadro, el aspecto de los recuadros
-  aún sin aplicar y la revisión del resultado.
-- Gbemi T., *Mastering Adobe Acrobat DC Pro: A Comprehensive Guide* (2024),
-  capítulo 13, "Advanced Editing": varias palabras y patrones en la
-  búsqueda, la censura de parte de una palabra, los códigos de censura, la
-  vista previa con el ratón y la eliminación de la información oculta.
 - Los códigos de la Freedom of Information Act estadounidense, 5 U.S.C.
   § 552(b), y de la Privacy Act de 1974, 5 U.S.C. § 552a(d)(5), (j) y (k):
   los dos conjuntos de códigos de censura que vienen con el programa.

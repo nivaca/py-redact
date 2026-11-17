@@ -17,9 +17,8 @@ and anyone can select it, copy it or search for it. py-redact takes it out
 of the file, and after saving it checks the copy to make sure that nothing
 which was under a mark can still be read there.
 
-It has a window, in English and in Spanish, and works on Linux. Marking
-follows the way of Xodo and of Adobe Acrobat Pro: drag over text to mark
-it, or elsewhere to draw a box; find and mark every place where a word, a
+It has a window, in English and in Spanish, and works on Linux. Drag over
+text to mark it, or elsewhere to draw a box; find and mark every place where a word, a
 list of words or a pattern (phone numbers, e-mail addresses, card numbers,
 dates, identity numbers, bank accounts) appears; repeat a mark on other
 pages; and remove the hidden information of a document (metadata, attached
@@ -220,8 +219,8 @@ and pages of those selected. (The window calls the marks *boxes*.)
 
 ### Marking
 
-The window starts with the tool *Redact* (T), which works as the redaction
-tools of Xodo and Acrobat:
+The window starts with the tool *Redact* (T), which marks text and areas
+alike:
 
 * Dragging over text selects it, and a mark is made over each of its lines.
 * Dragging anywhere else draws a box: over a picture, a drawing, a scanned
@@ -498,7 +497,7 @@ This is py-redact 0.4.3. `py-redact --version` says which one is installed.
     from the menu of the desktop, it often didn't find it, and PDF/A and
     PDF/X were always greyed out.
 - 0.4.0:
-  - From Adobe Acrobat Pro: Find and redact looks for several words or
+  - Find and redact looks for several words or
     phrases at once (typed, or read from a text file) and for patterns
     (e-mail addresses, phone numbers, credit card numbers, dates, identity
     numbers, IBAN), in their U.S. forms or in those of Spain and Latin
@@ -514,7 +513,7 @@ This is py-redact 0.4.3. `py-redact --version` says which one is installed.
   - This documentation, in English and Spanish, with screenshots.
   - *Settings…* has the key Ctrl+,.
 - 0.3.0:
-  - From Xodo: one tool for text and areas (over text it selects the text,
+  - One tool for text and areas (over text it selects the text,
     elsewhere it draws a box; Ctrl+drag always draws a box); a double click
     marks a word or a picture; a hand tool.
   - The properties of a mark: a fill of any colour or none, a text written
@@ -551,9 +550,7 @@ changes the page labels, and [py-imposition](https://github.com/nivaca/py-imposi
 which imposes pages for printing. It has their shape: the interface in two
 languages, the configuration file, the packages and the way they are
 published came from py-foliation, and the lists of pages from
-py-imposition. How a redaction tool should behave came from those of Xodo
-PDF Studio and Adobe Acrobat Pro, as their manuals describe them.
-`docs/DESCRIPTION.md` tells the whole story.
+py-imposition. `docs/DESCRIPTION.md` tells the whole story.
 
 Sources
 -------
@@ -566,15 +563,6 @@ Sources
 - [py-pdfconform](https://github.com/nivaca/py-pdfconform), by the author,
   with [Ghostscript](https://www.ghostscript.com/) and
   [pikepdf](https://pikepdf.readthedocs.io/): PDF/A and PDF/X.
-- Xodo PDF Studio, *Redaction*, *Redaction Annotations*, *Applying
-  Redactions* and *Redaction Properties*, in the help pages of Xodo
-  (<https://feedback.xodo.com/support/solutions>): the single tool for text
-  and areas, the properties of a mark, the look of marks not yet applied,
-  and checking the result.
-- Gbemi T., *Mastering Adobe Acrobat DC Pro: A Comprehensive Guide* (2024),
-  chapter 13, "Advanced Editing": several words and patterns in the search,
-  marking part of a word, redaction codes, the preview under the mouse, and
-  removing hidden information.
 - The codes of the U.S. Freedom of Information Act, 5 U.S.C. § 552(b), and
   of the Privacy Act of 1974, 5 U.S.C. § 552a(d)(5), (j) and (k): the two
   sets of redaction codes that come with the program.

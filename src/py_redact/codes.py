@@ -1,5 +1,5 @@
-"""Redaction codes, as Acrobat has them: short texts written over a redacted
-box to say why it was redacted ("(b)(6)"), grouped in code sets. A box may
+"""Redaction codes: short texts written over a redacted box to say why it
+was redacted ("(b)(6)"), grouped in code sets. A box may
 carry several codes, written separated by commas.
 
 Two sets come with the program, the U.S. FOIA exemptions and the U.S. Privacy

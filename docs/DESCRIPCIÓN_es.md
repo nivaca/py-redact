@@ -8,7 +8,7 @@ El requisito central salía de un error frecuente. Tapar un texto con un rectán
 
 Lo demás vino de la manera en que se censura de verdad. Lo que se quiere quitar casi nunca está en un solo lugar: un encabezado aparece en todas las páginas, un nombre en muchas, un número de teléfono quién sabe dónde. Había que poder repetir un recuadro en otras páginas, buscar palabras, listas de palabras y patrones (teléfonos, correos, tarjetas, fechas, números de identidad, cuentas), y dejar visible, si se quiere, una parte de lo encontrado, como los últimos dígitos de una tarjeta. El color del relleno debía poder elegirse, también blanco, o no ponerse ninguno. Y un PDF guarda más de lo que muestran sus páginas: metadatos, adjuntos, marcadores, comentarios, texto oculto, scripts; también eso había que poder quitarlo.
 
-Para lo demás tomé como referencia las herramientas de censura de Xodo PDF Studio y de Adobe Acrobat Pro, según sus manuales: una sola herramienta para texto y zonas, propiedades de cada recuadro, códigos de censura, una vista previa al pasar el ratón y la eliminación de la información oculta por clases. La interfaz tenía que estar en español y en inglés, y la copia debía poder guardarse como PDF/A o PDF/X.
+Para lo demás hacía falta lo que se espera de una herramienta de censura completa: una sola herramienta para texto y zonas, propiedades de cada recuadro, códigos de censura, una vista previa al pasar el ratón y la eliminación de la información oculta por clases. La interfaz tenía que estar en español y en inglés, y la copia debía poder guardarse como PDF/A o PDF/X.
 
 ## Diseño
 
@@ -46,7 +46,7 @@ El paso a PDF/A o PDF/X-4 lo hace py-pdfconform, otro programa mío, que usa Gho
 
 ### Proceso y distribución
 
-El trabajo pasó por siete etapas: una ventana que censura, con recuadros repetidos y relleno de cualquier color; los paquetes (la AppImage, el RPM y su publicación); el menú del botón derecho, la configuración y la selección de texto; buscar y censurar; PDF/A y PDF/X; lo que vino de Xodo (una sola herramienta, las propiedades de los recuadros, la revisión de la copia), y lo que vino de Acrobat Pro (listas de palabras, patrones, censura parcial, códigos de censura, información oculta). `docs/DESCRIPTION.md` cuenta cada una.
+El trabajo pasó por siete etapas: una ventana que censura, con recuadros repetidos y relleno de cualquier color; los paquetes (la AppImage, el RPM y su publicación); el menú del botón derecho, la configuración y la selección de texto; buscar y censurar; PDF/A y PDF/X; una sola herramienta para texto y zonas, con las propiedades de los recuadros y la revisión de la copia, y por último listas de palabras, patrones, censura parcial, códigos de censura e información oculta. `docs/DESCRIPTION.md` cuenta cada una.
 
 El código se maneja con git, en un repositorio publicado en GitHub (https://github.com/nivaca/py-redact) y en Codeberg (https://codeberg.org/nivaca/py-redact). Un solo script publica cada versión: corre las pruebas, hace la rueda, el paquete fuente, el ZIP, la AppImage y el RPM firmado, pone la etiqueta, publica en los dos sitios y manda el RPM fuente a Copr.
 

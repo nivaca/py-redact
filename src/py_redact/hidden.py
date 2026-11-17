@@ -1,6 +1,6 @@
-"""Hidden information, as Acrobat's "Remove hidden information" finds it:
-what a PDF holds besides what its pages show. inspect() says what a document
-has of each kind; remove() takes out the kinds chosen.
+"""Hidden information: what a PDF holds besides what its pages show.
+inspect() says what a document has of each kind; remove() takes out the
+kinds chosen.
 """
 
 from __future__ import annotations
