@@ -24,7 +24,7 @@ La copia censurada nunca es el original. Se escribe al lado, como `NOMBRE-redact
 
 ## Implementación
 
-Está escrito en Python 3.15 o superior, con PyMuPDF y PySide6 (Qt 6). Son 20 archivos, unas 3900 líneas. El proyecto se maneja con uv.
+Está escrito en Python 3.14 o superior, con PyMuPDF y PySide6 (Qt 6). Son 20 archivos, unas 3900 líneas. El proyecto se maneja con uv.
 
 La página se dibuja con PyMuPDF a la resolución de la pantalla y se muestra en una vista gráfica de Qt, donde los recuadros se dibujan, se mueven y se redimensionan con el ratón. La herramienta *Censurar* decide qué hacer según dónde empieza el arrastre: sobre un texto lo selecciona, en otra parte dibuja un recuadro, y con Ctrl siempre dibuja un recuadro. Un doble clic marca una palabra o una imagen entera. Mientras no se aplican, los recuadros son transparentes, con un contorno rojo; con el ratón encima se ven como quedarán. "Mostrar el resultado" censura en memoria una copia de la página mostrada y la dibuja.
 
@@ -60,12 +60,12 @@ El RPM vuelve a correr todas las pruebas sobre el paquete instalado, con el Pyth
 
 ## Plataforma
 
-Funciona en Linux. La AppImage lleva su propio Python, Qt y PyMuPDF, y corre en cualquier Linux con glibc 2.34 o posterior; el RPM es para Fedora 45 y posteriores, y Copr lo construye para cada versión. Desde el código fuente basta Python 3.15 y uv. Para PDF/A y PDF/X hace falta py-pdfconform, con Ghostscript.
+Funciona en Linux. La AppImage lleva su propio Python, Qt y PyMuPDF, y corre en cualquier Linux con glibc 2.34 o posterior; el RPM es para Fedora 45 y posteriores, y Copr lo construye para cada versión. Desde el código fuente basta Python 3.14 y uv. Para PDF/A y PDF/X hace falta py-pdfconform, con Ghostscript.
 
 Es una aplicación de escritorio y no necesita internet. Nada sale del equipo: los documentos, la configuración y los códigos de censura se quedan en él.
 
 ## Ambiente
 
-Lo desarrollé en Fedora Linux 45 con KDE Plasma, con Python 3.15 y uv, y con git, con repositorios en GitHub y Codeberg. Las versiones se publican en los dos sitios y en Copr (https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/).
+Lo desarrollé en Fedora Linux 45 con KDE Plasma, con Python 3.14 y uv, y con git, con repositorios en GitHub y Codeberg. Las versiones se publican en los dos sitios y en Copr (https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/).
 
 Para usarlo basta descargar la AppImage, hacerla ejecutable y abrirla; en Fedora, `sudo dnf copr enable nivaca/py-redact` y `sudo dnf install py-redact` lo instalan con su entrada en el menú. La configuración queda en la carpeta de configuración del usuario (`~/.config/py-redact/config.toml` en Linux), con los códigos de censura propios en `codes.xml`.

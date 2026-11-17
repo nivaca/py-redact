@@ -77,6 +77,7 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
 * Tue Nov 17 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.3-1
 - Save always writes a plain PDF; File > Save as writes PDF/A or PDF/X this
   once, without remembering it
+- Python 3.14 or later is needed (it was 3.15)
 
 * Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.2-1
 - File > Save as saves at once in the kind of PDF chosen (PDF, PDF/A, PDF/X)

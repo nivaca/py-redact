@@ -65,7 +65,7 @@ Linux. The AppImage needs nothing else: it brings its own Python, Qt and
 PyMuPDF, and runs with glibc 2.34 or later (Ubuntu 22.04, Debian 12, Fedora
 35 and later). The Fedora package needs Fedora 45 or later, and brings in
 Fedora's own Python, PyMuPDF and PySide6. From the source, it needs Python
-3.15 or later and [uv](https://docs.astral.sh/uv/), which brings the rest
+3.14 or later and [uv](https://docs.astral.sh/uv/), which brings the rest
 (PyMuPDF and PySide6). To save PDF/A or PDF/X, any of them needs
 [py-pdfconform](https://github.com/nivaca/py-pdfconform) (see "PDF/A and
 PDF/X").
@@ -481,6 +481,8 @@ This is py-redact 0.4.3. `py-redact --version` says which one is installed.
   - *Save* always writes a plain PDF. *File ▸ Save as* writes PDF/A or
     PDF/X (or a plain PDF) this once, as soon as it is chosen, and
     remembers nothing; the kind of PDF is no longer a setting.
+  - Python 3.14 or later is needed (it was 3.15); the AppImage carries
+    Python 3.14.
 - 0.4.2:
   - *File ▸ Save as* saves at once in the kind of PDF chosen (PDF, PDF/A,
     PDF/X), which stays ticked for the next times; before, it only chose

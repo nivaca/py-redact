@@ -69,7 +69,7 @@ Linux. La AppImage no necesita nada más: trae su propio Python, Qt y
 PyMuPDF, y funciona con glibc 2.34 o posterior (Ubuntu 22.04, Debian 12,
 Fedora 35 y posteriores). El paquete de Fedora necesita Fedora 45 o
 posterior, y usa el Python, el PyMuPDF y el PySide6 de Fedora. Desde el
-código fuente hacen falta Python 3.15 o posterior y
+código fuente hacen falta Python 3.14 o posterior y
 [uv](https://docs.astral.sh/uv/), que trae lo demás (PyMuPDF y PySide6).
 Para guardar PDF/A o PDF/X, cualquiera de ellos necesita
 [py-pdfconform](https://github.com/nivaca/py-pdfconform) (véase "PDF/A y
@@ -500,6 +500,8 @@ instalada.
   - *Guardar* siempre escribe un PDF corriente. *Archivo ▸ Guardar como*
     escribe PDF/A o PDF/X (o un PDF corriente) esa vez, en cuanto se elige,
     y no recuerda nada; la clase de PDF ya no es parte de la configuración.
+  - Se necesita Python 3.14 o posterior (antes, 3.15); la AppImage lleva
+    Python 3.14.
 - 0.4.2:
   - *Archivo ▸ Guardar como* guarda en el acto en la clase de PDF elegida
     (PDF, PDF/A, PDF/X), que queda marcada para las veces siguientes;
