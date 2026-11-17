@@ -492,9 +492,12 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 0.4.3 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 0.4.4 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 0.4.4:
+  - La documentación ya no nombra otros programas de censura. El programa
+    es el mismo.
 - 0.4.3:
   - *Guardar* siempre escribe un PDF corriente. *Archivo ▸ Guardar como*
     escribe PDF/A o PDF/X (o un PDF corriente) esa vez, en cuanto se elige,

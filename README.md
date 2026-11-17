@@ -474,8 +474,11 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 0.4.3. `py-redact --version` says which one is installed.
+This is py-redact 0.4.4. `py-redact --version` says which one is installed.
 
+- 0.4.4:
+  - The documentation no longer names other redaction programs. The
+    program is the same.
 - 0.4.3:
   - *Save* always writes a plain PDF. *File ▸ Save as* writes PDF/A or
     PDF/X (or a plain PDF) this once, as soon as it is chosen, and
