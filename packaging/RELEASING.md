@@ -5,7 +5,7 @@
 
    ```bash
    rpmdev-bumpspec -n 0.2.0 -c "What changed" \
-       -u "Nicolas Vaughan <nivaca@fastmail.com>" packaging/py-redact.spec
+       -u "Nicolas Vaughan <nicolasvaughan@proton.me>" packaging/py-redact.spec
    ```
 
    `tests/test_packaging.py` fails while the versions differ.

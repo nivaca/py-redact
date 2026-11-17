@@ -25,7 +25,7 @@ pages; and remove the hidden information of a document (metadata, attached
 files, bookmarks, comments, hidden text, scripts). The redacted copy can
 also be saved as PDF/A or PDF/X.
 
-I am Nicolas Vaughan (<nivaca@fastmail.com>), and I wrote it in 2026. It is
+I am Nicolas Vaughan (<nicolasvaughan@proton.me>), and I wrote it in 2026. It is
 free software, under the GNU General Public License, version 3 or later
 (see "Licensing").
 

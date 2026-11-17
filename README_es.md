@@ -28,7 +28,7 @@ otras páginas, y se quita la información oculta de un documento
 (metadatos, adjuntos, marcadores, comentarios, texto oculto, scripts). La
 copia censurada también puede guardarse como PDF/A o PDF/X.
 
-Soy Nicolas Vaughan (<nivaca@fastmail.com>), y lo escribí en 2026. Es
+Soy Nicolas Vaughan (<nicolasvaughan@proton.me>), y lo escribí en 2026. Es
 software libre, bajo la Licencia Pública General de GNU, versión 3 o
 posterior (véase "Licencia").
 
