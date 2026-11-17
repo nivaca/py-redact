@@ -108,10 +108,6 @@
     <tr>Guardar la copia censurada…</tr>
   </text>
   <text>
-    <en>Write a copy of the document with what is under the boxes removed</en>
-    <tr>Escribir una copia del documento sin lo que hay debajo de los recuadros</tr>
-  </text>
-  <text>
     <en>Also remove metadata, hidden text, attachments and scripts</en>
     <tr>Quitar también metadatos, texto oculto, adjuntos y scripts</tr>
   </text>
@@ -670,14 +666,6 @@
   <text>
     <en>Save as</en>
     <tr>Guardar como</tr>
-  </text>
-  <text>
-    <en>Save as:</en>
-    <tr>Guardar como:</tr>
-  </text>
-  <text>
-    <en>Save the redacted copy as {standard}…</en>
-    <tr>Guardar la copia censurada como {standard}…</tr>
   </text>
   <text>
     <en>The redacted copy was saved as a plain PDF, but it could not be made {standard}: {error}</en>
@@ -1270,7 +1258,15 @@
     <tr>py-pdfconform:</tr>
   </text>
   <text>
-    <en>Save the redacted copy as this, now and the next times</en>
-    <tr>Guardar la copia censurada así, ahora y las próximas veces</tr>
+    <en>Save the redacted copy as {standard}</en>
+    <tr>Guardar la copia censurada como {standard}</tr>
+  </text>
+  <text>
+    <en>The redacted copy was saved as a plain PDF: {command} is not installed (or not where Settings say)</en>
+    <tr>La copia censurada se guardó como PDF corriente: {command} no está instalado (o no está donde dice la Configuración)</tr>
+  </text>
+  <text>
+    <en>Write a copy of the document with what is under the boxes removed, as a plain PDF (File &gt; Save as: PDF/A or PDF/X)</en>
+    <tr>Escribir una copia del documento sin lo que hay debajo de los recuadros, como PDF corriente (Archivo &gt; Guardar como: PDF/A o PDF/X)</tr>
   </text>
 </interface>

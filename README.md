@@ -307,7 +307,8 @@ wherever else it is.
 
 *File ▸ Save the redacted copy…* (Ctrl+S), or *Apply all N redactions…* at
 the top of the right-click menu, writes a copy of the document
-(`NAME-redacted.pdf`) with what is under the marks removed. The original is
+(`NAME-redacted.pdf`) with what is under the marks removed, always as a
+plain PDF. The original is
 not changed, unless you choose its own name, and then it is asked first. A
 protected document keeps its password.
 
@@ -315,10 +316,10 @@ The copy is then checked: every word that was under a mark is looked for,
 under the same mark, in the copy. If any can still be read, a warning says
 where; if none can, the status bar says so.
 
-*File ▸ Save as* saves the copy at once as a plain PDF, PDF/A-1b, PDF/A-2b
-or PDF/A-3b (for archiving), or PDF/X-4 (for printing), made by
-py-pdfconform; the one chosen stays ticked, and Ctrl+S saves as it the next
-times. PDF/A and PDF/X can't be protected, so the copy of a
+*File ▸ Save as* saves the copy, this once, as the kind of PDF chosen there:
+a plain PDF, PDF/A-1b, PDF/A-2b or PDF/A-3b (for archiving), or PDF/X-4
+(for printing), made by py-pdfconform. Choosing it saves at once, and
+nothing is remembered: the next *Save* is a plain PDF again. PDF/A and PDF/X can't be protected, so the copy of a
 protected document comes out without its password.
 
 Closing the window, or opening another document, with marks not yet saved
@@ -345,7 +346,7 @@ tick *File ▸ Also remove metadata, hidden text, attachments and scripts*.
 * what happens to the drawings under a mark: remove those wholly under it
   (the usual), those it touches, or none;
 * whether to also remove metadata, hidden text, attachments and scripts;
-* what kind of PDF to save (see above), and where py-pdfconform is;
+* where py-pdfconform is (see "PDF/A and PDF/X");
 * the outline colour and the opacity of the marks not yet applied.
 
 Text under a mark is always removed.
@@ -359,7 +360,7 @@ buttons.
 | Key | What it does |
 |---|---|
 | Ctrl+O | Open a document |
-| Ctrl+S | Save the redacted copy |
+| Ctrl+S | Save the redacted copy, as a plain PDF |
 | T, B, H | The tools: Redact, Draw boxes, Hand |
 | Ctrl+F | Find and redact |
 | Ctrl+R | Show the result |
@@ -419,8 +420,8 @@ configuration folder: `~/.config/py-redact/` on Linux, or the folder that
 window (`interface`), the look of new marks (`redact_color`, `box_text`,
 `box_text_color`, `box_font_size`, `box_align`, `box_repeat_text`), what
 redaction does to pictures and drawings (`redact_images`, `redact_drawings`),
-whether to clean (`redact_clean`), what kind of PDF to save
-(`redact_output`) and where py-pdfconform is (`pdfconform`), the forms of the patterns (`pattern_language`) and the
+whether to clean (`redact_clean`), where py-pdfconform is (`pdfconform`),
+the forms of the patterns (`pattern_language`) and the
 look of marks not yet applied (`mark_outline`, `mark_opacity`). A value that
 is missing or wrong gives the usual one, so a file edited by hand never
 stops the program; deleting the file brings back all the usual values.
@@ -462,7 +463,7 @@ Testing
 
     $ uv run pytest
 
-There are 81 tests. They cover the redaction (of text, pictures, drawings,
+There are 80 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the
@@ -474,8 +475,12 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 0.4.2. `py-redact --version` says which one is installed.
+This is py-redact 0.4.3. `py-redact --version` says which one is installed.
 
+- 0.4.3:
+  - *Save* always writes a plain PDF. *File ▸ Save as* writes PDF/A or
+    PDF/X (or a plain PDF) this once, as soon as it is chosen, and
+    remembers nothing; the kind of PDF is no longer a setting.
 - 0.4.2:
   - *File ▸ Save as* saves at once in the kind of PDF chosen (PDF, PDF/A,
     PDF/X), which stays ticked for the next times; before, it only chose

@@ -42,10 +42,6 @@ class SettingsDialog(QDialog):
         self.drawings = QComboBox()
         for value, name in DRAWINGS:
             self.drawings.addItem(tr(name), value)
-        self.output = QComboBox()
-        self.output.addItem(tr("PDF"), "")
-        for value, name in conform.STANDARDS:
-            self.output.addItem(tr(name), value)
         self.pdfconform = QLineEdit()
         self.pdfconform.setPlaceholderText(tr("Look for it on the PATH, in ~/bin and in ~/.local/bin"))
         self.pdfconform.setToolTip(tr("The script py-pdfconform, which makes PDF/A and PDF/X (with or without "
@@ -67,7 +63,6 @@ class SettingsDialog(QDialog):
         row.addWidget(choose)
         form.addRow(tr("py-pdfconform:"), row)
         form.addRow("", self.pdfconform_found)
-        form.addRow(tr("Save as:"), self.output)
         form.addRow(QLabel("<b>" + tr("Boxes not yet applied") + "</b>"))
         form.addRow(tr("Outline:"), self.outline_button)
         form.addRow(tr("Fill opacity:"), self.opacity)
@@ -99,9 +94,6 @@ class SettingsDialog(QDialog):
         self.opacity.setValue(settings.mark_opacity)
         self.pdfconform.setText(settings.pdfconform)
         self._show_pdfconform()
-        values = [self.output.itemData(i) for i in range(self.output.count())]
-        self.output.setCurrentIndex(values.index(settings.output)
-                                    if conform.available(self.pdfconform.text().strip()) else 0)
 
     def _show_color(self):
         self.color_button.setIcon(self._swatch(self.color))
@@ -114,7 +106,7 @@ class SettingsDialog(QDialog):
             self._show_color()
 
     def _show_pdfconform(self, *_):
-        """Which py-pdfconform will be used, and PDF/A and PDF/X enabled only if there is one."""
+        """Which py-pdfconform will be used (File > Save as > PDF/A, PDF/X)."""
         path = self.pdfconform.text().strip()
         found = conform.find(path)
         if found is not None:
@@ -123,10 +115,6 @@ class SettingsDialog(QDialog):
             self.pdfconform_found.setText(tr("There is no such file"))
         else:
             self.pdfconform_found.setText(tr("Not found: PDF/A and PDF/X can't be made until it is given here"))
-        for i in range(1, self.output.count()):
-            self.output.model().item(i).setEnabled(found is not None)
-        if found is None:
-            self.output.setCurrentIndex(0)
 
     def _choose_pdfconform(self):
         from pathlib import Path
@@ -150,6 +138,6 @@ class SettingsDialog(QDialog):
         """The settings shown, with those the dialog doesn't show kept as they were."""
         return dataclasses.replace(self.original, color=self.color, clean=self.clean.isChecked(),
                                    images=self.images.currentData(), drawings=self.drawings.currentData(),
-                                   output=self.output.currentData(), mark_outline=self.outline,
+                                   mark_outline=self.outline,
                                    pdfconform=self.pdfconform.text().strip(),
                                    mark_opacity=self.opacity.value())

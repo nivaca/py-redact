@@ -319,7 +319,8 @@ que esté.
 
 *Archivo ▸ Guardar la copia censurada…* (Ctrl+S), o *Aplicar las N
 censuras…* arriba en el menú del botón derecho, escribe una copia del
-documento (`NOMBRE-redacted.pdf`) sin lo que hay debajo de los recuadros. El
+documento (`NOMBRE-redacted.pdf`) sin lo que hay debajo de los recuadros,
+siempre como PDF corriente. El
 original no cambia, salvo que se elija su mismo nombre, y entonces se
 pregunta antes. Un documento protegido conserva su contraseña.
 
@@ -327,10 +328,11 @@ Luego se revisa la copia: cada palabra que estaba debajo de un recuadro se
 busca, debajo del mismo recuadro, en la copia. Si alguna todavía se puede
 leer, un aviso dice dónde; si ninguna, lo dice la barra de estado.
 
-*Archivo ▸ Guardar como* guarda la copia en el acto como PDF corriente,
-PDF/A-1b, PDF/A-2b o PDF/A-3b (para archivo) o PDF/X-4 (para imprenta),
-hechos por py-pdfconform; la clase elegida queda marcada, y Ctrl+S guarda
-así las veces siguientes. PDF/A y PDF/X no admiten protección,
+*Archivo ▸ Guardar como* guarda la copia, esa vez, en la clase de PDF que se
+elija allí: PDF corriente, PDF/A-1b, PDF/A-2b o PDF/A-3b (para archivo) o
+PDF/X-4 (para imprenta), hechos por py-pdfconform. Elegirla guarda en el
+acto, y no se recuerda nada: el siguiente *Guardar* vuelve a ser un PDF
+corriente. PDF/A y PDF/X no admiten protección,
 así que la copia de un documento protegido sale sin contraseña.
 
 Al cerrar la ventana, o al abrir otro documento, con recuadros que aún no se
@@ -358,7 +360,7 @@ también metadatos, texto oculto, adjuntos y scripts*.
 * qué pasa con los dibujos debajo de un recuadro: quitar los que quedan del
   todo debajo (lo habitual), los que toca o ninguno;
 * si quitar también metadatos, texto oculto, adjuntos y scripts;
-* qué clase de PDF guardar (véase arriba), y dónde está py-pdfconform;
+* dónde está py-pdfconform (véase "PDF/A y PDF/X");
 * el color del contorno y la opacidad de los recuadros aún sin aplicar.
 
 El texto debajo de un recuadro siempre se elimina.
@@ -372,7 +374,7 @@ nombres de sus botones.
 | Tecla | Qué hace |
 |---|---|
 | Ctrl+O | Abrir un documento |
-| Ctrl+S | Guardar la copia censurada |
+| Ctrl+S | Guardar la copia censurada, como PDF corriente |
 | T, B, H | Las herramientas: Censurar, Dibujar recuadros, Mano |
 | Ctrl+F | Buscar y censurar |
 | Ctrl+R | Mostrar el resultado |
@@ -435,9 +437,8 @@ que nombre `$PY_REDACT_CONFIG`. Bajo `[parameters]` tiene el idioma de la
 ventana (`interface`), el aspecto de los recuadros nuevos (`redact_color`,
 `box_text`, `box_text_color`, `box_font_size`, `box_align`,
 `box_repeat_text`), lo que la censura hace con imágenes y dibujos
-(`redact_images`, `redact_drawings`), si sanear (`redact_clean`), la clase
-de PDF que se guarda (`redact_output`) y dónde está py-pdfconform
-(`pdfconform`), las formas de los patrones
+(`redact_images`, `redact_drawings`), si sanear (`redact_clean`), dónde
+está py-pdfconform (`pdfconform`), las formas de los patrones
 (`pattern_language`) y el aspecto de los recuadros aún sin aplicar
 (`mark_outline`, `mark_opacity`). Un valor que falte o esté mal da el
 habitual, así que un archivo editado a mano nunca detiene el programa;
@@ -480,7 +481,7 @@ Pruebas
 
     $ uv run pytest
 
-Hay 81 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 80 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando
@@ -492,9 +493,13 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 0.4.2 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 0.4.3 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 0.4.3:
+  - *Guardar* siempre escribe un PDF corriente. *Archivo ▸ Guardar como*
+    escribe PDF/A o PDF/X (o un PDF corriente) esa vez, en cuanto se elige,
+    y no recuerda nada; la clase de PDF ya no es parte de la configuración.
 - 0.4.2:
   - *Archivo ▸ Guardar como* guarda en el acto en la clase de PDF elegida
     (PDF, PDF/A, PDF/X), que queda marcada para las veces siguientes;

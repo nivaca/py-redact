@@ -231,36 +231,6 @@ def test_boxes_follow_the_page(window):
     assert window.boxes == []
 
 
-@pytest.mark.skipif(not shutil.which("py-pdfconform"), reason="py-pdfconform not installed")
-@pytest.mark.parametrize("standard", ["a-2b", "x-4"])
-def test_save_as_pdfa_or_pdfx(window, tmp_path, standard):
-    drag(window, (60, 105), (300, 126))
-    asked = []
-    window.save_dialog = lambda: asked.append(window.output())
-    window.output_actions[standard].trigger()
-    assert asked == [standard]  # (choosing it saves at once, as that)
-    assert window.output() == standard and settings.load().output == standard
-    assert "PDF/" in window.a_save.text()
-    out = tmp_path / "out.pdf"
-    assert window.save_to(out)
-    doc = pymupdf.open(out)
-    raw = out.read_bytes()
-    assert (b"pdfaid:part" in raw or b"pdfaid" in raw) if standard.startswith("a") else b"GTS_PDFX" in raw
-    assert "Person1" not in doc[0].get_text() and "PDF/" in window.statusBar().currentMessage()
-
-
-def test_pdfa_greyed_without_py_pdfconform(app, sample, tmp_path, monkeypatch):
-    from py_redact import conform
-
-    monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setattr(conform, "command", lambda path=None: None)
-    settings.save(settings.Settings(output="a-2b"))  # (chosen when it was there)
-    w = MainWindow()
-    assert not w.output_actions["a-2b"].isEnabled() and w.output_actions[""].isChecked()
-    assert w.output() == "" and w.a_save.text() == "Save the redacted copy…"
-    w.close()
-
-
 def test_toolbar_has_icons(window):
     buttons = [a for a in window.toolbar.actions() if not a.isSeparator()]
     assert buttons and all(not a.icon().isNull() for a in buttons)
@@ -418,32 +388,52 @@ def test_remove_hidden_information(window, tmp_path, monkeypatch):
     assert window.hidden_dialog() and out.is_file()
 
 
+@pytest.mark.skipif(not shutil.which("py-pdfconform"), reason="py-pdfconform not installed")
+@pytest.mark.parametrize("standard", ["a-2b", "x-4"])
+def test_save_as_is_for_this_once(window, tmp_path, monkeypatch, standard):
+    from py_redact.gui import window as w
+
+    drag(window, (60, 105), (300, 126))
+    out = tmp_path / "as.pdf"
+    monkeypatch.setattr(w.QFileDialog, "getSaveFileName", lambda *a, **k: (str(out), ""))
+    window.output_actions[standard].trigger()  # (Save as > PDF/A-2b or PDF/X-4: saves at once)
+    raw = out.read_bytes()
+    assert (b"pdfaid" in raw) if standard.startswith("a") else (b"GTS_PDFX" in raw)
+    assert "Person1" not in pymupdf.open(out)[0].get_text() and "PDF/" in window.statusBar().currentMessage()
+    drag(window, (60, 40), (300, 66))
+    plain = tmp_path / "plain.pdf"
+    monkeypatch.setattr(w.QFileDialog, "getSaveFileName", lambda *a, **k: (str(plain), ""))
+    window.a_save.trigger()  # (Save: always a plain PDF, whatever Save as was before)
+    raw = plain.read_bytes()
+    assert b"pdfaid" not in raw and b"GTS_PDFX" not in raw
+
+
+def test_save_as_items(window, monkeypatch):
+    from py_redact import conform
+
+    assert not window.output_actions[""].isEnabled()  # (no boxes yet: nothing to save)
+    drag(window, (60, 105), (300, 126))
+    assert window.output_actions[""].isEnabled() and not window.output_actions["a-2b"].isCheckable()
+    monkeypatch.setattr(conform, "command", lambda path=None: None)
+    window._show_output()
+    assert not window.output_actions["a-2b"].isEnabled() and window.output_actions[""].isEnabled()
+    asked = []
+    window.save_dialog = lambda standard="": asked.append(standard)
+    window.output_actions[""].trigger()
+    assert asked == [""]
+
+
 def test_pdfconform_setting_in_the_dialog(window, tmp_path):
     from py_redact.gui.prefs import SettingsDialog
     from py_redact.gui.window import color_name, swatch
 
     script = tmp_path / "my-pdfconform"
     script.write_text("#!/bin/sh\n")
+    drag(window, (60, 105), (300, 126))
     d = SettingsDialog(window.prefs, swatch, color_name, window)
     d.pdfconform.setText(str(tmp_path / "nothing"))
-    assert not d.output.model().item(2).isEnabled() and d.output.currentIndex() == 0
+    assert "no such file" in d.pdfconform_found.text()
     d.pdfconform.setText(str(script))
-    assert d.output.model().item(2).isEnabled() and str(script) in d.pdfconform_found.text()
-    d.output.setCurrentIndex(2)
+    assert str(script) in d.pdfconform_found.text()
     window.set_prefs(d.settings())
-    assert settings.load().pdfconform == str(script) and window.output() == "a-2b"
-    assert window.output_actions["a-2b"].isEnabled()
-
-
-def test_save_as_saves_at_once(window, monkeypatch):
-    from py_redact import conform
-
-    monkeypatch.setattr(conform, "command", lambda path=None: ["true"])
-    window._show_output()
-    asked = []
-    window.save_dialog = lambda: asked.append(window.output())
-    window.output_actions["a-3b"].trigger()  # (no boxes yet: it only becomes the choice)
-    assert asked == [] and window.output() == "a-3b"
-    drag(window, (60, 105), (300, 126))
-    window.output_actions["x-4"].trigger()
-    assert asked == ["x-4"] and window.output_actions["x-4"].isChecked()
+    assert settings.load().pdfconform == str(script) and window.output_actions["a-2b"].isEnabled()

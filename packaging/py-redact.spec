@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-redact
-Version:        0.4.2
+Version:        0.4.3
 Release:        1%{?dist}
 Summary:        Redact PDF documents: remove what lies under boxes drawn on their pages
 
@@ -74,6 +74,10 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
 %{_datadir}/icons/hicolor/*/apps/py-redact.*
 
 %changelog
+* Tue Nov 17 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.3-1
+- Save always writes a plain PDF; File > Save as writes PDF/A or PDF/X this
+  once, without remembering it
+
 * Mon Nov 16 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.2-1
 - File > Save as saves at once in the kind of PDF chosen (PDF, PDF/A, PDF/X)
 

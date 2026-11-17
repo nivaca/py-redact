@@ -244,9 +244,10 @@ class MainWindow(QMainWindow):
         self.a_open = self._action(m, tr("Open…"), self.open_dialog, QKeySequence.StandardKey.Open)
         self.m_recent = m.addMenu(tr("Open recent"))
         self._recent_menu()
-        self.a_save = self._action(m, tr("Save the redacted copy…"), self.save_dialog,
+        self.a_save = self._action(m, tr("Save the redacted copy…"), lambda: self.save_dialog(),
                                    QKeySequence.StandardKey.Save,
-                                   tr("Write a copy of the document with what is under the boxes removed"))
+                                   tr("Write a copy of the document with what is under the boxes removed, as a plain PDF (File > Save "
+                                      "as: PDF/A or PDF/X)"))
         self.a_clean = QAction(tr("Also remove metadata, hidden text, attachments and scripts"), self,
                                checkable=True)
         self.a_clean.setChecked(self.prefs.clean)
@@ -262,17 +263,15 @@ class MainWindow(QMainWindow):
         self.a_sanitize = self._action(m, tr("Sanitize the document…"), self.sanitize_dialog,
                                        tip=tr("Save a copy without metadata, hidden text, attachments, scripts and "
                                               "links, and with nothing else changed (the boxes aren't applied)"))
+        # Save as: the redacted copy, this once, as a plain PDF, PDF/A or PDF/X (Save is always a plain PDF)
         self.m_output = m.addMenu(tr("Save as"))
         self.m_output.setToolTipsVisible(True)
-        group = QActionGroup(self)
         self.output_actions = {}
         for value, name in [("", N_("PDF"))] + conform.STANDARDS:
-            act = QAction(tr(name) + "…", self, checkable=True)
-            act.triggered.connect(lambda _=False, v=value: self.set_output(v))
-            group.addAction(act)
+            act = QAction(tr(name) + "…", self)
+            act.triggered.connect(lambda _=False, v=value: self.save_dialog(v))
             self.m_output.addAction(act)
             self.output_actions[value] = act
-            act.setStatusTip(tr("Save the redacted copy as this, now and the next times"))
         self._show_output()
         m.addSeparator()
         self._action(m, tr("Quit"), self.close, QKeySequence.StandardKey.Quit)
@@ -501,7 +500,8 @@ class MainWindow(QMainWindow):
         self._fill_pages()
         return True
 
-    def save_dialog(self) -> bool:
+    def save_dialog(self, standard: str = "") -> bool:
+        """Save the redacted copy, as a plain PDF or, this once, as STANDARD ('a-2b', 'x-4'...)."""
         if self.path is None:
             return False
         if not self.boxes:
@@ -512,16 +512,18 @@ class MainWindow(QMainWindow):
             self.status(tr("A box has pages that can't be read: {error}", error=check(bad[0].repeat)), error=True)
             return False
         default = Path(self.last_dir()) / f"{self.path.stem}-redacted.pdf"
-        name, _ = QFileDialog.getSaveFileName(self, tr("Save the redacted copy"), str(default),
-                                              tr("PDF files (*.pdf)"))
+        title = tr("Save the redacted copy") if not standard \
+            else tr("Save the redacted copy as {standard}", standard=conform.label(standard))
+        name, _ = QFileDialog.getSaveFileName(self, title, str(default), tr("PDF files (*.pdf)"))
         if not name:
             return False
         target = Path(name)
         if target.suffix.lower() != ".pdf":
             target = target.with_suffix(".pdf")
-        return self.save_to(target)
+        return self.save_to(target, standard)
 
-    def save_to(self, target: Path) -> bool:
+    def save_to(self, target: Path, standard: str = "") -> bool:
+        """Write the redacted copy as TARGET: a plain PDF or, if given, STANDARD."""
         replacing = target.resolve() == self.path.resolve()
         if replacing and QMessageBox.warning(
                 self, tr("Replace the original"),
@@ -542,7 +544,11 @@ class MainWindow(QMainWindow):
                 self.refresh()
             self.status(str(e), error=True)
             return False
-        standard, check_ = self.output(), ""
+        check_ = ""
+        if standard and not conform.available():
+            self.warn(conform.label(standard), tr("The redacted copy was saved as a plain PDF: {command} is not "
+                                                  "installed (or not where Settings say)", command=conform.COMMAND))
+            standard = ""
         if standard:
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             self.status(tr("Making {standard} with {command}…", standard=conform.label(standard),
@@ -642,28 +648,15 @@ class MainWindow(QMainWindow):
 
     # ----------------------------------------------------------------- PDF/A and PDF/X
 
-    def output(self) -> str:
-        """The standard the redacted copy is made to ('' for a plain PDF)."""
-        return self.prefs.output if self.prefs.output and conform.available() else ""
-
-    def set_output(self, value: str, save: bool = True):
-        """Make VALUE the kind of PDF of redacted copies (kept for the next times),
-        and, with SAVE, save the copy as that at once, as Save as does elsewhere."""
-        self.set_prefs(dataclasses.replace(self.prefs, output=value))
-        if save and self.doc is not None and self.boxes:
-            self.save_dialog()
-
     def _show_output(self):
-        """The Save as menu: what is chosen, and greyed out if py-pdfconform isn't there."""
+        """The Save as menu: PDF/A and PDF/X greyed out if py-pdfconform isn't there."""
         have = conform.available()
         for value, act in self.output_actions.items():
-            act.setChecked(value == self.output())
+            act.setEnabled(self.doc is not None and bool(self.boxes) and (have or not value))
             if value:
                 act.setEnabled(have)
                 act.setToolTip("" if have else tr("Needs {command}: install it, or say where it is in Settings",
                                                   command=conform.COMMAND))
-        self.a_save.setText(tr("Save the redacted copy…") if not self.output()
-                            else tr("Save the redacted copy as {standard}…", standard=conform.label(self.output())))
         self._toolbar_tips()
 
     # ----------------------------------------------------------------- recent files
@@ -1325,6 +1318,7 @@ class MainWindow(QMainWindow):
         self.a_next.setEnabled(has and self.page < self.count - 1)
         self.a_undo.setEnabled(bool(self.undo_stack))
         self.a_redo.setEnabled(bool(self.redo_stack))
+        self._show_output()
 
     # ----------------------------------------------------------------- unsaved changes
 
