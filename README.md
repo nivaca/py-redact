@@ -484,8 +484,15 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 0.4.4. `py-redact --version` says which one is installed.
+This is py-redact 0.4.5. `py-redact --version` says which one is installed.
 
+- 0.4.5:
+  - After saving, the bookmarks of the copy are checked too: those whose
+    titles name what was under the marks, or that point to no page, can
+    be removed, or all the bookmarks.
+  - Page labels (the numbers a viewer shows for the pages) are a kind of
+    hidden information, which *Remove hidden information* and *Sanitize*
+    remove.
 - 0.4.4:
   - The documentation no longer names other redaction programs. The
     program is the same.

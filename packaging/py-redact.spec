@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-redact
-Version:        0.4.4
+Version:        0.4.5
 Release:        1%{?dist}
 Summary:        Redact PDF documents: remove what lies under boxes drawn on their pages
 
@@ -74,6 +74,11 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
 %{_datadir}/icons/hicolor/*/apps/py-redact.*
 
 %changelog
+* Tue Nov 17 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.5-1
+- The bookmarks of the redacted copy are checked after saving, and those that
+  give away what was redacted can be removed; page labels are a kind of hidden
+  information
+
 * Tue Nov 17 2026 Nicolas Vaughan <nivaca@fastmail.com> - 0.4.4-1
 - The documentation, the changelog and the comments no longer name other
   redaction programs

@@ -503,9 +503,16 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 0.4.4 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 0.4.5 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 0.4.5:
+  - Al guardar, también se revisan los marcadores de la copia: los que
+    nombran lo que estaba debajo de los recuadros, o que no llevan a
+    ninguna página, pueden quitarse, o todos los marcadores.
+  - Las etiquetas de página (los números que un visor muestra para las
+    páginas) son una clase de información oculta, que *Quitar información
+    oculta* y *Sanear* quitan.
 - 0.4.4:
   - La documentación ya no nombra otros programas de censura. El programa
     es el mismo.
