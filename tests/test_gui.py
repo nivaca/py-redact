@@ -393,7 +393,7 @@ def test_remove_hidden_information(window, tmp_path, monkeypatch):
     assert window.hidden_dialog() and out.is_file()
 
 
-@pytest.mark.skipif(not shutil.which("py-pdfconform"), reason="py-pdfconform not installed")
+@pytest.mark.skipif(not shutil.which("pdf2iso"), reason="pdf2iso not installed")
 @pytest.mark.parametrize("standard", ["a-2b", "x-4"])
 def test_save_as_is_for_this_once(window, tmp_path, monkeypatch, standard):
     from py_redact.gui import window as w

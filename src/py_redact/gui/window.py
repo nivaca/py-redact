@@ -692,7 +692,7 @@ class MainWindow(QMainWindow):
     # ----------------------------------------------------------------- PDF/A and PDF/X
 
     def _show_output(self):
-        """The Save as menu: PDF/A and PDF/X greyed out if py-pdfconform isn't there."""
+        """The Save as menu: PDF/A and PDF/X greyed out if pdf2iso isn't there."""
         have = conform.available()
         for value, act in self.output_actions.items():
             act.setEnabled(self.doc is not None and bool(self.boxes) and (have or not value))

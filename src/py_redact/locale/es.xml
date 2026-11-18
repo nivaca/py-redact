@@ -1238,24 +1238,24 @@
     <tr>No se encontró: no se pueden hacer PDF/A ni PDF/X hasta que se indique aquí</tr>
   </text>
   <text>
-    <en>The script py-pdfconform, which makes PDF/A and PDF/X (with or without the .py extension); empty to look for it</en>
-    <tr>El script py-pdfconform, que hace los PDF/A y PDF/X (con la extensión .py o sin ella); vacío para buscarlo</tr>
+    <en>The script pdf2iso, which makes PDF/A and PDF/X (with or without the .py extension); empty to look for it</en>
+    <tr>El script pdf2iso, que hace los PDF/A y PDF/X (con la extensión .py o sin ella); vacío para buscarlo</tr>
   </text>
   <text>
     <en>There is no such file</en>
     <tr>No existe ese archivo</tr>
   </text>
   <text>
-    <en>Where is py-pdfconform?</en>
-    <tr>¿Dónde está py-pdfconform?</tr>
+    <en>Where is pdf2iso?</en>
+    <tr>¿Dónde está pdf2iso?</tr>
   </text>
   <text>
-    <en>py-pdfconform (py-pdfconform py-pdfconform.py);;All files (*)</en>
-    <tr>py-pdfconform (py-pdfconform py-pdfconform.py);;Todos los archivos (*)</tr>
+    <en>pdf2iso (pdf2iso pdf2iso.py);;All files (*)</en>
+    <tr>pdf2iso (pdf2iso pdf2iso.py);;Todos los archivos (*)</tr>
   </text>
   <text>
-    <en>py-pdfconform:</en>
-    <tr>py-pdfconform:</tr>
+    <en>pdf2iso:</en>
+    <tr>pdf2iso:</tr>
   </text>
   <text>
     <en>Save the redacted copy as {standard}</en>

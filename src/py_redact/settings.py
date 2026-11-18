@@ -32,7 +32,7 @@ class Settings:
     pattern_language: str = "en"  # the forms of the patterns of Find and redact (see patterns.py)
     mark_outline: str = "#d03030"  # of boxes not yet applied
     mark_opacity: int = 60  # their fill, in % (100: as they will be once applied)
-    pdfconform: str = ""  # the path of py-pdfconform; '' to look for it (see conform.find)
+    pdfconform: str = ""  # the path of pdf2iso; '' to look for it (see conform.find)
 
 
 DEFAULTS = Settings()

@@ -44,7 +44,7 @@ class SettingsDialog(QDialog):
             self.drawings.addItem(tr(name), value)
         self.pdfconform = QLineEdit()
         self.pdfconform.setPlaceholderText(tr("Look for it on the PATH, in ~/bin and in ~/.local/bin"))
-        self.pdfconform.setToolTip(tr("The script py-pdfconform, which makes PDF/A and PDF/X (with or without "
+        self.pdfconform.setToolTip(tr("The script pdf2iso, which makes PDF/A and PDF/X (with or without "
                                       "the .py extension); empty to look for it"))
         self.pdfconform.textChanged.connect(self._show_pdfconform)
         choose = QPushButton(tr("Choose…"))
@@ -61,7 +61,7 @@ class SettingsDialog(QDialog):
         row = QHBoxLayout()
         row.addWidget(self.pdfconform, 1)
         row.addWidget(choose)
-        form.addRow(tr("py-pdfconform:"), row)
+        form.addRow(tr("pdf2iso:"), row)
         form.addRow("", self.pdfconform_found)
         form.addRow(QLabel("<b>" + tr("Boxes not yet applied") + "</b>"))
         form.addRow(tr("Outline:"), self.outline_button)
@@ -106,7 +106,7 @@ class SettingsDialog(QDialog):
             self._show_color()
 
     def _show_pdfconform(self, *_):
-        """Which py-pdfconform will be used (File > Save as > PDF/A, PDF/X)."""
+        """Which pdf2iso will be used (File > Save as > PDF/A, PDF/X)."""
         path = self.pdfconform.text().strip()
         found = conform.find(path)
         if found is not None:
@@ -122,8 +122,8 @@ class SettingsDialog(QDialog):
         from PySide6.QtWidgets import QFileDialog
 
         start = self.pdfconform.text().strip() or str(Path.home() / "bin")
-        name, _ = QFileDialog.getOpenFileName(self, tr("Where is py-pdfconform?"), start,
-                                              tr("py-pdfconform (py-pdfconform py-pdfconform.py);;All files (*)"))
+        name, _ = QFileDialog.getOpenFileName(self, tr("Where is pdf2iso?"), start,
+                                              tr("pdf2iso (pdf2iso pdf2iso.py);;All files (*)"))
         if name:
             self.pdfconform.setText(name)
 

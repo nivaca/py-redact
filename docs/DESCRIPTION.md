@@ -101,20 +101,20 @@ find that text everywhere else.
 5. PDF/A and PDF/X
 ------------------
 
-py-pdfconform, another program of mine, converts a PDF to PDF/A or PDF/X-4
+pdf2iso, another program of mine, converts a PDF to PDF/A or PDF/X-4
 with Ghostscript and pikepdf, and checks the result. py-redact writes the
-redacted copy and then gives it to py-pdfconform, if it is installed; if not,
+redacted copy and then gives it to pdf2iso, if it is installed; if not,
 those choices are greyed out. A program started from the menu of the desktop
 often hasn't `~/bin` on its PATH, where a script like this one lives, so
 py-redact also looks there and in `~/.local/bin`, and the settings can say
 where the script is.
 
-This stage left one lesson. py-pdfconform starts with `#!/usr/bin/env
+This stage left one lesson. pdf2iso starts with `#!/usr/bin/env
 python3`, so it runs with the first Python on the PATH; inside the
 environment where py-redact runs (its virtual environment, or the
 AppImage), that is py-redact's Python, which hasn't pikepdf. The conversion
 failed, and in the build of the RPM the warning that said so waited for a
-click that never came. Now py-pdfconform is always run without py-redact's
+click that never came. Now pdf2iso is always run without py-redact's
 environment, the RPM is built outside it, and in the tests a warning fails
 instead of waiting.
 
@@ -178,5 +178,5 @@ it, with mouse events on the page: drawing, moving and resizing marks,
 selecting text, double clicks, the tools, finding, marking, saving, and the
 right-click menus. A test checks that every text of the window has its
 Spanish translation, and no other. The conversion to PDF/A and PDF/X is
-tested when py-pdfconform is installed. The RPM runs all the tests again
+tested when pdf2iso is installed. The RPM runs all the tests again
 with Fedora's own packages. The program has 20 files, around 3,900 lines.

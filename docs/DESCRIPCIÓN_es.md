@@ -1,4 +1,4 @@
-# py-redact 0.4.5: descripción
+# py-redact 0.4.6: descripción
 
 ## Análisis
 
@@ -44,7 +44,7 @@ Un documento bien censurado todavía puede delatarse por sus marcadores: un tít
 
 ### PDF/A y PDF/X
 
-El paso a PDF/A o PDF/X-4 lo hace py-pdfconform, otro programa mío, que usa Ghostscript y pikepdf y revisa el resultado. py-redact escribe la copia censurada y se la pasa, si está instalado; si no, esas opciones aparecen desactivadas. Un programa abierto desde el menú del escritorio a menudo no tiene en su PATH la carpeta `~/bin`, donde suele vivir un script como este, así que py-redact también lo busca allí y en `~/.local/bin`, y la configuración permite indicar dónde está. py-pdfconform se ejecuta siempre sin el entorno de Python de py-redact (su entorno virtual o la AppImage), porque, si no, correría con un Python que no tiene pikepdf.
+El paso a PDF/A o PDF/X-4 lo hace pdf2iso, otro programa mío, que usa Ghostscript y pikepdf y revisa el resultado. py-redact escribe la copia censurada y se la pasa, si está instalado; si no, esas opciones aparecen desactivadas. Un programa abierto desde el menú del escritorio a menudo no tiene en su PATH la carpeta `~/bin`, donde suele vivir un script como este, así que py-redact también lo busca allí y en `~/.local/bin`, y la configuración permite indicar dónde está. pdf2iso se ejecuta siempre sin el entorno de Python de py-redact (su entorno virtual o la AppImage), porque, si no, correría con un Python que no tiene pikepdf.
 
 ### Proceso y distribución
 
@@ -56,13 +56,13 @@ El código se maneja con git, en un repositorio publicado en GitHub (https://git
 
 Hay 84 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
 
-La ventana se prueba manejándola como lo haría un usuario, con eventos del ratón sobre la página: dibujar, mover y redimensionar recuadros, seleccionar texto, hacer doble clic, cambiar de herramienta, buscar, marcar, guardar y abrir los menús del botón derecho. Un aviso que en uso normal esperaría un clic hace fallar la prueba en lugar de esperar. El paso a PDF/A y PDF/X se prueba cuando py-pdfconform está instalado.
+La ventana se prueba manejándola como lo haría un usuario, con eventos del ratón sobre la página: dibujar, mover y redimensionar recuadros, seleccionar texto, hacer doble clic, cambiar de herramienta, buscar, marcar, guardar y abrir los menús del botón derecho. Un aviso que en uso normal esperaría un clic hace fallar la prueba en lugar de esperar. El paso a PDF/A y PDF/X se prueba cuando pdf2iso está instalado.
 
 El RPM vuelve a correr todas las pruebas sobre el paquete instalado, con el Python, el PyMuPDF y el PySide6 de Fedora, y la AppImage censura un documento con su propio Python antes de terminar de armarse. Las ventanas se revisaron además a ojo, con capturas de pantalla en los dos idiomas.
 
 ## Plataforma
 
-Funciona en Linux. La AppImage lleva su propio Python, Qt y PyMuPDF, y corre en cualquier Linux con glibc 2.34 o posterior; el RPM es para Fedora 45 y posteriores, y Copr lo construye para cada versión. Desde el código fuente basta Python 3.14 y uv. Para PDF/A y PDF/X hace falta py-pdfconform, con Ghostscript.
+Funciona en Linux. La AppImage lleva su propio Python, Qt y PyMuPDF, y corre en cualquier Linux con glibc 2.34 o posterior; el RPM es para Fedora 45 y posteriores, y Copr lo construye para cada versión. Desde el código fuente basta Python 3.14 y uv. Para PDF/A y PDF/X hace falta pdf2iso, con Ghostscript.
 
 Es una aplicación de escritorio y no necesita internet. Nada sale del equipo: los documentos, la configuración y los códigos de censura se quedan en él.
 

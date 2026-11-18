@@ -66,7 +66,7 @@ PyMuPDF, and runs with glibc 2.34 or later (Ubuntu 22.04, Debian 12, Fedora
 Fedora's own Python, PyMuPDF and PySide6. From the source, it needs Python
 3.14 or later and [uv](https://docs.astral.sh/uv/), which brings the rest
 (PyMuPDF and PySide6). To save PDF/A or PDF/X, any of them needs
-[py-pdfconform](https://github.com/nivaca/py-pdfconform) (see "PDF/A and
+[pdf2iso](https://github.com/nivaca/pdf2iso) (see "PDF/A and
 PDF/X").
 
 ### Getting the program
@@ -147,12 +147,12 @@ desktop session (it usually is). It is also offered for opening PDF files.
 ### PDF/A and PDF/X
 
 To save the redacted copy as PDF/A or PDF/X, py-redact uses another program
-of mine, [py-pdfconform](https://github.com/nivaca/py-pdfconform) (it needs
-Ghostscript). py-redact looks for it, as `py-pdfconform` or
-`py-pdfconform.py`, on the PATH and in `~/bin` and `~/.local/bin`; a program
+of mine, [pdf2iso](https://github.com/nivaca/pdf2iso) (it needs
+Ghostscript). py-redact looks for it, as `pdf2iso` or
+`pdf2iso.py`, on the PATH and in `~/bin` and `~/.local/bin` (or, if it is older than its version 2.0, as `py-pdfconform` or `py-pdfconform.py`); a program
 started from the menu of the desktop often doesn't have those two folders on
 its PATH. If it is elsewhere, give its path in *Settings ▸ Settings… ▸
-py-pdfconform*, which says which one will be used. A script that can't be
+pdf2iso*, which says which one will be used. A script that can't be
 run by itself is run with `python3`. Without it, those choices are greyed
 out and everything else works.
 
@@ -325,7 +325,7 @@ bookmarks, or to keep them.
 
 *File ▸ Save as* saves the copy, this once, as the kind of PDF chosen there:
 a plain PDF, PDF/A-1b, PDF/A-2b or PDF/A-3b (for archiving), or PDF/X-4
-(for printing), made by py-pdfconform. Choosing it saves at once, and
+(for printing), made by pdf2iso. Choosing it saves at once, and
 nothing is remembered: the next *Save* is a plain PDF again. PDF/A and PDF/X can't be protected, so the copy of a
 protected document comes out without its password.
 
@@ -355,7 +355,7 @@ tick *File ▸ Also remove metadata, hidden text, attachments and scripts*.
 * what happens to the drawings under a mark: remove those wholly under it
   (the usual), those it touches, or none;
 * whether to also remove metadata, hidden text, attachments and scripts;
-* where py-pdfconform is (see "PDF/A and PDF/X");
+* where pdf2iso is (see "PDF/A and PDF/X");
 * the outline colour and the opacity of the marks not yet applied.
 
 Text under a mark is always removed.
@@ -429,7 +429,7 @@ configuration folder: `~/.config/py-redact/` on Linux, or the folder that
 window (`interface`), the look of new marks (`redact_color`, `box_text`,
 `box_text_color`, `box_font_size`, `box_align`, `box_repeat_text`), what
 redaction does to pictures and drawings (`redact_images`, `redact_drawings`),
-whether to clean (`redact_clean`), where py-pdfconform is (`pdfconform`),
+whether to clean (`redact_clean`), where pdf2iso is (`pdfconform`),
 the forms of the patterns (`pattern_language`) and the
 look of marks not yet applied (`mark_outline`, `mark_opacity`). A value that
 is missing or wrong gives the usual one, so a file edited by hand never
@@ -458,7 +458,7 @@ The program is in `src/py_redact/`:
 | `patterns.py` | The patterns of Find and redact |
 | `codes.py` | Redaction codes and code sets |
 | `hidden.py` | Hidden information: what a document has, and removing it |
-| `conform.py` | PDF/A and PDF/X, through py-pdfconform |
+| `conform.py` | PDF/A and PDF/X, through pdf2iso |
 | `settings.py`, `config.py` | The settings and the configuration file |
 | `interface.py`, `locale/es.xml` | The language of the window |
 | `gui/window.py` | The window |
@@ -477,15 +477,18 @@ annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the
 mouse, marking text, finding, saving, and making PDF/A and PDF/X when
-py-pdfconform is installed. A test checks that every text of the window has
+pdf2iso is installed. A test checks that every text of the window has
 its Spanish translation. The RPM runs them all again when it is built, with
 Fedora's own Python and packages.
 
 Version
 -------
 
-This is py-redact 0.4.5. `py-redact --version` says which one is installed.
+This is py-redact 0.4.6. `py-redact --version` says which one is installed.
 
+- 0.4.6:
+  - PDF/A and PDF/X are made by pdf2iso, the new name of py-pdfconform;
+    the old name is still looked for.
 - 0.4.5:
   - After saving, the bookmarks of the copy are checked too: those whose
     titles name what was under the marks, or that point to no page, can
@@ -511,7 +514,7 @@ This is py-redact 0.4.5. `py-redact --version` says which one is installed.
     getting the program, a menu entry, updating, uninstalling, what is
     where, help, the language of the window, this history, background and
     sources.
-  - *Settings ▸ Settings… ▸ py-pdfconform* says where py-pdfconform is,
+  - *Settings ▸ Settings… ▸ pdf2iso* says where pdf2iso is,
     and which one will be used; without it, py-redact also looks for it in
     `~/bin` and `~/.local/bin` and with the `.py` extension. Before, started
     from the menu of the desktop, it often didn't find it, and PDF/A and
@@ -544,7 +547,7 @@ This is py-redact 0.4.5. `py-redact --version` says which one is installed.
     saving.
   - *File ▸ Sanitize the document…*.
   - The copy can be saved as PDF/A-1b, PDF/A-2b, PDF/A-3b or PDF/X-4, with
-    py-pdfconform.
+    pdf2iso.
   - Icons in the toolbar, from the desktop's theme or the program's own;
     *Settings ▸ Labels in the toolbar*.
 - 0.2.0:
@@ -580,7 +583,7 @@ Sources
   the pages. GNU AGPL 3.
 - [PySide6](https://doc.qt.io/qtforpython-6/), Qt for Python, by The Qt
   Company: the window. GNU LGPL 3.
-- [py-pdfconform](https://github.com/nivaca/py-pdfconform), by the author,
+- [pdf2iso](https://github.com/nivaca/pdf2iso), by the author,
   with [Ghostscript](https://www.ghostscript.com/) and
   [pikepdf](https://pikepdf.readthedocs.io/): PDF/A and PDF/X.
 - The codes of the U.S. Freedom of Information Act, 5 U.S.C. § 552(b), and
