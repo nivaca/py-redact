@@ -101,7 +101,10 @@ the first time, and some minutes), and adds it to the menu of the system.
 Nothing is compiled, nothing needs administrator rights, and the settings
 are never touched. First install Python 3.14 or later, if it isn't there
 yet, then download `py-redact-VERSION.zip` and unpack it (or clone the
-source).
+source). The three installers are run on each change of the program, on
+machines of GitHub with Windows, macOS and Linux, which then run the tests
+against the program installed, and uninstall it
+(`.github/workflows/installers.yml`).
 
 **Windows.** Python comes from
 [python.org](https://www.python.org/downloads/windows/). Then double-click
@@ -585,7 +588,7 @@ Testing
 
     $ uv run pytest
 
-There are 96 tests. They cover the redaction (of text, pictures, drawings,
+There are 97 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the
@@ -598,8 +601,15 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 1.0.6. `py-redact --version` says which one is installed.
+This is py-redact 1.0.7. `py-redact --version` says which one is installed.
 
+- 1.0.7:
+  - The installers are now run on each change on Windows, macOS and Linux
+    (GitHub Actions), with the tests run against the program installed. This
+    found and fixed: the macOS installer stopped halfway (its chmod refuses
+    --); on Windows, saving over the original failed, since the processes
+    that draw the pages kept it open; and an error while renaming a copy was
+    hidden behind another.
 - 1.0.6:
   - Saving no longer stops the window: the copy is written and checked in a
     process of its own (on 300 pages with 5,100 boxes, the longest stop went

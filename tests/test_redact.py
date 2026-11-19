@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pymupdf
 import pytest
 
@@ -215,7 +217,9 @@ def test_image_at(tmp_path):
 
     doc = pymupdf.open()
     page = doc.new_page()
-    pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 10, 10), False)
+    # (of the shape of its rectangle: PyMuPDF 2 gives the place where an image
+    # is drawn, which, for another shape, is smaller than the rectangle)
+    pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 20, 10), False)
     page.insert_image(pymupdf.Rect(100, 100, 200, 150), pixmap=pix)
     assert image_at(page, 150, 120) == (100, 100, 200, 150) and image_at(page, 10, 10) is None
 
@@ -286,17 +290,24 @@ def test_hidden_information(tmp_path):
     page.insert_link({"kind": pymupdf.LINK_URI, "from": pymupdf.Rect(0, 0, 50, 50), "uri": "https://example.org"})
     path = tmp_path / "in.pdf"
     doc.save(path)
-    found = hidden.inspect(pymupdf.open(path))
+    with pymupdf.open(path) as d:  # (closed: on Windows, an open file can't be replaced)
+        found = hidden.inspect(d)
     assert all(found[k] >= 1 for k in ("metadata", "attachments", "bookmarks", "comments", "hidden_text", "links"))
     out = tmp_path / "out.pdf"
     sanitize(path, out, kinds={"bookmarks", "hidden_text"})
-    after = hidden.inspect(pymupdf.open(out))
+    with pymupdf.open(out) as d:
+        after = hidden.inspect(d)
     assert after["bookmarks"] == 0 and after["hidden_text"] == 0 and after["comments"] == 1
     sanitize(path, out)
-    assert not any(v > 0 for v in hidden.inspect(pymupdf.open(out)).values())
-    assert pymupdf.open(out)[0].get_text() == "seen\n"
+    with pymupdf.open(out) as d:
+        assert not any(v > 0 for v in hidden.inspect(d).values())
+        assert d[0].get_text() == "seen\n"
 
 
+UNIX_SCRIPTS = pytest.mark.skipif(sys.platform == "win32", reason="scripts without an extension, run by sh")
+
+
+@UNIX_SCRIPTS
 def test_finding_pdfconform(tmp_path, monkeypatch):
     from py_redact import conform, settings
 
@@ -318,6 +329,7 @@ def test_finding_pdfconform(tmp_path, monkeypatch):
     assert conform.command() is None
 
 
+@UNIX_SCRIPTS
 def test_finding_the_old_name(tmp_path, monkeypatch):
     """Before version 2.0, pdf2iso was called py-pdfconform: that name is
     still found, but pdf2iso comes first."""
@@ -352,7 +364,8 @@ def test_bookmark_leaks_and_removal(tmp_path):
     leaks = bookmark_leaks(path, out, boxes)
     assert [(i, t) for i, t, _ in leaks] == [(2, "Creating watermarks")] and "watermarks" in leaks[0][2]
     remove_bookmarks(out, {i for i, _, _ in leaks})
-    assert pymupdf.open(out).get_toc() == [[1, "Chapter 4", 1], [2, "Creating headers", 1], [1, "The end", 1]]
+    with pymupdf.open(out) as d:  # (closed: on Windows, an open file can't be replaced)
+        assert d.get_toc() == [[1, "Chapter 4", 1], [2, "Creating headers", 1], [1, "The end", 1]]
     remove_bookmarks(out)
     assert pymupdf.open(out).get_toc() == []
 

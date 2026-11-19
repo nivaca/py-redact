@@ -600,3 +600,41 @@ def test_saving_in_another_process(app, sample, tmp_path, monkeypatch):
     timer.stop()
     w.boxes = w.saved = []
     w.close()
+
+
+def test_saving_over_the_original_while_pages_are_drawn_elsewhere(app, sample, tmp_path, monkeypatch):
+    """The processes that draw the pages have the original open; they let it go
+    before it is replaced (on Windows, an open file can't be replaced)."""
+    import time
+
+    from py_redact.gui import renderer as R
+
+    monkeypatch.setattr(R, "ENABLED", True)
+    original = tmp_path / "original.pdf"
+    shutil.copy(sample, original)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    w = MainWindow()
+    w.warn = lambda *a: (_ for _ in ()).throw(AssertionError(a))
+    w.resize(1200, 800)
+    w.show()
+    try:
+        assert w.open_path(original)
+        end = time.monotonic() + 30
+        while not w._thumbs or w.canvas._wanted is not None:  # (the processes have it open now)
+            assert time.monotonic() < end
+            app.processEvents()
+            time.sleep(0.01)
+        from py_redact.redact import Box
+
+        w.change([Box(0, (60, 105, 300, 126))])
+        assert w.save_to(original)
+        assert "Person1" not in pymupdf.open(original)[0].get_text() and not w.boxes
+        end = time.monotonic() + 30
+        while w.canvas._wanted is not None or w.canvas.pixmap_item.pixmap().isNull():  # (drawn again)
+            assert time.monotonic() < end
+            app.processEvents()
+            time.sleep(0.01)
+    finally:
+        w.boxes = w.saved = []
+        w.close()
+        R.renderer().shutdown()

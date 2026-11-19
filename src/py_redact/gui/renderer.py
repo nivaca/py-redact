@@ -123,10 +123,13 @@ class Renderer(QObject):
                 for callback in callbacks:
                     _call(callback, None)
 
-    def shutdown(self) -> None:
+    def shutdown(self, wait: bool = False) -> None:
+        """Stop the processes (they are started again when a page is asked for).
+        WAIT: until they are gone, and the files they had open are closed (on
+        Windows, an open file can't be replaced)."""
         for ln in self.lanes.values():
             if ln.pool is not None:
-                ln.pool.shutdown(wait=False, cancel_futures=True)
+                ln.pool.shutdown(wait=wait, cancel_futures=True)
         self.lanes = {}
 
 

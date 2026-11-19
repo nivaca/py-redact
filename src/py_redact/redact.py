@@ -212,7 +212,8 @@ def write_redacted(source: Path, boxes: list[Box], target: Path, password: str =
         doc.close()
         os.replace(tmp, target)
     except BaseException as e:
-        doc.close()
+        if not doc.is_closed:  # (it may fail after closing: the renaming, on Windows)
+            doc.close()
         Path(tmp).unlink(missing_ok=True)
         if isinstance(e, (OSError, RuntimeError)):
             raise RedactError(tr("{path} cannot be written: {error}", path=target, error=e)) from None
@@ -488,7 +489,8 @@ def sanitize(source: Path, target: Path, password: str = "", kinds: set[str] | N
         doc.close()
         os.replace(tmp, target)
     except BaseException as e:
-        doc.close()
+        if not doc.is_closed:  # (it may fail after closing: the renaming, on Windows)
+            doc.close()
         Path(tmp).unlink(missing_ok=True)
         if isinstance(e, (OSError, RuntimeError)):
             raise RedactError(tr("{path} cannot be written: {error}", path=target, error=e)) from None
@@ -589,7 +591,8 @@ def remove_bookmarks(path: Path, which: set[int] | None = None, password: str = 
         doc.close()
         os.replace(tmp, path)
     except BaseException as e:
-        doc.close()
+        if not doc.is_closed:  # (it may fail after closing: the renaming, on Windows)
+            doc.close()
         Path(tmp).unlink(missing_ok=True)
         if isinstance(e, (OSError, RuntimeError, ValueError)):
             raise RedactError(tr("{path} cannot be written: {error}", path=path, error=e)) from None

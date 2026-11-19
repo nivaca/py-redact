@@ -105,6 +105,9 @@ necesita internet y unos minutos) y lo añade al menú del sistema. No se
 compila nada, no hacen falta permisos de administrador y la configuración
 no se toca. Primero se instala Python 3.14 o posterior, si no está; luego
 se descarga `py-redact-VERSIÓN.zip` y se descomprime (o se clona el código).
+Los tres instaladores se corren con cada cambio del programa, en máquinas de
+GitHub con Windows, macOS y Linux, que luego corren las pruebas sobre el
+programa instalado y lo desinstalan (`.github/workflows/installers.yml`).
 
 **Windows.** Python se descarga de
 [python.org](https://www.python.org/downloads/windows/). Luego se hace doble
@@ -605,7 +608,7 @@ Pruebas
 
     $ uv run pytest
 
-Hay 96 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 97 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando
@@ -618,9 +621,16 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 1.0.6 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 1.0.7 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 1.0.7:
+  - Los instaladores se corren ahora con cada cambio en Windows, macOS y
+    Linux (GitHub Actions), con las pruebas sobre el programa instalado. Así
+    se encontró y se corrigió: el instalador de macOS se detenía a medias
+    (su chmod no acepta --); en Windows, guardar sobre el original fallaba,
+    porque los procesos que dibujan las páginas lo tenían abierto; y un
+    error al renombrar una copia quedaba oculto detrás de otro.
 - 1.0.6:
   - Guardar ya no detiene la ventana: la copia se escribe y se revisa en un
     proceso propio (en 300 páginas con 5100 recuadros, la parada más larga

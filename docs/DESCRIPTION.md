@@ -280,7 +280,7 @@ the processes.
 Testing
 -------
 
-The program has 96 tests (`uv run pytest`). The tests of the redaction make
+The program has 97 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use
@@ -291,6 +291,12 @@ Spanish translation, and no other. The conversion to PDF/A and PDF/X is
 tested when pdf2iso is installed. Another test draws the pages through the
 processes of their own, and the installers are checked as far as Linux
 allows; the Linux installer was also run in a home folder made for the
-test. The Windows and macOS installers have not yet been tried on those
-systems. The RPM runs all the tests again with Fedora's own packages. The
+test. Since version 1.0.7 the three installers are also run on each change,
+on GitHub's machines with Windows, macOS and Linux, which then run the tests
+against the program installed and uninstall it. The program had not run on
+Windows or macOS before, and this found three faults at once: the `chmod` of
+macOS refuses `--`, so the installer stopped halfway there; on Windows, an
+open file can't be replaced, and the processes that draw the pages kept the
+original open when the copy was to replace it; and an error while renaming
+a copy was hidden behind another one. The RPM runs all the tests again with Fedora's own packages. The
 program has 30 files, around 5,300 lines.

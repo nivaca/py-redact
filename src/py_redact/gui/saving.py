@@ -13,6 +13,7 @@ from ..interface import ntr, tr
 from ..pagesel import check
 from ..redact import RedactError, bookmark_leaks, check_redacted, remove_bookmarks, sanitize, write_redacted
 from . import background
+from .renderer import renderer
 from .background import Cancelled
 
 
@@ -52,9 +53,10 @@ class SavingMixin:
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
                 QMessageBox.StandardButton.Cancel) != QMessageBox.StandardButton.Yes:
             return False
-        if replacing:  # (the file is about to change under the open document)
+        if replacing:  # (the file is about to change under the open document, and the processes that draw it)
             self.doc.close()
             self.doc = None
+            renderer().shutdown(wait=True)
         # (in a process of its own, which can be stopped: see background.py; until
         # the copy is complete, it is written as PART, next to it)
         part = target.with_name(f".{target.name}.part")

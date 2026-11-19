@@ -1,0 +1,105 @@
+# The installers of install/, run on Linux, macOS and Windows: each installs
+# py-redact from this source with Python 3.14, checks what it made, runs the
+# tests of the program (not those of the packaging, which are Fedora's) against
+# the program installed, and uninstalls it.
+
+name: installers
+
+on:
+  push:
+    branches: [main]
+    paths: ["install/**", "src/**", "tests/**", "pyproject.toml", ".github/workflows/installers.yml"]
+  workflow_dispatch:
+
+jobs:
+  unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Libraries for Qt
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -q && sudo apt-get install -q -y libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+      - name: Install
+        run: bash install/install.sh
+      - name: What it made
+        run: |
+          set -x
+          ~/.local/bin/py-redact --version || ~/bin/py-redact --version
+          if [ "$RUNNER_OS" = macOS ]; then
+            app=~/Applications/py-redact.app
+            test -x "$app/Contents/MacOS/py-redact"
+            plutil -lint "$app/Contents/Info.plist"
+            test -s "$app/Contents/Resources/py-redact.icns"
+            "$app/Contents/MacOS/py-redact" --version
+            venv=~/"Library/Application Support/py-redact/venv"
+          else
+            desktop-file-validate ~/.local/share/applications/py-redact.desktop || true
+            grep -q "^Exec=\"$HOME/.local/share/py-redact/venv/bin/py-redact\"" ~/.local/share/applications/py-redact.desktop
+            test -s ~/.local/share/icons/hicolor/48x48/apps/py-redact.png
+            venv=~/.local/share/py-redact/venv
+          fi
+          echo "VENV=$venv" >> "$GITHUB_ENV"
+      - name: Tests, against the program installed
+        run: |
+          "$VENV/bin/python" -m pip install --quiet pytest
+          cd tests && "$VENV/bin/python" -m pytest -q -p no:cacheprovider test_redact.py test_gui.py test_interface.py
+      - name: Uninstall
+        run: |
+          bash install/install.sh --uninstall
+          test ! -e "$VENV"
+          test ! -e ~/.local/bin/py-redact
+          test ! -e ~/Applications/py-redact.app
+          test ! -e ~/.local/share/applications/py-redact.desktop
+
+  windows:
+    runs-on: windows-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install (through install.bat, as a user would)
+        shell: cmd
+        run: install\install.bat -Desktop < nul
+      - name: What it made
+        shell: pwsh
+        run: |
+          $venv = Join-Path $env:LOCALAPPDATA "py-redact\venv"
+          & (Join-Path $venv "Scripts\python.exe") -m py_redact --version
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Test-Path (Join-Path $venv "Scripts\py-redact.exe"))) { throw "no py-redact.exe" }
+          $link = Join-Path ([Environment]::GetFolderPath("Programs")) "py-redact.lnk"
+          if (-not (Test-Path $link)) { throw "no Start menu shortcut" }
+          if (-not (Test-Path (Join-Path ([Environment]::GetFolderPath("Desktop")) "py-redact.lnk"))) { throw "no desktop shortcut" }
+          $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($link)
+          if ($shortcut.TargetPath -notlike "*\Scripts\pythonw.exe") { throw "shortcut to $($shortcut.TargetPath)" }
+          $ico = Join-Path $env:LOCALAPPDATA "py-redact\py-redact.ico"
+          $bytes = [IO.File]::ReadAllBytes($ico)
+          if ($bytes[2] -ne 1 -or $bytes[4] -ne 7) { throw "the icon is not an .ico of 7 sizes" }
+          "VENV=$venv" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+      - name: Tests, against the program installed
+        shell: pwsh
+        run: |
+          & "$env:VENV\Scripts\python.exe" -m pip install --quiet pytest
+          Set-Location tests
+          & "$env:VENV\Scripts\python.exe" -m pytest -q -p no:cacheprovider test_redact.py test_gui.py test_interface.py
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Uninstall
+        shell: cmd
+        run: install\install.bat -Uninstall < nul
+      - name: Nothing left
+        shell: pwsh
+        run: |
+          if (Test-Path $env:VENV) { throw "the environment is still there" }
+          if (Test-Path (Join-Path ([Environment]::GetFolderPath("Programs")) "py-redact.lnk")) { throw "the shortcut is still there" }
