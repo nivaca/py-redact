@@ -576,7 +576,7 @@ Testing
 
     $ uv run pytest
 
-There are 92 tests. They cover the redaction (of text, pictures, drawings,
+There are 94 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the
@@ -589,8 +589,13 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 1.0.1. `py-redact --version` says which one is installed.
+This is py-redact 1.0.2. `py-redact --version` says which one is installed.
 
+- 1.0.2:
+  - The checks after saving are much faster on large documents: each page is
+    read once for all its boxes (on 300 pages with 5,100 boxes, checking the
+    copy went from 140 seconds to 2, and the bookmarks from 85 to 1), and
+    the bookmarks are not checked when the copy has none.
 - 1.0.1:
   - A new icon, with colour: a page with two lines blacked out and a red
     marker, drawn plainer for the small sizes.

@@ -231,10 +231,24 @@ Python. The pages are drawn by processes started the same way on the three
 systems, so the program's main modules are guarded against being run again
 by those processes.
 
+11. Speed, again
+----------------
+
+After version 1.0 I went through the program again looking for what was
+still slow, this time on a made-up book of 300 pages with 5,100 marks. The
+checks after saving were the worst. For every mark, the words of its page
+were read twice, in the original and in the copy, and every word was
+compared with the mark through PyMuPDF's rectangles, which cost a few
+microseconds each and, in Python, add up: checking the copy took 140
+seconds, and checking the bookmarks 85. Now each page is read once for all
+its marks, the rectangles are compared as plain numbers, and the bookmarks
+are not checked at all when the copy has none. The two checks take two
+seconds and one.
+
 Testing
 -------
 
-The program has 92 tests (`uv run pytest`). The tests of the redaction make
+The program has 94 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use

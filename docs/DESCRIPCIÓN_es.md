@@ -1,4 +1,4 @@
-# py-redact 1.0.1: descripción
+# py-redact 1.0.2: descripción
 
 ## Análisis
 
@@ -44,17 +44,17 @@ Con un libro escaneado de 303 páginas, la ventana se colgó, y cada causa sali�
 
 Una página escaneada tarda un quinto de segundo en dibujarse, y PyMuPDF retiene a Python todo ese tiempo, así que un hilo aparte no sirve. Las páginas se dibujan en dos procesos propios, uno para la página que se muestra y sus vecinas y otro para las miniaturas, cada uno con una cola en la que la página recién pedida pasa primero. La ventana responde a un clic en unos milisegundos.
 
+Después de la 1.0 se buscó lo que seguía siendo lento, con un libro inventado de 300 páginas y 5100 recuadros. Las revisiones de la copia leían el texto de una página dos veces por recuadro y comparaban cada palabra con rectángulos de PyMuPDF; ahora cada página se lee una vez y los rectángulos se comparan como números. Revisar la copia pasó de 140 segundos a 2, y los marcadores, de 85 a 1.
+
 ### Instaladores, PDF/A y distribución
 
 La versión 1.0 trajo instaladores para Linux, macOS y Windows. Cada uno crea un entorno virtual propio, instala py-redact desde el código con PyMuPDF y PySide6 y lo añade al menú del sistema. Como los procesos que dibujan las páginas arrancan igual en los tres sistemas, los módulos principales están protegidos para que esos procesos no los vuelvan a ejecutar.
 
 El paso a PDF/A o PDF/X-4 lo hace pdf2iso, otro programa del autor, que usa Ghostscript y pikepdf; si no está instalado, esas opciones aparecen desactivadas. py-redact lo busca también en `~/bin` y en `~/.local/bin`, y lo ejecuta siempre sin su propio entorno de Python, porque, si no, correría con un Python que no tiene pikepdf.
 
-El código se maneja con git, en un repositorio publicado en GitHub (https://github.com/nivaca/py-redact) y en Codeberg (https://codeberg.org/nivaca/py-redact). Un solo script publica cada versión: corre las pruebas, hace la rueda, el paquete fuente, el ZIP, la AppImage y el RPM firmado, pone la etiqueta, publica en los dos sitios y manda el RPM fuente a Copr.
-
 ## Validación
 
-Hay 92 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
+Hay 94 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
 
 La ventana se prueba manejándola como lo haría un usuario, con eventos del ratón sobre la página: dibujar, mover y redimensionar recuadros, seleccionar texto, hacer doble clic, cambiar de herramienta, buscar, marcar, guardar y abrir los menús del botón derecho. Un aviso que en uso normal esperaría un clic hace fallar la prueba en lugar de esperar. El paso a PDF/A y PDF/X se prueba cuando pdf2iso está instalado. Otra prueba dibuja las páginas en los procesos propios, y los instaladores se revisan hasta donde Linux lo permite; el de Linux se probó además en una carpeta personal creada para la prueba. Los de Windows y macOS no se han probado en esos sistemas.
 
@@ -68,6 +68,6 @@ Es una aplicación de escritorio y no necesita internet. Nada sale del equipo: l
 
 ## Ambiente
 
-Fue desarrollado en Fedora Linux 45 con KDE Plasma, con Python 3.14 y uv, y con git, con repositorios en GitHub y Codeberg. Las versiones se publican en los dos sitios y en Copr (https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/).
+Fue desarrollado en Fedora Linux 45 con KDE Plasma, con Python 3.14 y uv. El código se maneja con git, en repositorios publicados en GitHub (https://github.com/nivaca/py-redact) y en Codeberg (https://codeberg.org/nivaca/py-redact). Un solo script publica cada versión: corre las pruebas, hace la rueda, el paquete fuente, el ZIP, la AppImage y el RPM firmado, pone la etiqueta, publica en los dos sitios y manda el RPM fuente a Copr (https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/).
 
 Para usarlo en Linux basta descargar la AppImage, hacerla ejecutable y abrirla; en Fedora, `sudo dnf copr enable nivaca/py-redact` y `sudo dnf install py-redact` lo instalan con su entrada en el menú. La configuración queda en la carpeta de configuración del usuario (`~/.config/py-redact/config.toml` en Linux), con los códigos de censura propios en `codes.xml`; en macOS, en `~/Library/Application Support/py-redact/`, y en Windows, en `%APPDATA%\py-redact\`. En Windows y macOS, el instalador de `install/` lo deja en el menú Inicio o en `~/Applications`.

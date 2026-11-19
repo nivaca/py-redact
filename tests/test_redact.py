@@ -419,3 +419,28 @@ def test_metadata_is_given_after_cleaning(sample, tmp_path):
     out = tmp_path / "out.pdf"
     write_redacted(sample, [Box(0, NAME)], out, clean=True, meta=M.Metadata((("Title", "Kept"),)))
     assert M.read(pymupdf.open(out)).info == (("Title", "Kept"),)
+
+
+def test_boxes_by_page_and_words_under(tmp_path):
+    from py_redact.redact import boxes_by_page, text_under
+
+    a, b, c = Box(0, HEADER), Box(1, NAME, repeat="odd"), Box(4, NAME)
+    assert boxes_by_page([a, b, c], 4) == {0: [a, b], 2: [b]}
+    # (the words under a box on a turned page are those it covers as the page is shown)
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((72, 100), "secret name here", fontsize=12)
+    page.set_rotation(90)
+    shown = [w for w in words(page)]
+    x0, y0, x1, y1 = shown[0][0]
+    assert text_under(page, (x0 - 1, y0 - 1, x1 + 1, y1 + 1)) == "secret"
+    assert text_under(page, (0, 0, 1, 1)) == ""
+
+
+def test_bookmark_check_without_bookmarks(sample, tmp_path):
+    from py_redact.redact import bookmark_leaks
+
+    target = tmp_path / "out.pdf"
+    write_redacted(sample, [Box(0, NAME)], target)
+    assert pymupdf.open(target).get_toc() == []
+    assert bookmark_leaks(sample, target, [Box(0, NAME)]) == []

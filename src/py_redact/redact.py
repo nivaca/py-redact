@@ -99,6 +99,16 @@ def boxes_on(boxes: list[Box], page: int, count: int) -> list[Box]:
     return [b for b in boxes if b.on(page, count)]
 
 
+def boxes_by_page(boxes: list[Box], count: int) -> dict[int, list[Box]]:
+    """BOXES by the pages they are on, in a document of COUNT pages (in their
+    order on each page): each repeated box's pages are read once, not once a page."""
+    out: dict[int, list[Box]] = {}
+    for box in boxes:
+        for number in box.pages(count):
+            out.setdefault(number, []).append(box)
+    return out
+
+
 def page_rect(page: pymupdf.Page, rect: Rect) -> pymupdf.Rect | None:
     """RECT (as the page is shown) in the page's own coordinates, cut to the
     page; None if nothing of it is on the page."""
@@ -149,12 +159,9 @@ def redact(doc: pymupdf.Document, boxes: list[Box], clean: bool = False, images:
     """Redact BOXES in DOC (in memory). With CLEAN, also remove the metadata,
     hidden text, attached files, scripts and links of the document. Returns how
     many boxes were applied, counting each page a box is repeated on."""
-    count = doc.page_count
     done = 0
-    for number in range(count):
-        here = boxes_on(boxes, number, count)
-        if here:
-            done += redact_page(doc[number], here, images, drawings)
+    for number, here in sorted(boxes_by_page(boxes, doc.page_count).items()):
+        done += redact_page(doc[number], here, images, drawings)
     if clean:
         doc.scrub()
         doc.set_metadata({})
@@ -361,19 +368,38 @@ def find_all(doc: pymupdf.Document, queries: list[tuple[str, bool]], pages: list
     return out
 
 
+def word_list(page: pymupdf.Page) -> list[tuple[Rect, str]]:
+    """The words of PAGE, in reading order, with their rectangles as the page
+    is shown: the text of the page read once, for all the boxes on it."""
+    turn = page.rotation_matrix
+    out = []
+    for x0, y0, x1, y1, w, *_ in page.get_text("words", sort=False):
+        r = (pymupdf.Rect(x0, y0, x1, y1) * turn).normalize()
+        out.append(((r.x0, r.y0, r.x1, r.y1), w))
+    return out
+
+
+def _under(found: list[tuple[Rect, str]], rect: Rect) -> list[str]:
+    """The words of FOUND (see word_list) wholly or mostly under RECT (as the
+    page is shown). (In plain numbers: thousands of boxes on hundreds of pages.)"""
+    ax0, ay0, ax1, ay1 = normalized(rect)
+    out = []
+    for (x0, y0, x1, y1), w in found:
+        if x1 <= ax0 or x0 >= ax1 or y1 <= ay0 or y0 >= ay1:
+            continue
+        whole = (x1 - x0) * (y1 - y0)
+        if x1 > x0 and y1 > y0 and (min(x1, ax1) - max(x0, ax0)) * (min(y1, ay1) - max(y0, ay0)) >= 0.5 * whole:
+            out.append(w)
+    return out
+
+
 def text_under(page: pymupdf.Page, rect: Rect) -> str:
     """The words of PAGE wholly or mostly under RECT (as the page is shown), in reading order."""
-    area = pymupdf.Rect(rect)
-    out = []
-    for (x0, y0, x1, y1), w in zip((r for r, _, _ in words(page)), page.get_text("words", sort=False)):
-        r = pymupdf.Rect(x0, y0, x1, y1)
-        if not r.is_empty and (r & area).get_area() >= 0.5 * r.get_area():
-            out.append(w[4])
-    return " ".join(out)
+    return " ".join(_under(word_list(page), rect))
 
 
 def words_under(page: pymupdf.Page, rect: Rect) -> list[str]:
-    return text_under(page, rect).split()
+    return _under(word_list(page), rect)
 
 
 def check_redacted(source: Path, target: Path, boxes: list[Box], password: str = "") -> list[tuple[int, str]]:
@@ -385,15 +411,20 @@ def check_redacted(source: Path, target: Path, boxes: list[Box], password: str =
     before, after = open_pdf(source, password), open_pdf(target, password)
     try:
         count = min(before.page_count, after.page_count)
-        for number in range(count):
-            for box in boxes_on(boxes, number, before.page_count):
-                area = page_rect(before[number], box.rect)
+        # (each page's words are read once, in both copies, for all its boxes)
+        for number, here in sorted(boxes_by_page(boxes, before.page_count).items()):
+            if number >= count:
+                continue
+            page = before[number]
+            old, new = word_list(page), word_list(after[number])
+            for box in here:
+                area = page_rect(page, box.rect)
                 if area is None:
                     continue
-                shown = tuple((area * before[number].rotation_matrix).normalize())
-                hidden = set(words_under(before[number], shown))
+                shown = tuple((area * page.rotation_matrix).normalize())
+                hidden = set(_under(old, shown))
                 written = set(overlay(box, area)[0].split())
-                left = [w for w in words_under(after[number], shown) if w in hidden and w not in written]
+                left = [w for w in _under(new, shown) if w in hidden and w not in written]
                 if left:
                     leaks.append((number, " ".join(left)))
     finally:
@@ -454,42 +485,48 @@ def bookmark_leaks(source: Path, target: Path, boxes: list[Box], password: str =
     title tells what was under the boxes in SOURCE: it has a word that was
     under a box and nowhere else in SOURCE, or more than half of its words
     were under boxes ("Creating watermarks", over a redacted heading)."""
+    after = open_pdf(target, password)
+    try:
+        toc = after.get_toc(simple=False)
+        pages = after.page_count
+    finally:
+        after.close()
+    if not toc:  # (no bookmarks: no need to read the text)
+        return []
     under: set[str] = set()
     elsewhere: set[str] = set()  # (the words of SOURCE outside the boxes)
     before = open_pdf(source, password)
     try:
+        by_page = boxes_by_page(boxes, before.page_count)
         for number in range(before.page_count):
             page = before[number]
+            found = word_list(page)  # (read once, for its boxes and for the whole page)
             hidden_counts: dict[str, int] = {}  # (the words under the boxes of the page, with how many times)
-            for box in boxes_on(boxes, number, before.page_count):
+            for box in by_page.get(number, []):
                 area = page_rect(page, box.rect)
                 if area is not None:
                     shown = tuple((area * page.rotation_matrix).normalize())
-                    for w in _plain_words(text_under(page, shown)):
+                    for w in _plain_words(" ".join(_under(found, shown))):
                         hidden_counts[w] = hidden_counts.get(w, 0) + 1
             under |= hidden_counts.keys()
             # (a word of the page is also elsewhere if it is there more times than under the boxes)
             counts: dict[str, int] = {}
-            for w in _plain_words(page.get_text()):
+            for w in _plain_words(" ".join(w for _, w in found)):
                 counts[w] = counts.get(w, 0) + 1
             elsewhere |= {w for w, n in counts.items() if n > hidden_counts.get(w, 0)}
     finally:
         before.close()
-    after = open_pdf(target, password)
-    try:
-        out = []
-        for i, (_level, title, page, *_rest) in enumerate(after.get_toc(simple=False)):
-            title = " ".join(title.split())
-            all_words = list(dict.fromkeys(_plain_words(title)))
-            words = [w for w in all_words if w in under]
-            telling = any(w not in elsewhere for w in words) or (all_words and len(words) * 2 > len(all_words))
-            if words and telling:
-                out.append((i, title, tr("it has words that were under the boxes: {words}", words=", ".join(words))))
-            elif not 1 <= page <= after.page_count:
-                out.append((i, title, tr("it points to no page of the document")))
-        return out
-    finally:
-        after.close()
+    out = []
+    for i, (_level, title, page, *_rest) in enumerate(toc):
+        title = " ".join(title.split())
+        all_words = list(dict.fromkeys(_plain_words(title)))
+        words = [w for w in all_words if w in under]
+        telling = any(w not in elsewhere for w in words) or (all_words and len(words) * 2 > len(all_words))
+        if words and telling:
+            out.append((i, title, tr("it has words that were under the boxes: {words}", words=", ".join(words))))
+        elif not 1 <= page <= pages:
+            out.append((i, title, tr("it points to no page of the document")))
+    return out
 
 
 def remove_bookmarks(path: Path, which: set[int] | None = None, password: str = "") -> None:
