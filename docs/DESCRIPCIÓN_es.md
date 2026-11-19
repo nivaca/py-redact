@@ -1,4 +1,4 @@
-# py-redact 1.0.2: descripción
+# py-redact 1.0.3: descripción
 
 ## Análisis
 
@@ -36,7 +36,7 @@ La búsqueda lee el texto de cada página como una sucesión de caracteres, cada
 
 Después de guardar, py-redact busca cada palabra que estaba debajo de un recuadro en el original, debajo del mismo recuadro, en la copia; si alguna todavía puede leerse, un aviso dice dónde. Se revisan también los marcadores de la copia, porque un título que quedó debajo de un recuadro suele seguir vivo como título de un marcador. Un título se señala si tiene una palabra que estaba debajo de un recuadro y en ninguna otra parte del original, o si más de la mitad de sus palabras estaban debajo de recuadros, y se pregunta si quitar esos marcadores.
 
-El editor de metadatos (*Archivo ▸ Metadatos…*) escribe lo elegido en la copia clave por clave, después de cualquier saneamiento, de modo que un campo que se deja fuera desaparece de verdad.
+El editor de metadatos (*Archivo ▸ Metadatos…*) escribe en la copia, después de cualquier saneamiento, solo los campos elegidos.
 
 ### Documentos grandes
 
@@ -44,7 +44,7 @@ Con un libro escaneado de 303 páginas, la ventana se colgó, y cada causa sali�
 
 Una página escaneada tarda un quinto de segundo en dibujarse, y PyMuPDF retiene a Python todo ese tiempo, así que un hilo aparte no sirve. Las páginas se dibujan en dos procesos propios, uno para la página que se muestra y sus vecinas y otro para las miniaturas, cada uno con una cola en la que la página recién pedida pasa primero. La ventana responde a un clic en unos milisegundos.
 
-Después de la 1.0 se buscó lo que seguía siendo lento, con un libro inventado de 300 páginas y 5100 recuadros. Las revisiones de la copia leían el texto de una página dos veces por recuadro y comparaban cada palabra con rectángulos de PyMuPDF; ahora cada página se lee una vez y los rectángulos se comparan como números. Revisar la copia pasó de 140 segundos a 2, y los marcadores, de 85 a 1.
+Después de la 1.0 se buscó lo que seguía siendo lento, con un libro inventado de 300 páginas y 5100 recuadros. Las revisiones de la copia y la búsqueda creaban un rectángulo de PyMuPDF por cada palabra o letra; ahora usan números, y cada página se lee una vez. Revisar la copia pasó de 140 segundos a 2, los marcadores de 85 a 1 y buscar de 15 a 1,5, y el texto leído se guarda para la búsqueda siguiente.
 
 ### Instaladores, PDF/A y distribución
 
@@ -54,7 +54,7 @@ El paso a PDF/A o PDF/X-4 lo hace pdf2iso, otro programa del autor, que usa Ghos
 
 ## Validación
 
-Hay 94 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
+Hay 95 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
 
 La ventana se prueba manejándola como lo haría un usuario, con eventos del ratón sobre la página: dibujar, mover y redimensionar recuadros, seleccionar texto, hacer doble clic, cambiar de herramienta, buscar, marcar, guardar y abrir los menús del botón derecho. Un aviso que en uso normal esperaría un clic hace fallar la prueba en lugar de esperar. El paso a PDF/A y PDF/X se prueba cuando pdf2iso está instalado. Otra prueba dibuja las páginas en los procesos propios, y los instaladores se revisan hasta donde Linux lo permite; el de Linux se probó además en una carpeta personal creada para la prueba. Los de Windows y macOS no se han probado en esos sistemas.
 

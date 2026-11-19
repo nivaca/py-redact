@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-redact
-Version:        1.0.2
+Version:        1.0.3
 Release:        1%{?dist}
 Summary:        Redact PDF documents: remove what lies under boxes drawn on their pages
 
@@ -74,6 +74,9 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
 %{_datadir}/icons/hicolor/*/apps/py-redact.*
 
 %changelog
+* Thu Nov 19 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.0.3-1
+- Version 1.0.3: faster search, and the text of the pages kept for the next one
+
 * Thu Nov 19 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.0.2-1
 - Version 1.0.2: faster checks after saving
 

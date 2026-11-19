@@ -233,7 +233,7 @@ class FindDialog(QDialog):
         try:
             self.matches = find_all(doc, queries, self.page_list(), self.case.isChecked(),
                                     self.whole.isChecked() and self.mode.currentData() != "patterns", *keep,
-                                    progress=self._progress)
+                                    progress=self._progress, texts=self.window.texts)
         except re.error as e:
             self.summary.setText(tr("That regular expression can't be read: {error}", error=e))
             self._enable()

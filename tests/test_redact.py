@@ -444,3 +444,24 @@ def test_bookmark_check_without_bookmarks(sample, tmp_path):
     write_redacted(sample, [Box(0, NAME)], target)
     assert pymupdf.open(target).get_toc() == []
     assert bookmark_leaks(sample, target, [Box(0, NAME)]) == []
+
+
+def test_search_keeps_the_text_and_turned_pages(monkeypatch):
+    from py_redact import redact
+    from py_redact.redact import _shown, find_all
+
+    doc = pymupdf.open()
+    for rotation in (0, 90, 180, 270):
+        page = doc.new_page()
+        page.insert_text((72, 100), "secret name", fontsize=12)
+        page.set_rotation(rotation)
+    found = find_all(doc, [("secret", False)])
+    # (the boxes are where the word is shown, on every turn of the page)
+    for m in found:
+        page = doc[m.page]
+        r = _shown(page, page.search_for("secret")[0])
+        assert all(abs(a - b) < 1.5 for a, b in zip(m.rects[0], (r.x0, r.y0, r.x1, r.y1)))
+    texts: dict = {}
+    assert find_all(doc, [("name", False)], texts=texts) and sorted(texts) == [0, 1, 2, 3]
+    monkeypatch.setattr(redact, "page_chars", lambda page: pytest.fail("the page was read again"))
+    assert len(find_all(doc, [("secret", False)], texts=texts)) == 4

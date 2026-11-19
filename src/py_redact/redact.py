@@ -226,6 +226,23 @@ def _shown(page: pymupdf.Page, rect) -> pymupdf.Rect:
     return (pymupdf.Rect(rect) * page.rotation_matrix).normalize()
 
 
+def _turner(page: pymupdf.Page):
+    """A function that gives a rectangle of PAGE as the page is shown, in
+    plain numbers (as _shown, but quick enough for every character of a book)."""
+    m = page.rotation_matrix
+    a, b, c, d, e, f = m.a, m.b, m.c, m.d, m.e, m.f
+    if (a, b, c, d, e, f) == (1, 0, 0, 1, 0, 0):
+        return lambda r: (min(r[0], r[2]), min(r[1], r[3]), max(r[0], r[2]), max(r[1], r[3]))
+
+    def turn(r):  # (pages turn by quarters: two opposite corners stay opposite)
+        x0, y0, x1, y1 = r
+        u0, u1 = a * x0 + c * y0 + e, a * x1 + c * y1 + e
+        v0, v1 = b * x0 + d * y0 + f, b * x1 + d * y1 + f
+        return min(u0, u1), min(v0, v1), max(u0, u1), max(v0, v1)
+
+    return turn
+
+
 def words(page: pymupdf.Page) -> list[tuple[Rect, int, int]]:
     """The words of PAGE in reading order: (their rectangle as the page is
     shown, block number, line number)."""
@@ -276,6 +293,7 @@ def page_chars(page: pymupdf.Page) -> tuple[str, list]:
     (block, line, rectangle as the page is shown), or None for a space put
     between two lines. Runs of spaces are one space."""
     text, where = [], []
+    turn = _turner(page)
     raw = page.get_text("rawdict", flags=pymupdf.TEXTFLAGS_SEARCH & ~pymupdf.TEXT_PRESERVE_IMAGES)
     for b, block in enumerate(raw.get("blocks", [])):
         for n, line in enumerate(block.get("lines", [])):
@@ -290,7 +308,7 @@ def page_chars(page: pymupdf.Page) -> tuple[str, list]:
                             continue
                         c = " "
                     text.append(c)
-                    where.append((b, n, _shown(page, ch["bbox"])))
+                    where.append((b, n, turn(ch["bbox"])))
     return "".join(text), where
 
 
@@ -314,14 +332,18 @@ def _matches_on(number: int, text: str, where: list, found_re, keep_start: int, 
         chosen = real[keep_start:len(real) - keep_end if keep_end else None]
         if not chosen:
             continue
-        lines: dict[tuple[int, int], pymupdf.Rect] = {}
+        lines: dict[tuple[int, int], tuple] = {}  # (an empty rectangle, as of a space, adds nothing)
         for i in range(chosen[0], chosen[-1] + 1):
             if where[i] is None:
                 continue
             b, n, r = where[i]
-            lines[(b, n)] = lines[(b, n)] | r if (b, n) in lines else pymupdf.Rect(r)
-        rects = tuple((round(r.x0 - 0.5, 2), round(r.y0 - 0.5, 2), round(r.x1 + 0.5, 2), round(r.y1 + 0.5, 2))
-                      for r in lines.values())
+            old = lines.get((b, n))
+            if old is None or not (old[2] > old[0] and old[3] > old[1]):
+                lines[(b, n)] = r
+            elif r[2] > r[0] and r[3] > r[1]:
+                lines[(b, n)] = (min(old[0], r[0]), min(old[1], r[1]), max(old[2], r[2]), max(old[3], r[3]))
+        rects = tuple((round(x0 - 0.5, 2), round(y0 - 0.5, 2), round(x1 + 0.5, 2), round(y1 + 0.5, 2))
+                      for x0, y0, x1, y1 in lines.values())
         before = text[max(start - 40, 0):start].split(" ", 1)[-1] if start > 40 else text[:start]
         after = text[end:end + 40].rsplit(" ", 1)[0] if len(text) > end + 40 else text[end:]
         snippet = m.group(0).strip()
@@ -331,31 +353,39 @@ def _matches_on(number: int, text: str, where: list, found_re, keep_start: int, 
 
 
 def find_text(doc: pymupdf.Document, query: str, pages: list[int] | None = None, case: bool = False,
-              whole_words: bool = False, regex: bool = False, keep_start: int = 0, keep_end: int = 0) -> list[Match]:
+              whole_words: bool = False, regex: bool = False, keep_start: int = 0, keep_end: int = 0,
+              texts: dict | None = None) -> list[Match]:
     """Where QUERY is on PAGES (0-based; all if None) of DOC. The text of a page
     is read with single spaces between its words and lines, so a phrase is found
     across line breaks and however it is spaced. With REGEX, QUERY is a regular
     expression (raises re.error if it is wrong). KEEP_START and KEEP_END leave
     that many characters of each place found out of its boxes (the last four
-    digits of a card number stay visible, for instance)."""
-    return find_all(doc, [(query, regex)], pages, case, whole_words, keep_start, keep_end)
+    digits of a card number stay visible, for instance). TEXTS: see find_all."""
+    return find_all(doc, [(query, regex)], pages, case, whole_words, keep_start, keep_end, texts=texts)
 
 
 def find_all(doc: pymupdf.Document, queries: list[tuple[str, bool]], pages: list[int] | None = None,
              case: bool = False, whole_words: bool = False, keep_start: int = 0, keep_end: int = 0,
-             progress=None) -> list[Match]:
+             progress=None, texts: dict | None = None) -> list[Match]:
     """Where any of QUERIES ((text, whether it is a regular expression)) is (see
     find_text), in page order; a place found by two of them is given once. Each
     page is read once, whatever the number of QUERIES. PROGRESS, if given, is
     called after each page with (pages done, pages in all); if it returns False,
-    the search stops there, with what it found so far."""
+    the search stops there, with what it found so far. TEXTS, if given, keeps
+    the text of each page read (by its number), for the next search in the
+    same document: the caller empties it when the document changes."""
     compiled = [_compile(q, case, whole_words, regex) for q, regex in queries if q.strip()]
     if not compiled:
         return []
     numbers = list(range(doc.page_count) if pages is None else pages)
     seen, out = set(), []
     for done, number in enumerate(numbers, 1):
-        text, where = page_chars(doc[number])
+        if texts is None:
+            text, where = page_chars(doc[number])
+        else:
+            if number not in texts:
+                texts[number] = page_chars(doc[number])
+            text, where = texts[number]
         found = []
         for found_re in compiled:
             for m in _matches_on(number, text, where, found_re, keep_start, keep_end):

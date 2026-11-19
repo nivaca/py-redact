@@ -245,10 +245,17 @@ its marks, the rectangles are compared as plain numbers, and the bookmarks
 are not checked at all when the copy has none. The two checks take two
 seconds and one.
 
+The search had the same fault, one level down: it made a rectangle for
+every letter of the book, to know where each place found is. With plain
+numbers instead, a search of the 300 pages went from 15 seconds to one and
+a half, with the same results, on turned pages too. The text of each page
+is also kept once read, until another document is opened, so that a second
+search, for another word, doesn't read the pages again.
+
 Testing
 -------
 
-The program has 94 tests (`uv run pytest`). The tests of the redaction make
+The program has 95 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use

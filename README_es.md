@@ -595,7 +595,7 @@ Pruebas
 
     $ uv run pytest
 
-Hay 94 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 95 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando
@@ -608,9 +608,13 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 1.0.2 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 1.0.3 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 1.0.3:
+  - Buscar es diez veces más rápido (en 300 páginas, de 15 segundos a 1,5),
+    y el texto de cada página se guarda una vez leído, de modo que la
+    búsqueda siguiente en el mismo documento no vuelve a leerlo.
 - 1.0.2:
   - Las revisiones después de guardar son mucho más rápidas en documentos
     grandes: cada página se lee una vez para todos sus recuadros (en 300

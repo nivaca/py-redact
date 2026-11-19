@@ -107,6 +107,7 @@ class MainWindow(QMainWindow):
         self.path: Path | None = None
         self.password = ""
         self.doc: pymupdf.Document | None = None
+        self.texts: dict = {}  # (see _load)
         self.count = 0
         self.page = 0  # (0-based) the page shown
         self.boxes: list[Box] = []
@@ -506,6 +507,7 @@ class MainWindow(QMainWindow):
         self.doc, self.path, self.password, self.count = doc, path, password, doc.page_count
         self.page = 0
         self._thumbs = {}
+        self.texts: dict = {}  # page -> its text as the search reads it (see find_all), kept for the next search
         self._by_page: list[list[Box]] = [[] for _ in range(self.count)]  # the boxes on each page
         self._thumb_shown: dict[int, tuple] = {}  # page -> the boxes its thumbnail shows
         self.canvas.clear_cache()
@@ -1064,7 +1066,7 @@ class MainWindow(QMainWindow):
     def _find(self, text: str, pages: list[int] | None) -> list[Match]:
         from ..redact import find_text
 
-        return find_text(self.doc, text, pages, whole_words=True) if self.doc is not None else []
+        return find_text(self.doc, text, pages, whole_words=True, texts=self.texts) if self.doc is not None else []
 
     def find_dialog(self, text: str = ""):
         if self.doc is None:
