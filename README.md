@@ -508,8 +508,13 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 0.4.8. `py-redact --version` says which one is installed.
+This is py-redact 0.4.9. `py-redact --version` says which one is installed.
 
+- 0.4.9:
+  - The window is lighter. A page is rendered once and kept, so drawing,
+    moving or recolouring a box no longer renders it again; the next and
+    previous pages are rendered while the window is idle, and only the
+    thumbnails whose boxes changed are drawn again.
 - 0.4.8:
   - The window answers with large documents. Marking thousands of places
     takes a second (it could take minutes), thumbnails are drawn one at a

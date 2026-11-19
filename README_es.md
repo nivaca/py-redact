@@ -529,9 +529,15 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 0.4.8 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 0.4.9 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 0.4.9:
+  - La ventana es más ligera. Cada página se dibuja una vez y se guarda,
+    así que trazar, mover o cambiar de color un recuadro ya no la vuelve a
+    dibujar; la página siguiente y la anterior se preparan mientras la
+    ventana está quieta, y solo se redibujan las miniaturas cuyos
+    recuadros cambiaron.
 - 0.4.8:
   - La ventana responde con documentos grandes. Marcar miles de lugares
     toma un segundo (podía tomar minutos), las miniaturas se dibujan de a
