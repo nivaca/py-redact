@@ -28,6 +28,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -60,13 +61,39 @@ PRUNE = [
     "PySide6/qmltyperegistrar", "PySide6/balsam", "PySide6/balsamui", "PySide6/svgtoqml", "PySide6/qsb",
     "PySide6/rcc", "PySide6/uic", "PySide6/Qt/plugins/designer", "PySide6/Qt/plugins/qmltooling",
     "PySide6/Qt/plugins/qmllint",
+    # (1.0.9: what the window doesn't use either: Qt's tables of types, used
+    # only when building; databases, tests, forms read at run time, Lottie
+    # animations, the Labs modules, a Wayland compositor (a client is what a
+    # window is), EGLFS (Qt on a screen with no desktop); pip and the headers
+    # of MuPDF, which only building needs)
+    "PySide6/Qt/metatypes", "PySide6/Qt/plugins/sqldrivers", "PySide6/Qt/plugins/egldeviceintegrations",
+    "PySide6/Qt/plugins/wayland-graphics-integration-server", "PySide6/Qt/plugins/platforms/libqeglfs.so",
+    "PySide6/Qt/plugins/vectorimageformats/libqlottievectorimage.so",
+    "pip", "build", "pyproject_hooks", "pymupdf/mupdf-devel",
+    # (and what needed libraries that were never there, or are left out above:
+    # it couldn't be loaded anyway)
+    "PySide6/Qt/plugins/imageformats/libqpdf.so",
+    "PySide6/Qt/plugins/platforminputcontexts/libqtvirtualkeyboardplugin.so",
 ]
 PRUNE_GLOBS = ["PySide6/*.pyi", "PySide6/Qt/lib/libQt6Designer*", "PySide6/Qt/lib/libQt6Qml*",
                "PySide6/Qt/lib/libQt6Quick*", "PySide6/Qt/lib/libQt6ShaderTools*", "PySide6/Qt/lib/libQt6Help*",
                "PySide6/QtQml*", "PySide6/QtQuick*", "PySide6/QtDesigner*", "PySide6/QtHelp*",
                "PySide6/Qt/translations/assistant_*", "PySide6/Qt/translations/designer_*",
                "PySide6/Qt/translations/linguist_*", "PySide6/Qt/translations/qtdeclarative_*",
-               "PySide6/Qt/translations/qt_help_*"]
+               "PySide6/Qt/translations/qt_help_*",
+               "PySide6/Qt/lib/libQt6Sql*", "PySide6/QtSql*", "PySide6/Qt/lib/libQt6Test*", "PySide6/QtTest*",
+               "PySide6/Qt/lib/libQt6UiTools*", "PySide6/QtUiTools*", "PySide6/Qt/lib/libQt6Lottie*",
+               "PySide6/Qt/lib/libQt6Labs*", "PySide6/QtLabs*", "PySide6/Qt/lib/libQt6WaylandCompositor*",
+               "PySide6/Qt/lib/libQt6WaylandEglCompositor*", "PySide6/QtWaylandCompositor*",
+               "PySide6/Qt/lib/libQt6EglFs*", "PySide6/libpyside6qml*", "pip-*.dist-info", "build-*.dist-info", "pyproject_hooks-*.dist-info"]
+# Qt's own texts are kept in the languages of the program only
+LANGUAGES = ("en", "es")
+# Parts of the Python itself the program doesn't use: Tk, IDLE, the turtle,
+# the installer of pip, pydoc's topics (relative to the AppDir)
+PRUNE_PYTHON = ["opt/python3*/lib/python3.*/tkinter", "opt/python3*/lib/python3.*/idlelib",
+                "opt/python3*/lib/python3.*/turtledemo", "opt/python3*/lib/python3.*/ensurepip",
+                "opt/python3*/lib/python3.*/pydoc_data", "opt/python3*/lib/python3.*/lib-dynload/_tkinter*",
+                "usr/share/tcltk", "usr/lib/libtcl*", "usr/lib/libtk*"]
 
 DESKTOP = (ROOT / "packaging" / f"{APP_ID}.desktop").read_text(encoding="utf-8")
 
@@ -173,6 +200,13 @@ def make_appdir(appdir: Path, whl: Path):
     for pattern in PRUNE_GLOBS:
         for path in site.glob(pattern):
             shutil.rmtree(path) if path.is_dir() else path.unlink()
+    for path in (site / "PySide6" / "Qt" / "translations").glob("*.qm"):
+        if path.stem.rsplit("_", 1)[-1] not in LANGUAGES:
+            path.unlink()
+    for pattern in PRUNE_PYTHON:
+        for path in appdir.glob(pattern):
+            shutil.rmtree(path) if path.is_dir() else path.unlink()
+    missing_libraries(site / "PySide6")
     # Out with what makes it the Python's AppImage
     for pattern in ("AppRun", "*.desktop", "*.png", "*.svg", ".DirIcon", "usr/share/applications",
                     "usr/share/metainfo"):
@@ -190,6 +224,25 @@ def make_appdir(appdir: Path, whl: Path):
     shutil.copy2(icons / "256x256" / "apps" / f"{APP_ID}.png", appdir / f"{APP_ID}.png")
     os.symlink(f"{APP_ID}.png", appdir / ".DirIcon")
     shutil.copytree(icons, appdir / "usr" / "share" / "icons" / "hicolor", dirs_exist_ok=True)
+
+
+def missing_libraries(pyside: Path):
+    """Make sure that every library and plugin of Qt left finds the Qt
+    libraries it needs (none of them was left out by mistake)."""
+    if not shutil.which("readelf"):
+        say("(readelf is not installed: the libraries of Qt were not checked)")
+        return
+    have = {p.name for p in (pyside / "Qt" / "lib").iterdir()}
+    wrong = []
+    for path in sorted(pyside.rglob("*.so*")):
+        if not path.is_file() or path.is_symlink():
+            continue
+        r = subprocess.run(["readelf", "-d", str(path)], capture_output=True, text=True)
+        for name in re.findall(r"\(NEEDED\)\s+Shared library: \[(libQt6[^\]]+)\]", r.stdout):
+            if name not in have:
+                wrong.append(f"{path.relative_to(pyside)} needs {name}")
+    if wrong:
+        raise OSError("Qt libraries left out that others need:\n  " + "\n  ".join(wrong))
 
 
 def clean_env(**extra) -> dict:

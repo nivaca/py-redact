@@ -282,7 +282,14 @@ installing py-redact from PyPI, which gave it the newest PyMuPDF, 2.1,
 while the tests and the RPM ran with 1.28. It is now made with the versions
 of the project's lock file, the same the tests run with. The installers
 still take the newest, which the tests on GitHub's machines now run with on
-each change.
+each change. Version 1.0.9 made the AppImage lighter, from 88 to 73 MB, by
+leaving out the parts of Qt and Python the program never uses: Qt's tables
+of types, which only building needs, its databases, tests, Wayland
+compositor and modules for screens without a desktop, its translations into
+languages other than English and Spanish, pip, and Tk. A check, made each
+time it is built, looks at every library of Qt that stays and fails if one
+needs a library left out; it found two plugins of Qt that could never be
+loaded, since they needed libraries that were never there.
 
 Testing
 -------
@@ -305,5 +312,12 @@ Windows or macOS before, and this found three faults at once: the `chmod` of
 macOS refuses `--`, so the installer stopped halfway there; on Windows, an
 open file can't be replaced, and the processes that draw the pages kept the
 original open when the copy was to replace it; and an error while renaming
-a copy was hidden behind another one. The RPM runs all the tests again with Fedora's own packages. The
+a copy was hidden behind another one. Since version 1.0.9 the program is
+also opened there on the screen, not off it as in the tests: it opens a
+document, has its pages drawn by the processes of their own, saves a
+redacted copy, checks it, and leaves pictures of the screen, which showed
+the window as it should be on the three systems. They showed one more
+fault: on macOS, the menu bar called the program "Python", the program that
+really runs it; the name is now given to macOS before the window opens. The
+RPM runs all the tests again with Fedora's own packages. The
 program has 30 files, around 5,300 lines.

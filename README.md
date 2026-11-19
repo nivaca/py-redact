@@ -63,7 +63,7 @@ Installation
 
 * **Linux**: the AppImage needs nothing else: it brings its own Python, Qt
   and PyMuPDF, and runs with glibc 2.34 or later (Ubuntu 22.04, Debian 12,
-  Fedora 35 and later). The Fedora package needs Fedora 45 or later, and
+  Fedora 35 and later). The Fedora package needs Fedora 44 or later, and
   brings in Fedora's own Python, PyMuPDF and PySide6.
 * **Windows and macOS** (and Linux, if you prefer it): Python 3.14 or later.
   The installer of the source (see "With the installers") installs PyMuPDF
@@ -103,7 +103,8 @@ are never touched. First install Python 3.14 or later, if it isn't there
 yet, then download `py-redact-VERSION.zip` and unpack it (or clone the
 source). The three installers are run on each change of the program, on
 machines of GitHub with Windows, macOS and Linux, which then run the tests
-against the program installed, and uninstall it
+against the program installed, open it on the screen to redact a document
+and keep pictures of it (`.github/smoke.py`), and uninstall it
 (`.github/workflows/installers.yml`).
 
 **Windows.** Python comes from
@@ -169,7 +170,7 @@ This installs `py-redact`, a menu entry (also offered for opening PDF files),
 its icons and these documents, with Fedora's own Python, PyMuPDF and
 PySide6. The packages are built and signed by
 [Copr](https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/), for
-Fedora 45 and Rawhide.
+Fedora 44, 45 and Rawhide.
 
 Each release also has the RPM itself. It is signed with the author's key,
 `RPM-GPG-KEY-py-redact`, which is attached to each release and is also in
@@ -602,8 +603,14 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 1.0.8. `py-redact --version` says which one is installed.
+This is py-redact 1.0.9. `py-redact --version` says which one is installed.
 
+- 1.0.9:
+  - On macOS, the menu bar calls the program py-redact, not Python. The
+    AppImage is lighter (from 88 to 73 MB), without the parts of Qt and
+    Python the program doesn't use. The RPM is also built for Fedora 44. On
+    GitHub's machines, the program is now also opened on the screen of
+    Windows, macOS and Linux, to redact a document.
 - 1.0.8:
   - The AppImage carries PyMuPDF and PySide6 in the versions the tests run
     with (those of uv.lock), not the newest on PyPI: PyMuPDF 1.28 instead of

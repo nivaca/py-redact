@@ -67,7 +67,7 @@ Instalación
 
 * **Linux**: la AppImage no necesita nada más: trae su propio Python, Qt y
   PyMuPDF, y funciona con glibc 2.34 o posterior (Ubuntu 22.04, Debian 12,
-  Fedora 35 y posteriores). El paquete de Fedora necesita Fedora 45 o
+  Fedora 35 y posteriores). El paquete de Fedora necesita Fedora 44 o
   posterior, y usa el Python, el PyMuPDF y el PySide6 de Fedora.
 * **Windows y macOS** (y Linux, si se prefiere): Python 3.14 o posterior.
   El instalador del código fuente (véase "Con los instaladores") instala
@@ -107,7 +107,9 @@ no se toca. Primero se instala Python 3.14 o posterior, si no está; luego
 se descarga `py-redact-VERSIÓN.zip` y se descomprime (o se clona el código).
 Los tres instaladores se corren con cada cambio del programa, en máquinas de
 GitHub con Windows, macOS y Linux, que luego corren las pruebas sobre el
-programa instalado y lo desinstalan (`.github/workflows/installers.yml`).
+programa instalado, lo abren en la pantalla para censurar un documento y
+guardan imágenes de ello (`.github/smoke.py`), y lo desinstalan
+(`.github/workflows/installers.yml`).
 
 **Windows.** Python se descarga de
 [python.org](https://www.python.org/downloads/windows/). Luego se hace doble
@@ -172,7 +174,7 @@ Instala `py-redact`, una entrada en el menú (que también se ofrece para
 abrir archivos PDF), sus iconos y estos documentos, con el Python, el
 PyMuPDF y el PySide6 de Fedora. Los paquetes los construye y firma
 [Copr](https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/), para
-Fedora 45 y Rawhide.
+Fedora 44, 45 y Rawhide.
 
 Cada versión publicada trae además el RPM. Está firmado con la clave del
 autor, `RPM-GPG-KEY-py-redact`, que va adjunta a cada versión y está también
@@ -622,9 +624,15 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 1.0.8 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 1.0.9 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 1.0.9:
+  - En macOS, la barra de menús llama al programa py-redact, no Python. La
+    AppImage es más liviana (de 88 a 73 MB), sin las partes de Qt y de
+    Python que el programa no usa. El RPM se construye también para Fedora
+    44. En las máquinas de GitHub, el programa se abre ahora también en la
+    pantalla de Windows, macOS y Linux, para censurar un documento.
 - 1.0.8:
   - La AppImage lleva PyMuPDF y PySide6 en las versiones con que corren las
     pruebas (las de uv.lock), no las más nuevas de PyPI: PyMuPDF 1.28 en

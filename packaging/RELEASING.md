@@ -43,6 +43,6 @@ machine's gpg keyring. A copy of the public key is
 ## Copr
 
 The project is https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/,
-built for fedora-45-x86_64 and fedora-rawhide-x86_64. Each Copr build needs a
+built for fedora-44-x86_64, fedora-45-x86_64 and fedora-rawhide-x86_64. Each Copr build needs a
 higher version-release than the last, so bump the spec first. `copr-cli`
 needs an API token in `~/.config/copr` (it expires after 180 days).

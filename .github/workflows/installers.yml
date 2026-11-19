@@ -1,14 +1,16 @@
 # The installers of install/, run on Linux, macOS and Windows: each installs
 # py-redact from this source with Python 3.14, checks what it made, runs the
 # tests of the program (not those of the packaging, which are Fedora's) against
-# the program installed, and uninstalls it.
+# the program installed (off the screen), opens it on the screen of the
+# machine (.github/smoke.py, whose pictures are kept as an artifact of the
+# run), and uninstalls it.
 
 name: installers
 
 on:
   push:
     branches: [main]
-    paths: ["install/**", "src/**", "tests/**", "pyproject.toml", ".github/workflows/installers.yml"]
+    paths: ["install/**", "src/**", "tests/**", "pyproject.toml", ".github/workflows/installers.yml", ".github/smoke.py"]
   workflow_dispatch:
 
 jobs:
@@ -18,16 +20,16 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      QT_QPA_PLATFORM: offscreen
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
       - name: Libraries for Qt
         if: runner.os == 'Linux'
-        run: sudo apt-get update -q && sudo apt-get install -q -y libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+        run: sudo apt-get update -q && sudo apt-get install -q -y libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 xvfb
+          libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-render-util0
+          libxcb-xinerama0 libxcb-shape0 libxcb-randr0
       - name: Install
         run: bash install/install.sh
       - name: What it made
@@ -52,6 +54,26 @@ jobs:
         run: |
           "$VENV/bin/python" -m pip install --quiet pytest
           cd tests && "$VENV/bin/python" -m pytest -q -p no:cacheprovider test_redact.py test_gui.py test_interface.py
+      - name: On the screen
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then  # (a screen of its own: the machine has none)
+            xvfb-run -a --server-args="-screen 0 1280x900x24" "$VENV/bin/python" .github/smoke.py "$RUNNER_TEMP/screen"
+          else
+            "$VENV/bin/python" .github/smoke.py "$RUNNER_TEMP/screen"
+          fi
+      - name: The application of macOS, started as from the Finder
+        if: runner.os == 'macOS'
+        run: |
+          open ~/Applications/py-redact.app
+          sleep 12
+          screencapture -x "$RUNNER_TEMP/screen/app.png"
+          pgrep -f py_redact.gui  # (it is running)
+          pkill -f py_redact.gui || true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: screen-${{ runner.os }}
+          path: ${{ runner.temp }}/screen/*.png
       - name: Uninstall
         run: |
           bash install/install.sh --uninstall
@@ -62,11 +84,9 @@ jobs:
 
   windows:
     runs-on: windows-latest
-    env:
-      QT_QPA_PLATFORM: offscreen
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
       - name: Install (through install.bat, as a user would)
@@ -95,6 +115,16 @@ jobs:
           Set-Location tests
           & "$env:VENV\Scripts\python.exe" -m pytest -q -p no:cacheprovider test_redact.py test_gui.py test_interface.py
           if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: On the screen
+        shell: pwsh
+        run: |
+          & "$env:VENV\Scripts\python.exe" .github/smoke.py "$env:RUNNER_TEMP\screen"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: screen-Windows
+          path: ${{ runner.temp }}/screen/*.png
       - name: Uninstall
         shell: cmd
         run: install\install.bat -Uninstall < nul
