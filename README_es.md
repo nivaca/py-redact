@@ -529,9 +529,15 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 0.4.7 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 0.4.8 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 0.4.8:
+  - La ventana responde con documentos grandes. Marcar miles de lugares
+    toma un segundo (podía tomar minutos), las miniaturas se dibujan de a
+    una, primero las que están a la vista, y *Buscar y censurar* lee cada
+    página una sola vez para todos sus términos, muestra cuánto lleva y
+    puede detenerse.
 - 0.4.7:
   - *Archivo ▸ Metadatos…* (Ctrl+Mayús+M) muestra todos los metadatos del
     documento (información del documento, otros campos, idioma, XMP) y

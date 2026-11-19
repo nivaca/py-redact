@@ -508,8 +508,13 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 0.4.7. `py-redact --version` says which one is installed.
+This is py-redact 0.4.8. `py-redact --version` says which one is installed.
 
+- 0.4.8:
+  - The window answers with large documents. Marking thousands of places
+    takes a second (it could take minutes), thumbnails are drawn one at a
+    time, those in view first, and *Find and redact* reads each page once
+    for all its terms, shows how far it has gone and can be stopped.
 - 0.4.7:
   - *File ▸ Metadata…* (Ctrl+Shift+M) shows all the metadata of the
     document (document information, other fields, language, XMP) and lets
