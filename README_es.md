@@ -346,6 +346,30 @@ así que la copia de un documento protegido sale sin contraseña.
 Al cerrar la ventana, o al abrir otro documento, con recuadros que aún no se
 han guardado en una copia censurada, se pregunta antes.
 
+### Metadatos
+
+*Archivo ▸ Metadatos…* (Ctrl+Mayús+M) muestra todos los metadatos del
+documento, y permite cambiar los que tendrá la copia censurada:
+
+* la información del documento: título, autor, asunto, palabras clave,
+  creador, productor, las fechas de creación y de modificación (escritas
+  como `2026-11-17 07:57:28 -05:00`, con un botón *Ahora*) y si se le aplicó
+  el reventado (trapping) para imprenta;
+* el idioma del documento (`es-CO`, `en-US`…);
+* cualquier otro campo que un programa haya puesto ahí (una empresa, un
+  número de expediente…), que puede cambiarse, y a los que pueden añadirse
+  otros;
+* los metadatos XMP, un paquete XML que puede repetir los campos de arriba y
+  añadir otros.
+
+Cada campo tiene un botón (✕) para quitarlo, y los metadatos XMP tienen el
+suyo. *Quitar todo* deja la copia sin metadatos, y *Los del documento*
+vuelve a mostrar los que tiene el documento. La copia recibe estos
+metadatos al guardarse, después de cualquier saneamiento; el documento
+abierto no cambia. Una copia puede guardarse con metadatos nuevos aunque no
+tenga recuadros. Una copia PDF/A o PDF/X puede recibir de la conversión un
+productor y un XMP propios.
+
 ### Información oculta
 
 *Archivo ▸ Quitar información oculta…* muestra lo que el documento guarda
@@ -385,6 +409,7 @@ nombres de sus botones.
 |---|---|
 | Ctrl+O | Abrir un documento |
 | Ctrl+S | Guardar la copia censurada, como PDF corriente |
+| Ctrl+Mayús+M | Metadatos |
 | T, B, H | Las herramientas: Censurar, Dibujar recuadros, Mano |
 | Ctrl+F | Buscar y censurar |
 | Ctrl+R | Mostrar el resultado |
@@ -477,6 +502,7 @@ El programa está en `src/py_redact/`:
 | `patterns.py` | Los patrones de Buscar y censurar |
 | `codes.py` | Códigos y conjuntos de códigos de censura |
 | `hidden.py` | La información oculta: qué tiene un documento, y quitarla |
+| `metadata.py` | Los metadatos: leerlos, y darle a una copia exactamente los elegidos |
 | `conform.py` | PDF/A y PDF/X, por medio de pdf2iso |
 | `settings.py`, `config.py` | La configuración y su archivo |
 | `interface.py`, `locale/es.xml` | El idioma de la ventana |
@@ -491,7 +517,7 @@ Pruebas
 
     $ uv run pytest
 
-Hay 84 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 90 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando

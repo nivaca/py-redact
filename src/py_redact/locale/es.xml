@@ -292,10 +292,6 @@
     <tr>No se encontró {path}</tr>
   </text>
   <text>
-    <en>There are no boxes to redact</en>
-    <tr>No hay recuadros que censurar</tr>
-  </text>
-  <text>
     <en>A box has pages that can't be read: {error}</en>
     <tr>Un recuadro tiene páginas que no se pueden leer: {error}</tr>
   </text>
@@ -1328,5 +1324,153 @@
   <text>
     <en>{count} bookmarks were removed</en>
     <tr>se quitaron {count} marcadores</tr>
+  </text>
+  <text>
+    <en>Add a field</en>
+    <tr>Añadir un campo</tr>
+  </text>
+  <text>
+    <en>Author</en>
+    <tr>Autor</tr>
+  </text>
+  <text>
+    <en>Created</en>
+    <tr>Creado</tr>
+  </text>
+  <text>
+    <en>Creator</en>
+    <tr>Creador</tr>
+  </text>
+  <text>
+    <en>Document information</en>
+    <tr>Información del documento</tr>
+  </text>
+  <text>
+    <en>Keywords</en>
+    <tr>Palabras clave</tr>
+  </text>
+  <text>
+    <en>Language:</en>
+    <tr>Idioma:</tr>
+  </text>
+  <text>
+    <en>Leave every field empty: the copy will have no metadata</en>
+    <tr>Dejar vacíos todos los campos: la copia no tendrá metadatos</tr>
+  </text>
+  <text>
+    <en>Metadata as XML, which may repeat the fields above and add others</en>
+    <tr>Metadatos en XML, que pueden repetir los campos de arriba y añadir otros</tr>
+  </text>
+  <text>
+    <en>Metadata…</en>
+    <tr>Metadatos…</tr>
+  </text>
+  <text>
+    <en>Modified</en>
+    <tr>Modificado</tr>
+  </text>
+  <text>
+    <en>Name</en>
+    <tr>Nombre</tr>
+  </text>
+  <text>
+    <en>Now</en>
+    <tr>Ahora</tr>
+  </text>
+  <text>
+    <en>Other fields</en>
+    <tr>Otros campos</tr>
+  </text>
+  <text>
+    <en>Producer</en>
+    <tr>Productor</tr>
+  </text>
+  <text>
+    <en>Remove all</en>
+    <tr>Quitar todo</tr>
+  </text>
+  <text>
+    <en>Remove the XMP metadata</en>
+    <tr>Quitar los metadatos XMP</tr>
+  </text>
+  <text>
+    <en>See and change the title, author, dates and the rest of the metadata the redacted copy will have, or remove them</en>
+    <tr>Ver y cambiar el título, el autor, las fechas y los demás metadatos que tendrá la copia censurada, o quitarlos</tr>
+  </text>
+  <text>
+    <en>Show again the metadata the document has</en>
+    <tr>Volver a mostrar los metadatos que tiene el documento</tr>
+  </text>
+  <text>
+    <en>Subject</en>
+    <tr>Asunto</tr>
+  </text>
+  <text>
+    <en>The XMP metadata is not well-formed XML: {error}</en>
+    <tr>Los metadatos XMP no son XML bien formado: {error}</tr>
+  </text>
+  <text>
+    <en>The copy will have no metadata</en>
+    <tr>La copia no tendrá metadatos</tr>
+  </text>
+  <text>
+    <en>The copy will have the document's own metadata</en>
+    <tr>La copia tendrá los metadatos del propio documento</tr>
+  </text>
+  <text>
+    <en>The copy will have the metadata chosen</en>
+    <tr>La copia tendrá los metadatos elegidos</tr>
+  </text>
+  <text>
+    <en>The document's own</en>
+    <tr>Los del documento</tr>
+  </text>
+  <text>
+    <en>The language of the document's text, as a language tag</en>
+    <tr>El idioma del texto del documento, como etiqueta de idioma</tr>
+  </text>
+  <text>
+    <en>The redacted copy gets this metadata when it is saved; the document open is not changed. A PDF/A or PDF/X copy may get a producer and XMP of its own.</en>
+    <tr>La copia censurada recibe estos metadatos al guardarse; el documento abierto no cambia. Una copia PDF/A o PDF/X puede recibir un productor y un XMP propios.</tr>
+  </text>
+  <text>
+    <en>There is a field called {name} already</en>
+    <tr>Ya hay un campo llamado {name}</tr>
+  </text>
+  <text>
+    <en>There is nothing to save: no boxes, and the metadata is the document's own</en>
+    <tr>No hay nada que guardar: no hay recuadros, y los metadatos son los del documento</tr>
+  </text>
+  <text>
+    <en>This moment</en>
+    <tr>Este momento</tr>
+  </text>
+  <text>
+    <en>Title</en>
+    <tr>Título</tr>
+  </text>
+  <text>
+    <en>Trapped</en>
+    <tr>Reventado (trapping)</tr>
+  </text>
+  <text>
+    <en>Value</en>
+    <tr>Valor</tr>
+  </text>
+  <text>
+    <en>Whether the document has been trapped for printing</en>
+    <tr>Si al documento se le aplicó el reventado (trapping) para imprenta</tr>
+  </text>
+  <text>
+    <en>XMP metadata</en>
+    <tr>Metadatos XMP</tr>
+  </text>
+  <text>
+    <en>{field}: {text} is not a date (2026-11-17 07:57:28 -05:00)</en>
+    <tr>{field}: {text} no es una fecha (2026-11-17 07:57:28 -05:00)</tr>
+  </text>
+  <text>
+    <en>{name} can't be the name of a field: letters, digits, '.', '-' and '_', starting with a letter</en>
+    <tr>{name} no puede ser el nombre de un campo: letras, dígitos, '.', '-' y '_', empezando por una letra</tr>
   </text>
 </interface>

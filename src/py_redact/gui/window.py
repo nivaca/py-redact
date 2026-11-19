@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from .. import __version__, codes, conform, config, hidden, interface, settings
+from .. import __version__, codes, conform, config, hidden, interface, metadata, settings
 from ..interface import N_, ntr, tr
 from ..pagesel import check
 from ..redact import Box, Match, PasswordError, RedactError, bookmark_leaks, check_redacted, remove_bookmarks, sanitize, text_under, Rect, boxes_on, open_pdf, preview_page, write_redacted
@@ -26,6 +26,7 @@ from .find import FindDialog
 from .prefs import SettingsDialog
 from .codes_dialog import CodesDialog
 from .hidden_dialog import HiddenDialog
+from .meta_dialog import MetadataDialog
 from .props import PropertiesDialog
 
 RECENT = 10  # documents in File ▸ Open recent
@@ -113,6 +114,8 @@ class MainWindow(QMainWindow):
         self.redo_stack: list[list[Box]] = []
         self.selected: list[int] = []  # indices in self.boxes
         self.prefs = settings.load()  # (the default colour of new boxes, and how boxes are redacted)
+        self.meta: metadata.Metadata | None = None  # (the metadata the copy will get; None: the document's own)
+        self.saved_meta: metadata.Metadata | None = None
         self._preview_doc: pymupdf.Document | None = None
         self._thumbs: dict[int, QImage] = {}  # page -> its picture, without the boxes
         self._rows: list[int] = []  # row of the table -> index of its box
@@ -256,6 +259,9 @@ class MainWindow(QMainWindow):
                                    "author and other metadata, text that isn't shown, attached files, "
                                    "JavaScript and links"))
         m.addAction(self.a_clean)
+        self.a_meta = self._action(m, tr("Metadata…"), self.metadata_dialog, "Ctrl+Shift+M",
+                                   tr("See and change the title, author, dates and the rest of the metadata the "
+                                      "redacted copy will have, or remove them"))
         self.a_hidden = self._action(m, tr("Remove hidden information…"), self.hidden_dialog,
                                      tip=tr("See what the document holds besides its pages (metadata, attachments, "
                                             "bookmarks, comments, hidden text…), and save a copy without what you "
@@ -398,7 +404,7 @@ class MainWindow(QMainWindow):
         """What a new window needs to carry on with the same document."""
         return {"path": self.path, "password": self.password, "boxes": self.boxes, "saved": self.saved,
                 "undo": self.undo_stack, "redo": self.redo_stack, "page": self.page,
-                "tool": self.canvas.mode}
+                "tool": self.canvas.mode, "meta": self.meta, "saved_meta": self.saved_meta}
 
     def adopt_state(self, state: dict):
         self.set_tool(state["tool"])
@@ -406,6 +412,7 @@ class MainWindow(QMainWindow):
             self.refresh()
             return
         self.boxes, self.saved = list(state["boxes"]), list(state["saved"])
+        self.meta, self.saved_meta = state["meta"], state["saved_meta"]
         self.undo_stack, self.redo_stack = list(state["undo"]), list(state["redo"])
         self.refresh()
         self.show_page(state["page"])
@@ -473,6 +480,7 @@ class MainWindow(QMainWindow):
         self.settings.setValue("last_dir", str(path.parent))
         self.add_recent(path)
         self.boxes, self.saved, self.undo_stack, self.redo_stack, self.selected = [], [], [], [], []
+        self.meta = self.saved_meta = None
         self.refresh()
         self.show_page(0)
         if self.finder is not None:  # (its places were those of the document before)
@@ -504,8 +512,9 @@ class MainWindow(QMainWindow):
         """Save the redacted copy, as a plain PDF or, this once, as STANDARD ('a-2b', 'x-4'...)."""
         if self.path is None:
             return False
-        if not self.boxes:
-            self.status(tr("There are no boxes to redact"), error=True)
+        if not self.boxes and self.meta is None:
+            self.status(tr("There is nothing to save: no boxes, and the metadata is the document's own"),
+                        error=True)
             return False
         bad = [b for b in self.boxes if b.repeat.strip() and check(b.repeat)]
         if bad:
@@ -537,7 +546,7 @@ class MainWindow(QMainWindow):
             self.doc = None
         try:
             done = write_redacted(self.path, self.boxes, target, self.password, self.prefs.clean,
-                                  self.prefs.images, self.prefs.drawings)
+                                  self.prefs.images, self.prefs.drawings, self.meta)
         except RedactError as e:
             if replacing:
                 self._load(self.path, self.password)
@@ -570,10 +579,12 @@ class MainWindow(QMainWindow):
         self.add_recent(target)
         leaks = [] if replacing else self.check_copy(target)
         self.saved = list(self.boxes)
+        self.saved_meta = self.meta
         if replacing:  # (the boxes are in the file now)
             page = self.page
             self._load(self.path, self.password)
             self.boxes, self.saved, self.undo_stack, self.redo_stack, self.selected = [], [], [], [], []
+            self.meta = self.saved_meta = None  # (the metadata is in the file now too)
             self.refresh()
             self.show_page(page)
         self._update_title()
@@ -695,7 +706,7 @@ class MainWindow(QMainWindow):
         """The Save as menu: PDF/A and PDF/X greyed out if pdf2iso isn't there."""
         have = conform.available()
         for value, act in self.output_actions.items():
-            act.setEnabled(self.doc is not None and bool(self.boxes) and (have or not value))
+            act.setEnabled(self.can_save() and (have or not value))
             if value:
                 act.setEnabled(have)
                 act.setToolTip("" if have else tr("Needs {command}: install it, or say where it is in Settings",
@@ -1353,7 +1364,8 @@ class MainWindow(QMainWindow):
                   self.a_fit, self.a_fit_width, self.a_zoom_in, self.a_zoom_out, self.page_spin, self.result_box,
                   self.color_button):
             w.setEnabled(has)
-        self.a_save.setEnabled(has and bool(self.boxes))
+        self.a_save.setEnabled(self.can_save())
+        self.a_meta.setEnabled(has)
         self.a_clear_all.setEnabled(bool(self.boxes))
         self.a_delete.setEnabled(bool(self.selected))
         self.b_delete.setEnabled(bool(self.selected))
@@ -1365,8 +1377,38 @@ class MainWindow(QMainWindow):
 
     # ----------------------------------------------------------------- unsaved changes
 
+    def can_save(self) -> bool:
+        """Whether there is something to save: boxes, or metadata changed."""
+        return self.doc is not None and (bool(self.boxes) or self.meta is not None)
+
     def is_modified(self) -> bool:
-        return bool(self.boxes) and self.boxes != self.saved
+        return (bool(self.boxes) and self.boxes != self.saved) or \
+            (self.meta is not None and self.meta != self.saved_meta)
+
+    # ----------------------------------------------------------------- metadata
+
+    def metadata_dialog(self) -> bool:
+        if self.doc is None:
+            return False
+        original = metadata.read(self.doc)
+        dialog = MetadataDialog(self.meta if self.meta is not None else original, original, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return False
+        self.set_metadata(dialog.metadata(), original)
+        return True
+
+    def set_metadata(self, meta: metadata.Metadata, original: metadata.Metadata | None = None):
+        """Give the copy META when it is saved (none of this if it is the document's own)."""
+        original = metadata.read(self.doc) if original is None else original
+        self.meta = None if meta == original else meta
+        self._enable()
+        self._update_title()
+        if self.meta is None:
+            self.status(tr("The copy will have the document's own metadata"))
+        elif self.meta.is_empty():
+            self.status(tr("The copy will have no metadata"))
+        else:
+            self.status(tr("The copy will have the metadata chosen"))
 
     def _update_title(self):
         name = f"{self.path.name}[*] — py-redact" if self.path else "py-redact"

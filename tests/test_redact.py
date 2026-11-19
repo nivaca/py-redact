@@ -382,3 +382,40 @@ def test_page_labels_are_hidden_information(tmp_path):
     sanitize(path, out, kinds={"page_labels"})
     copy = pymupdf.open(out)
     assert hidden.inspect(copy)["page_labels"] == 0 and copy[0].get_label() == ""
+
+
+def test_metadata_round_trip(tmp_path):
+    from py_redact import metadata as M
+
+    doc = pymupdf.open()
+    doc.new_page()
+    meta = M.Metadata((("Title", "Tí(t)le"), ("Author", "Me"),
+                       ("CreationDate", M.pdf_date("2026-11-17 07:57:28 -05:00")), ("Trapped", "False"),
+                       ("Company", "ACME ñ")), "es-CO", "<x:xmpmeta xmlns:x='adobe:ns:meta/'/>")
+    M.write(doc, meta)
+    path = tmp_path / "m.pdf"
+    doc.save(path)
+    assert M.read(pymupdf.open(path)) == meta
+    doc = pymupdf.open(path)
+    M.write(doc, M.Metadata())
+    doc.save(tmp_path / "e.pdf")
+    assert M.read(pymupdf.open(tmp_path / "e.pdf")).is_empty()
+
+
+def test_metadata_dates():
+    from py_redact import metadata as M
+
+    assert M.text_date("D:20261117075728-05'00'") == "2026-11-17 07:57:28 -05:00"
+    assert M.text_date("D:20261117125728Z") == "2026-11-17 12:57:28 +00:00"
+    assert M.pdf_date("2026-11-17 07:57:28 -05:00") == "D:20261117075728-05'00'"
+    assert M.pdf_date("2026-11-17") == "D:20261117000000"
+    assert M.pdf_date("2026-02-30") is None and M.pdf_date("yesterday") is None
+    assert M.pdf_date(M.now()) is not None
+
+
+def test_metadata_is_given_after_cleaning(sample, tmp_path):
+    from py_redact import metadata as M
+
+    out = tmp_path / "out.pdf"
+    write_redacted(sample, [Box(0, NAME)], out, clean=True, meta=M.Metadata((("Title", "Kept"),)))
+    assert M.read(pymupdf.open(out)).info == (("Title", "Kept"),)

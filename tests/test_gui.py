@@ -468,3 +468,41 @@ def test_bookmarks_that_give_away_are_asked_about(app, tmp_path, monkeypatch):
     assert "bookmark" in w.statusBar().currentMessage()
     w.boxes = w.saved = []
     w.close()
+
+
+def test_metadata_dialog(window):
+    from py_redact import metadata as M
+    from py_redact.gui.meta_dialog import MetadataDialog
+
+    original = M.Metadata((("Title", "Report"), ("Author", "Someone"), ("ModDate", "D:20261117125728Z"),
+                           ("Company", "ACME")), "es-CO", "")
+    d = MetadataDialog(original, original, window)
+    assert d.fields["ModDate"].text() == "2026-11-17 12:57:28 +00:00"
+    d._clear("Author")  # (its remove button)
+    d._remove_custom(d.custom_rows[0])
+    d._add_custom("Case", "2026-0417")
+    d.language.clear()
+    meta = d.metadata()
+    assert meta.info == (("Title", "Report"), ("ModDate", "D:20261117125728Z"), ("Case", "2026-0417"))
+    assert meta.language == "" and not d.problems()
+    d.fields["CreationDate"].setText("last week")
+    d._add_custom("Title", "again")
+    d.xmp.setPlainText("<broken")
+    assert len(d.problems()) == 3
+    d.show_metadata(M.Metadata())  # (Remove all)
+    assert d.metadata().is_empty()
+
+
+def test_saving_only_new_metadata(window, tmp_path, monkeypatch):
+    from py_redact import metadata as M
+    from py_redact.gui import window as w
+
+    assert not window.can_save()
+    window.set_metadata(M.Metadata((("Title", "Public version"),)))
+    assert window.can_save() and window.is_modified()
+    out = tmp_path / "meta.pdf"
+    monkeypatch.setattr(w.QFileDialog, "getSaveFileName", lambda *a, **k: (str(out), ""))
+    assert window.save_dialog()
+    assert M.read(pymupdf.open(out)).info == (("Title", "Public version"),) and not window.is_modified()
+    window.set_metadata(M.read(window.doc))  # (the document's own again: nothing to give)
+    assert window.meta is None

@@ -7,7 +7,7 @@ is filled with a colour, or left empty, with a text over it if wanted.
 Nicolas Vaughan made it in 2026, in one day, as a companion to two other
 PDF programs of his, py-foliation (the page labels of a PDF) and
 py-imposition (imposition for printing), from which it took its shape.
-Here I explain how it was made, in seven stages.
+Here I explain how it was made, in eight stages.
 
 It is free software, under the GNU General Public License, version 3 or
 later. The redaction is done by PyMuPDF (GNU AGPL 3) and the window by
@@ -167,10 +167,25 @@ comments, form fields, hidden text, links and scripts, thumbnails, unused
 objects) and how much of each, and removes what is ticked; "Sanitize"
 removes all of it.
 
+8. Metadata
+-----------
+
+A redacted copy often needs its metadata changed as much as its pages: the
+author's name, a title that names the case, a custom field a program left
+there. *File ▸ Metadata…* shows all of it: the fields of the document
+information (title, author, subject, keywords, creator, producer, the two
+dates, trapped), any other fields, the language of the document, and the
+XMP packet. Each field has a button to remove it. What is chosen is given
+to the copy when it is saved, after any cleaning, and written key by key,
+so that a field left out is really gone. A date is shown as `2026-11-17
+07:57:28 -05:00` and written back in the PDF form; a date left untouched
+keeps the very form it had, so that opening the dialog and closing it
+changes nothing.
+
 Testing
 -------
 
-The program has 84 tests (`uv run pytest`). The tests of the redaction make
+The program has 90 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use

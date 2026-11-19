@@ -332,6 +332,28 @@ protected document comes out without its password.
 Closing the window, or opening another document, with marks not yet saved
 to a redacted copy, asks first.
 
+### Metadata
+
+*File ▸ Metadata…* (Ctrl+Shift+M) shows all the metadata of the document,
+and lets you change what the redacted copy will have:
+
+* the document information: title, author, subject, keywords, creator,
+  producer, the dates of creation and modification (written as
+  `2026-11-17 07:57:28 -05:00`, with a *Now* button) and whether it was
+  trapped for printing;
+* the language of the document (`es-CO`, `en-US`…);
+* any other fields a program put there (a company, a case number…), which
+  can be changed, and to which new ones can be added;
+* the XMP metadata, an XML packet that may repeat the fields above and add
+  others.
+
+Each field has a button (✕) to remove it, and the XMP metadata has its own.
+*Remove all* leaves the copy without metadata, and *The document's own*
+shows again what the document has. The copy gets this metadata when it is
+saved, after any cleaning; the document open is not changed. A copy can be
+saved with new metadata even if it has no marks. A PDF/A or PDF/X copy may
+get a producer and an XMP of its own from the conversion.
+
 ### Hidden information
 
 *File ▸ Remove hidden information…* shows what the document holds besides
@@ -370,6 +392,7 @@ buttons.
 |---|---|
 | Ctrl+O | Open a document |
 | Ctrl+S | Save the redacted copy, as a plain PDF |
+| Ctrl+Shift+M | Metadata |
 | T, B, H | The tools: Redact, Draw boxes, Hand |
 | Ctrl+F | Find and redact |
 | Ctrl+R | Show the result |
@@ -458,6 +481,7 @@ The program is in `src/py_redact/`:
 | `patterns.py` | The patterns of Find and redact |
 | `codes.py` | Redaction codes and code sets |
 | `hidden.py` | Hidden information: what a document has, and removing it |
+| `metadata.py` | The metadata: reading it, and giving a copy exactly the metadata chosen |
 | `conform.py` | PDF/A and PDF/X, through pdf2iso |
 | `settings.py`, `config.py` | The settings and the configuration file |
 | `interface.py`, `locale/es.xml` | The language of the window |
@@ -472,7 +496,7 @@ Testing
 
     $ uv run pytest
 
-There are 84 tests. They cover the redaction (of text, pictures, drawings,
+There are 90 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the

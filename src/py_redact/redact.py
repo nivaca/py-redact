@@ -177,14 +177,19 @@ def open_pdf(path: Path, password: str = "") -> pymupdf.Document:
 
 
 def write_redacted(source: Path, boxes: list[Box], target: Path, password: str = "",
-                   clean: bool = False, images: str = "pixels", drawings: str = "covered") -> int:
+                   clean: bool = False, images: str = "pixels", drawings: str = "covered", meta=None) -> int:
     """SOURCE with BOXES redacted, saved as TARGET (safely: TARGET may be
-    SOURCE). Returns how many boxes were applied (see redact)."""
+    SOURCE). META (a metadata.Metadata), if given, becomes the metadata of
+    TARGET, after any cleaning. Returns how many boxes were applied (see redact)."""
     doc = open_pdf(source, password)
     fd, tmp = tempfile.mkstemp(suffix=".pdf", dir=target.parent)
     os.close(fd)
     try:
         done = redact(doc, boxes, clean, images, drawings)
+        if meta is not None:
+            from . import metadata
+
+            metadata.write(doc, meta)
         # (garbage=4 drops the objects nothing uses any more: the fonts and images
         # that only the redacted parts used, which would otherwise stay in the file)
         doc.save(tmp, garbage=4, deflate=True, clean=True,
