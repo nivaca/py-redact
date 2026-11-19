@@ -574,6 +574,7 @@ El programa está en `src/py_redact/`:
 | `settings.py`, `config.py` | La configuración y su archivo |
 | `interface.py`, `locale/es.xml` | El idioma de la ventana |
 | `gui/window.py` | La ventana |
+| `gui/menus.py`, `gui/saving.py`, `gui/thumbnails.py`, `gui/common.py` | Sus menús, el guardado con sus revisiones, la lista de páginas y lo que comparten |
 | `gui/canvas.py` | La página y sus recuadros |
 | `rendering.py`, `gui/renderer.py` | El dibujo de las páginas en procesos propios |
 | `gui/find.py`, `gui/props.py`, `gui/prefs.py`, `gui/codes_dialog.py`, `gui/hidden_dialog.py`, `gui/meta_dialog.py` | Los diálogos |
@@ -608,9 +609,14 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 1.0.4 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 1.0.5 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 1.0.5:
+  - El código de la ventana está dividido: sus menús, el guardado con sus
+    revisiones y la lista de páginas tienen módulos propios (gui/menus.py,
+    gui/saving.py, gui/thumbnails.py, con gui/common.py); nada cambia para
+    el usuario.
 - 1.0.4:
   - Las palabras de una página se leen de una sola manera, para seleccionar
     texto, para las revisiones después de guardar y para el menú de un

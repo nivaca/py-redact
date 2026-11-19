@@ -1,4 +1,4 @@
-# py-redact 1.0.4: descripción
+# py-redact 1.0.5: descripción
 
 ## Análisis
 
@@ -16,7 +16,7 @@ El trabajo de fondo lo hace PyMuPDF. py-foliation y py-imposition usan pikepdf, 
 
 El programa se divide en módulos pequeños. `redact.py` define el recuadro, un registro inmutable con la página donde se dibujó, su rectángulo, sus páginas, su relleno y su texto, y se ocupa de la censura, de la búsqueda y de la revisión de la copia. `pagesel.py` lee las listas de páginas (`2-10, 15, LAST`), y viene de py-imposition. `patterns.py` tiene los patrones de búsqueda; `codes.py`, los códigos de censura; `hidden.py`, la información oculta; `metadata.py`, los metadatos; `conform.py`, el paso a PDF/A y PDF/X. `settings.py` y `config.py` guardan la configuración, e `interface.py` traduce la ventana; estos dos últimos vienen de py-foliation.
 
-La ventana está en `gui/`: `window.py` arma los menús, las listas y los diálogos; `canvas.py` dibuja la página y sus recuadros, y recibe el ratón; los diálogos (buscar, propiedades, configuración, códigos, información oculta) tienen cada uno su archivo.
+La ventana está en `gui/`: `window.py` la arma, con sus partes en archivos aparte (`menus.py`, `saving.py` para guardar y revisar la copia, `thumbnails.py` para la lista de páginas); `canvas.py` dibuja la página y sus recuadros, y recibe el ratón; los diálogos (buscar, propiedades, configuración, códigos, información oculta) tienen cada uno su archivo.
 
 El rectángulo de un recuadro se mide sobre la página tal como se ve, con su giro, desde la esquina superior izquierda; al aplicarlo se pasa a las coordenadas propias de la página, de modo que un recuadro sobre una página girada cubre lo que el ojo ve debajo. Un recuadro repetido conserva su posición en cada página, recortado a su tamaño. Cada cambio de los recuadros va a una pila, para poder deshacerlo.
 
@@ -24,7 +24,7 @@ La copia censurada nunca es el original. Se escribe al lado, como `NOMBRE-redact
 
 ## Implementación
 
-Está escrito en Python 3.14 o superior, con PyMuPDF y PySide6 (Qt 6). Son 25 archivos, unas 5000 líneas.
+Está escrito en Python 3.14 o superior, con PyMuPDF y PySide6 (Qt 6). Son 28 archivos, unas 5100 líneas.
 
 La página se dibuja con PyMuPDF a la resolución de la pantalla y se muestra en una vista gráfica de Qt, donde los recuadros se dibujan, se mueven y se redimensionan con el ratón. La herramienta *Censurar* decide qué hacer según dónde empieza el arrastre: sobre un texto lo selecciona, en otra parte dibuja un recuadro. Cada texto de la interfaz se busca por su inglés en `locale/es.xml`. Cada valor de la configuración (un archivo TOML) se comprueba al leerlo, de modo que un archivo editado a mano no puede detener el programa.
 

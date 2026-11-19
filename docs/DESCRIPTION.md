@@ -258,6 +258,11 @@ double click or for the menu of a mark, though the page shown already had
 them. Now there is one reading, which tells each word's place, line and
 text, and the page shown keeps it.
 
+The window's module had grown to 1,500 lines. Its menus, its saving with
+the checks, and its list of pages with the thumbnails went to modules of
+their own, as parts mixed into the window's class, so that nothing else
+had to change; the window itself is now under 900 lines.
+
 Testing
 -------
 
@@ -274,4 +279,4 @@ processes of their own, and the installers are checked as far as Linux
 allows; the Linux installer was also run in a home folder made for the
 test. The Windows and macOS installers have not yet been tried on those
 systems. The RPM runs all the tests again with Fedora's own packages. The
-program has 25 files, around 5,000 lines.
+program has 28 files, around 5,100 lines.

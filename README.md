@@ -555,6 +555,7 @@ The program is in `src/py_redact/`:
 | `settings.py`, `config.py` | The settings and the configuration file |
 | `interface.py`, `locale/es.xml` | The language of the window |
 | `gui/window.py` | The window |
+| `gui/menus.py`, `gui/saving.py`, `gui/thumbnails.py`, `gui/common.py` | Its menus, its saving with the checks, its list of pages, and what they share |
 | `gui/canvas.py` | The page and its marks |
 | `rendering.py`, `gui/renderer.py` | Drawing the pages in processes of their own |
 | `gui/find.py`, `gui/props.py`, `gui/prefs.py`, `gui/codes_dialog.py`, `gui/hidden_dialog.py`, `gui/meta_dialog.py` | The dialogs |
@@ -589,8 +590,13 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 1.0.4. `py-redact --version` says which one is installed.
+This is py-redact 1.0.5. `py-redact --version` says which one is installed.
 
+- 1.0.5:
+  - The code of the window is split: its menus, its saving with the checks,
+    and its list of pages are modules of their own (gui/menus.py,
+    gui/saving.py, gui/thumbnails.py, with gui/common.py); nothing changes
+    for the user.
 - 1.0.4:
   - The words of a page are read in one way only, for selecting text, for
     the checks after saving and for the menu of a box; the page shown keeps
