@@ -529,9 +529,15 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 0.4.6 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 0.4.7 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 0.4.7:
+  - *Archivo ▸ Metadatos…* (Ctrl+Mayús+M) muestra todos los metadatos del
+    documento (información del documento, otros campos, idioma, XMP) y
+    permite cambiar los que tendrá la copia censurada, con un botón para
+    quitar cada campo. Una copia puede guardarse con metadatos nuevos
+    aunque no tenga recuadros.
 - 0.4.6:
   - Los PDF/A y PDF/X los hace pdf2iso, el nombre nuevo de py-pdfconform;
     el nombre antiguo se sigue buscando.

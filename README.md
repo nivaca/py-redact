@@ -508,8 +508,13 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 0.4.6. `py-redact --version` says which one is installed.
+This is py-redact 0.4.7. `py-redact --version` says which one is installed.
 
+- 0.4.7:
+  - *File ▸ Metadata…* (Ctrl+Shift+M) shows all the metadata of the
+    document (document information, other fields, language, XMP) and lets
+    you change what the redacted copy will have, with a button to remove
+    each field. A copy can be saved with new metadata even without marks.
 - 0.4.6:
   - PDF/A and PDF/X are made by pdf2iso, the new name of py-pdfconform;
     the old name is still looked for.

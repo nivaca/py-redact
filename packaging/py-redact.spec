@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-redact
-Version:        0.4.6
+Version:        0.4.7
 Release:        1%{?dist}
 Summary:        Redact PDF documents: remove what lies under boxes drawn on their pages
 
@@ -74,6 +74,10 @@ export HOME="$PWD/check-home" PY_REDACT_CONFIG="$PWD/check-home/config" QT_QPA_P
 %{_datadir}/icons/hicolor/*/apps/py-redact.*
 
 %changelog
+* Thu Nov 19 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.4.7-1
+- File > Metadata: every field of the metadata, each with a button to remove it;
+  the redacted copy gets it when saved
+
 * Tue Nov 17 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.4.6-1
 - PDF/A and PDF/X are made by pdf2iso, the new name of py-pdfconform (the
   old name is still looked for)
