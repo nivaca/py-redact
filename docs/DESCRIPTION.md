@@ -7,7 +7,7 @@ is filled with a colour, or left empty, with a text over it if wanted.
 Nicolas Vaughan made it in November 2026, in a few days, as a companion
 to two other PDF programs of his, py-foliation (the page labels of a PDF)
 and py-imposition (imposition for printing), from which it took its shape.
-Here I explain how it was made, in ten stages.
+Here I explain how it was made, in eleven stages.
 
 It is free software, under the GNU General Public License, version 3 or
 later. The redaction is done by PyMuPDF (GNU AGPL 3) and the window by
