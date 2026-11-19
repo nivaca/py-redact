@@ -251,6 +251,7 @@ Qué hay dónde
     src/py_redact/          el programa (véase "Cómo funciona")
       locale/es.xml         el español de la ventana
       icons/                su icono, en todos los tamaños, y los de la barra
+                            (source/: el dibujo más simple de los tamaños pequeños)
     tests/                  las pruebas (véase "Pruebas")
     docs/                   DESCRIPTION.md y DESCRIPCIÓN_es.md: cómo se hizo;
                             img/: las capturas de este README
@@ -267,6 +268,7 @@ Cada paquete lo hace una orden:
     $ uv run python tools/bundle-appimage.py     # la AppImage, en dist/
     $ packaging/build-rpm.sh [--sign]            # el RPM, en build/rpm/
     $ uv run python tools/screenshots.py         # las capturas, en docs/img/
+    $ uv run python tools/icons.py               # los iconos PNG, desde los SVG (Inkscape)
 
 `tools/bundle-appimage.py` descarga, la primera vez, un Python hecho para
 AppImages ([python-appimage](https://github.com/niess/python-appimage)) y

@@ -532,9 +532,14 @@ def test_pages_rendered_in_another_process(app, sample, tmp_path, monkeypatch):
                 time.sleep(0.01)
 
         canvas = w.canvas
-        wait(lambda: canvas._wanted is None and not canvas.pixmap_item.pixmap().isNull())
+
+        def sharp():  # (the page shown, drawn at the zoom of now: a late resize may change it)
+            pixmap = canvas.pixmap_item.pixmap()
+            return (canvas._wanted is None and not canvas.render_timer.isActive() and not pixmap.isNull()
+                    and abs(pixmap.width() - 595 * canvas._scale_for(canvas.page)) <= 2)
+
+        wait(sharp)
         scale = canvas._scale_for(canvas.page)
-        assert canvas.pixmap_item.pixmap().width() == pytest.approx(595 * scale, abs=2)
         wait(lambda: len(w._thumbs) == 5)
         assert all(not image.isNull() for image in w._thumbs.values())
 
@@ -543,8 +548,7 @@ def test_pages_rendered_in_another_process(app, sample, tmp_path, monkeypatch):
         assert w.page == 1 and canvas._wanted is None  # (at once, from the cache)
 
         w.pages.setCurrentRow(4)  # (not rendered yet: the thumbnail meanwhile, then the page)
-        wait(lambda: canvas._wanted is None)
-        assert canvas.pixmap_item.pixmap().width() == pytest.approx(595 * scale, abs=2)
+        wait(sharp)
     finally:
         w.saved = list(w.boxes)
         w.close()

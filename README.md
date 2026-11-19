@@ -246,6 +246,7 @@ What is where
     src/py_redact/          the program (see "How it works")
       locale/es.xml         the Spanish of the window
       icons/                its icon, in every size, and those of the toolbar
+                            (source/: the plainer drawing for the small sizes)
     tests/                  the tests (see "Testing")
     docs/                   DESCRIPTION.md and DESCRIPCIÓN_es.md: how it was
                             made; img/: the screenshots of this README
@@ -262,6 +263,7 @@ Each package is made by one command:
     $ uv run python tools/bundle-appimage.py     # the AppImage, in dist/
     $ packaging/build-rpm.sh [--sign]            # the RPM, in build/rpm/
     $ uv run python tools/screenshots.py         # the screenshots, in docs/img/
+    $ uv run python tools/icons.py               # the PNG icons, from the SVG ones (Inkscape)
 
 `tools/bundle-appimage.py` downloads, the first time, a Python made for
 AppImages ([python-appimage](https://github.com/niess/python-appimage)) and
