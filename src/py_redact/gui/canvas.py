@@ -15,6 +15,7 @@ SCENE_MARGIN = 12  # points around the page
 MIN_SIZE = 2.0  # points: a smaller drag is a click
 GRIP = 6  # pixels from an edge where dragging resizes
 MAX_PIXELS = 40_000_000  # the largest rendering of a page
+CACHED_PAGES = 6  # renderings kept, so that a change of the boxes or a page turned back needn't render again
 SELECTED = QColor(42, 127, 255)
 OUTLINE = QColor(208, 48, 48)  # (marks not yet applied: red)
 NEAR_TEXT = 3.0  # points: a drag that starts this close to a word selects text
@@ -149,6 +150,12 @@ class PageCanvas(QGraphicsView):
         self._rendered = 0.0
         self.render_timer = QTimer(self, singleShot=True, interval=120)
         self.render_timer.timeout.connect(self._render)
+        from collections import OrderedDict
+
+        self._cache: OrderedDict = OrderedDict()  # (document, page number, scale) -> QPixmap
+        self._ahead: list[pymupdf.Page] = []  # pages to render while the window is idle
+        self.ahead_timer = QTimer(self, singleShot=True, interval=60)
+        self.ahead_timer.timeout.connect(self._render_ahead)
 
     # ----------------------------------------------------------------- page and boxes
 
@@ -184,17 +191,61 @@ class PageCanvas(QGraphicsView):
     def zoom(self) -> float:
         return self.transform().m11()
 
+    def _scale_for(self, page: pymupdf.Page) -> float:
+        """The scale to render PAGE at, for the zoom and the screen."""
+        scale = self.zoom() * self.devicePixelRatioF()
+        w, h = page.rect.width * scale, page.rect.height * scale
+        if w * h > MAX_PIXELS:
+            scale *= (MAX_PIXELS / (w * h)) ** 0.5
+        return round(scale, 3)
+
+    def _pixmap(self, page: pymupdf.Page, scale: float) -> QPixmap:
+        """PAGE rendered at SCALE, from the cache if it is there."""
+        key = (id(page.parent), page.number, scale)
+        pixmap = self._cache.get(key)
+        if pixmap is None:
+            pixmap = QPixmap.fromImage(page_image(page, scale))
+            self._cache[key] = pixmap
+            while len(self._cache) > CACHED_PAGES:
+                self._cache.popitem(last=False)
+        else:
+            self._cache.move_to_end(key)
+        return pixmap
+
+    def clear_cache(self):
+        """Forget the renderings (another document was opened, or this one changed on disk)."""
+        self._cache.clear()
+        self._ahead = []
+
+    def render_ahead(self, pages: list[pymupdf.Page]):
+        """Render PAGES (the next and previous ones) when the window is idle, so that
+        turning to them is at once."""
+        self._ahead = list(pages)
+        self.ahead_timer.start()
+
+    def _render_ahead(self):
+        if not self._ahead:
+            return
+        page = self._ahead.pop(0)
+        try:
+            self._pixmap(page, self._scale_for(page))
+        except (RuntimeError, ValueError):  # (the document was closed meanwhile)
+            self._ahead = []
+            return
+        if self._ahead:
+            self.ahead_timer.start()
+
     def _render(self):
         if self.page is None or self.pixmap_item is None:
             return
-        scale = self.zoom() * self.devicePixelRatioF()
-        w, h = self.page_size.width() * scale, self.page_size.height() * scale
-        if w * h > MAX_PIXELS:
-            scale *= (MAX_PIXELS / (w * h)) ** 0.5
+        scale = self._scale_for(self.page)
         if abs(scale - self._rendered) < 1e-3:
             return
         self._rendered = scale
-        self.pixmap_item.setPixmap(QPixmap.fromImage(page_image(self.page, scale)))
+        # (the result shown is a page of a document of its own, made each time: not kept)
+        pixmap = self._pixmap(self.page, scale) if self.editable \
+            else QPixmap.fromImage(page_image(self.page, scale))
+        self.pixmap_item.setPixmap(pixmap)
         self.pixmap_item.setScale(1 / scale)
 
     # ----------------------------------------------------------------- zoom

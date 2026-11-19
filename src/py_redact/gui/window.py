@@ -505,6 +505,9 @@ class MainWindow(QMainWindow):
         self.doc, self.path, self.password, self.count = doc, path, password, doc.page_count
         self.page = 0
         self._thumbs = {}
+        self._by_page: list[list[Box]] = [[] for _ in range(self.count)]  # the boxes on each page
+        self._thumb_shown: dict[int, tuple] = {}  # page -> the boxes its thumbnail shows
+        self.canvas.clear_cache()
         self._fill_pages()
         return True
 
@@ -1218,6 +1221,7 @@ class MainWindow(QMainWindow):
             self.canvas.mark_outline = QColor(self.prefs.mark_outline)
             self.canvas.mark_opacity = self.prefs.mark_opacity
             self.canvas.show_page(self.doc[page], here, self.selected, keep_view=keep_view)
+            self.canvas.render_ahead([self.doc[n] for n in (page + 1, page - 1) if 0 <= n < self.count])
         self.page_spin.blockSignals(True)
         self.page_spin.setValue(page + 1)
         self.page_spin.blockSignals(False)
@@ -1262,10 +1266,15 @@ class MainWindow(QMainWindow):
         self._thumb(n)
 
     def _thumb(self, n: int):
-        """The thumbnail of page N, with its boxes."""
+        """The thumbnail of page N, with its boxes (drawn again only if they changed)."""
         image = self._thumbs.get(n)
         if image is None or n >= self.pages.count():
             return
+        boxes = self._by_page[n] if n < len(self._by_page) else []
+        shown = tuple((b.rect, b.color) for b in boxes)
+        if self._thumb_shown.get(n) == shown:
+            return
+        self._thumb_shown[n] = shown
         pixmap = QPixmap(THUMB)
         pixmap.fill(QColor(0, 0, 0, 0))
         p = QPainter(pixmap)
@@ -1273,7 +1282,7 @@ class MainWindow(QMainWindow):
         p.drawImage(x, y, image)
         page = self.doc[n]
         scale = image.width() / page.rect.width
-        for box in boxes_on(self.boxes, n, self.count):
+        for box in boxes:
             x0, y0, x1, y1 = (v * scale for v in box.rect)
             p.fillRect(int(x + x0), int(y + y0), max(int(x1 - x0), 1), max(int(y1 - y0), 1), QColor(box.color))
             p.setPen(QColor(128, 128, 128))
@@ -1286,12 +1295,16 @@ class MainWindow(QMainWindow):
     def _label_pages(self):
         if self.doc is None:
             return
-        counts = [0] * self.count
+        self._by_page = [[] for _ in range(self.count)]
         for box in self.boxes:
             for n in box.pages(self.count):
-                counts[n] += 1
+                self._by_page[n].append(box)
         for n in range(min(self.count, self.pages.count())):
-            self.pages.item(n).setText(f"{n + 1}  ● {counts[n]}" if counts[n] else str(n + 1))
+            item = self.pages.item(n)
+            count = len(self._by_page[n])
+            text = f"{n + 1}  ● {count}" if count else str(n + 1)
+            if item.text() != text:
+                item.setText(text)
             self._thumb(n)
 
     def _covers(self, box: Box) -> str:
