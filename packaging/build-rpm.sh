@@ -11,7 +11,7 @@
 # Builds py-redact's RPM (and source RPM) from this checkout, into
 # build/rpm/ — not ~/rpmbuild, so nothing outside the repo is touched. The
 # RPM (signed, with --sign) is also copied to dist/, next to the AppImage,
-# the wheel and the zip.
+# the wheel and the zip, replacing the older RPMs there.
 #
 #   packaging/build-rpm.sh [--sign[=KEY]]
 #
@@ -142,8 +142,10 @@ if [ "$SIGN" = 1 ]; then
     done
 fi
 
-# The latest RPM in dist/ too (after signing, so that it is the signed one)
+# The latest RPM in dist/ too (after signing, so that it is the signed one),
+# in place of the older ones there
 mkdir -p "$DIR/dist"
+rm -f "$DIR"/dist/py-redact-*.rpm
 for rpm in "$TOP"/RPMS/*/*.rpm; do
     cp -p "$rpm" "$DIR/dist/"
 done
