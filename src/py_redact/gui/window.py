@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
 from .. import __version__, codes, conform, config, hidden, interface, metadata, settings
 from ..interface import N_, ntr, tr
 from ..pagesel import check
-from ..redact import Box, Match, PasswordError, RedactError, bookmark_leaks, check_redacted, remove_bookmarks, sanitize, text_under, Rect, boxes_on, open_pdf, preview_page, write_redacted
+from ..redact import Box, Match, PasswordError, RedactError, bookmark_leaks, check_redacted, remove_bookmarks, sanitize, under, Rect, open_pdf, preview_page, write_redacted
 from .canvas import PageCanvas, page_image
 from .find import FindDialog
 from .prefs import SettingsDialog
@@ -794,9 +794,9 @@ class MainWindow(QMainWindow):
             return
         if self.canvas.mode == "box":
             return
-        from ..redact import nearest_word, text_rects, words
+        from ..redact import nearest_word, text_rects
 
-        found = words(self.doc[self.page])
+        found = self.canvas.page_words()  # (read once for the page shown)
         i = nearest_word(found, *point)
         if i is not None:
             x0, y0, x1, y1 = found[i][0]
@@ -969,7 +969,7 @@ class MainWindow(QMainWindow):
                 menu.addAction(swatch(color), tr("Make {color} the colour of new boxes", color=color_name(color)),
                                lambda: self.set_default_color(color))
             if len(chosen) == 1 and chosen[0].on(self.page, self.count):
-                words_ = text_under(self.doc[self.page], chosen[0].rect)
+                words_ = " ".join(under(self.canvas.page_words(), chosen[0].rect))
                 if words_:
                     menu.addSeparator()
                     short = words_ if len(words_) <= 30 else words_[:28] + "…"

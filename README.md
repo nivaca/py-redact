@@ -589,8 +589,12 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 1.0.3. `py-redact --version` says which one is installed.
+This is py-redact 1.0.4. `py-redact --version` says which one is installed.
 
+- 1.0.4:
+  - The words of a page are read in one way only, for selecting text, for
+    the checks after saving and for the menu of a box; the page shown keeps
+    them, so a double click or a menu doesn't read them again.
 - 1.0.3:
   - Searching is ten times faster (on 300 pages, from 15 seconds to 1.5),
     and the text of each page is kept once read, so that the next search in

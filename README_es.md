@@ -608,9 +608,14 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 1.0.3 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 1.0.4 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 1.0.4:
+  - Las palabras de una página se leen de una sola manera, para seleccionar
+    texto, para las revisiones después de guardar y para el menú de un
+    recuadro; la página que se muestra las guarda, de modo que un doble clic
+    o un menú no vuelve a leerlas.
 - 1.0.3:
   - Buscar es diez veces más rápido (en 300 páginas, de 15 segundos a 1,5),
     y el texto de cada página se guarda una vez leído, de modo que la

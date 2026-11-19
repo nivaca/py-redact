@@ -18,6 +18,7 @@ import dataclasses
 import os
 import tempfile
 from pathlib import Path
+from typing import NamedTuple
 
 import pymupdf
 
@@ -243,17 +244,23 @@ def _turner(page: pymupdf.Page):
     return turn
 
 
-def words(page: pymupdf.Page) -> list[tuple[Rect, int, int]]:
-    """The words of PAGE in reading order: (their rectangle as the page is
-    shown, block number, line number)."""
-    out = []
-    for x0, y0, x1, y1, _text, block, line, _n in page.get_text("words", sort=False):
-        r = _shown(page, (x0, y0, x1, y1))
-        out.append(((r.x0, r.y0, r.x1, r.y1), block, line))
-    return out
+class Word(NamedTuple):
+    rect: Rect  # as the page is shown
+    block: int
+    line: int
+    text: str
 
 
-def nearest_word(found: list[tuple[Rect, int, int]], x: float, y: float) -> int | None:
+def words(page: pymupdf.Page) -> list[Word]:
+    """The words of PAGE in reading order, with their rectangles as the page
+    is shown: the one reading of a page's words, for selecting text and for
+    telling what is under a box (see under)."""
+    turn = _turner(page)
+    return [Word(turn((x0, y0, x1, y1)), block, line, w)
+            for x0, y0, x1, y1, w, block, line, _n in page.get_text("words", sort=False)]
+
+
+def nearest_word(found: list[Word], x: float, y: float) -> int | None:
     """The index of the word at (X, Y), or else of the nearest one; None if there are none."""
     if not found:
         return None
@@ -267,13 +274,13 @@ def nearest_word(found: list[tuple[Rect, int, int]], x: float, y: float) -> int 
     return min(range(len(found)), key=distance)
 
 
-def text_rects(found: list[tuple[Rect, int, int]], first: int, last: int, pad: float = 1.0) -> list[Rect]:
+def text_rects(found: list[Word], first: int, last: int, pad: float = 1.0) -> list[Rect]:
     """The rectangles that cover the words FIRST to LAST (in either order) of
     FOUND: one for each line, a little larger than the words (PAD points)."""
     if first > last:
         first, last = last, first
     lines: dict[tuple[int, int], list[float]] = {}
-    for (x0, y0, x1, y1), block, line in found[first:last + 1]:
+    for (x0, y0, x1, y1), block, line, _text in found[first:last + 1]:
         r = lines.setdefault((block, line), [x0, y0, x1, y1])
         r[0], r[1], r[2], r[3] = min(r[0], x0), min(r[1], y0), max(r[2], x1), max(r[3], y1)
     return [(round(x0 - pad, 2), round(y0 - pad, 2), round(x1 + pad, 2), round(y1 + pad, 2))
@@ -398,23 +405,13 @@ def find_all(doc: pymupdf.Document, queries: list[tuple[str, bool]], pages: list
     return out
 
 
-def word_list(page: pymupdf.Page) -> list[tuple[Rect, str]]:
-    """The words of PAGE, in reading order, with their rectangles as the page
-    is shown: the text of the page read once, for all the boxes on it."""
-    turn = page.rotation_matrix
-    out = []
-    for x0, y0, x1, y1, w, *_ in page.get_text("words", sort=False):
-        r = (pymupdf.Rect(x0, y0, x1, y1) * turn).normalize()
-        out.append(((r.x0, r.y0, r.x1, r.y1), w))
-    return out
-
-
-def _under(found: list[tuple[Rect, str]], rect: Rect) -> list[str]:
-    """The words of FOUND (see word_list) wholly or mostly under RECT (as the
-    page is shown). (In plain numbers: thousands of boxes on hundreds of pages.)"""
+def under(found: list[Word], rect: Rect) -> list[str]:
+    """The words of FOUND (see words) wholly or mostly under RECT (as the page
+    is shown), in reading order. (In plain numbers: thousands of boxes on
+    hundreds of pages.)"""
     ax0, ay0, ax1, ay1 = normalized(rect)
     out = []
-    for (x0, y0, x1, y1), w in found:
+    for (x0, y0, x1, y1), _block, _line, w in found:
         if x1 <= ax0 or x0 >= ax1 or y1 <= ay0 or y0 >= ay1:
             continue
         whole = (x1 - x0) * (y1 - y0)
@@ -425,11 +422,7 @@ def _under(found: list[tuple[Rect, str]], rect: Rect) -> list[str]:
 
 def text_under(page: pymupdf.Page, rect: Rect) -> str:
     """The words of PAGE wholly or mostly under RECT (as the page is shown), in reading order."""
-    return " ".join(_under(word_list(page), rect))
-
-
-def words_under(page: pymupdf.Page, rect: Rect) -> list[str]:
-    return _under(word_list(page), rect)
+    return " ".join(under(words(page), rect))
 
 
 def check_redacted(source: Path, target: Path, boxes: list[Box], password: str = "") -> list[tuple[int, str]]:
@@ -446,15 +439,15 @@ def check_redacted(source: Path, target: Path, boxes: list[Box], password: str =
             if number >= count:
                 continue
             page = before[number]
-            old, new = word_list(page), word_list(after[number])
+            old, new = words(page), words(after[number])
             for box in here:
                 area = page_rect(page, box.rect)
                 if area is None:
                     continue
                 shown = tuple((area * page.rotation_matrix).normalize())
-                hidden = set(_under(old, shown))
+                hidden = set(under(old, shown))
                 written = set(overlay(box, area)[0].split())
-                left = [w for w in _under(new, shown) if w in hidden and w not in written]
+                left = [w for w in under(new, shown) if w in hidden and w not in written]
                 if left:
                     leaks.append((number, " ".join(left)))
     finally:
@@ -523,25 +516,25 @@ def bookmark_leaks(source: Path, target: Path, boxes: list[Box], password: str =
         after.close()
     if not toc:  # (no bookmarks: no need to read the text)
         return []
-    under: set[str] = set()
+    under_boxes: set[str] = set()
     elsewhere: set[str] = set()  # (the words of SOURCE outside the boxes)
     before = open_pdf(source, password)
     try:
         by_page = boxes_by_page(boxes, before.page_count)
         for number in range(before.page_count):
             page = before[number]
-            found = word_list(page)  # (read once, for its boxes and for the whole page)
+            found = words(page)  # (read once, for its boxes and for the whole page)
             hidden_counts: dict[str, int] = {}  # (the words under the boxes of the page, with how many times)
             for box in by_page.get(number, []):
                 area = page_rect(page, box.rect)
                 if area is not None:
                     shown = tuple((area * page.rotation_matrix).normalize())
-                    for w in _plain_words(" ".join(_under(found, shown))):
+                    for w in _plain_words(" ".join(under(found, shown))):
                         hidden_counts[w] = hidden_counts.get(w, 0) + 1
-            under |= hidden_counts.keys()
+            under_boxes |= hidden_counts.keys()
             # (a word of the page is also elsewhere if it is there more times than under the boxes)
             counts: dict[str, int] = {}
-            for w in _plain_words(" ".join(w for _, w in found)):
+            for w in _plain_words(" ".join(w.text for w in found)):
                 counts[w] = counts.get(w, 0) + 1
             elsewhere |= {w for w, n in counts.items() if n > hidden_counts.get(w, 0)}
     finally:
@@ -550,10 +543,10 @@ def bookmark_leaks(source: Path, target: Path, boxes: list[Box], password: str =
     for i, (_level, title, page, *_rest) in enumerate(toc):
         title = " ".join(title.split())
         all_words = list(dict.fromkeys(_plain_words(title)))
-        words = [w for w in all_words if w in under]
-        telling = any(w not in elsewhere for w in words) or (all_words and len(words) * 2 > len(all_words))
-        if words and telling:
-            out.append((i, title, tr("it has words that were under the boxes: {words}", words=", ".join(words))))
+        hidden = [w for w in all_words if w in under_boxes]
+        telling = any(w not in elsewhere for w in hidden) or (all_words and len(hidden) * 2 > len(all_words))
+        if hidden and telling:
+            out.append((i, title, tr("it has words that were under the boxes: {words}", words=", ".join(hidden))))
         elif not 1 <= page <= pages:
             out.append((i, title, tr("it points to no page of the document")))
     return out

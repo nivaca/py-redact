@@ -252,6 +252,12 @@ a half, with the same results, on turned pages too. The text of each page
 is also kept once read, until another document is opened, so that a second
 search, for another word, doesn't read the pages again.
 
+The words of a page were read in two ways, one for selecting text with the
+mouse and one for the checks, and the window read them a third time, for a
+double click or for the menu of a mark, though the page shown already had
+them. Now there is one reading, which tells each word's place, line and
+text, and the page shown keeps it.
+
 Testing
 -------
 

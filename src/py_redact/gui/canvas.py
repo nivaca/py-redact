@@ -438,7 +438,7 @@ class PageCanvas(QGraphicsView):
 
     def near_text(self, point: QPointF) -> bool:
         """Whether POINT (on the page) is on a word, or very close to one."""
-        for (x0, y0, x1, y1), _, _ in self.page_words():
+        for (x0, y0, x1, y1), *_ in self.page_words():
             if x0 - NEAR_TEXT <= point.x() <= x1 + NEAR_TEXT and y0 - NEAR_TEXT <= point.y() <= y1 + NEAR_TEXT:
                 return True
         return False
