@@ -1,3 +1,3 @@
 """py-redact: redact PDF documents."""
 
-__version__ = "0.4.9"
+__version__ = "1.0.0"
