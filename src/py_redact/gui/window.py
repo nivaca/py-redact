@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 import pymupdf
-from PySide6.QtCore import QByteArray, QSettings, QSize, Qt, QTimer
+from PySide6.QtCore import QByteArray, QItemSelection, QItemSelectionModel, QPoint, QSettings, QSize, Qt, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QImage, QKeySequence, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView, QApplication, QCheckBox, QColorDialog, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout,
@@ -1244,19 +1244,22 @@ class MainWindow(QMainWindow):
         self.thumb_timer.start()
 
     def _draw_thumbnails(self):
-        """Draw a few thumbnails at each turn of the event loop."""
+        """Draw one thumbnail at each turn of the event loop, those in view first,
+        so that the window answers between them (a scanned page can take a
+        fifth of a second)."""
         if self.doc is None:
             self.thumb_timer.stop()
             return
-        todo = [n for n in range(self.count) if n not in self._thumbs][:6]
-        if not todo:
+        top = self.pages.indexAt(QPoint(10, 10)).row()
+        start = max(top, 0)
+        n = next((m for m in [*range(start, self.count), *range(0, start)] if m not in self._thumbs), None)
+        if n is None:
             self.thumb_timer.stop()
             return
-        for n in todo:
-            page = self.doc[n]
-            scale = min(THUMB.width() / page.rect.width, THUMB.height() / page.rect.height)
-            self._thumbs[n] = page_image(page, scale)
-            self._thumb(n)
+        page = self.doc[n]
+        scale = min(THUMB.width() / page.rect.width, THUMB.height() / page.rect.height)
+        self._thumbs[n] = page_image(page, scale)
+        self._thumb(n)
 
     def _thumb(self, n: int):
         """The thumbnail of page N, with its boxes."""
@@ -1320,14 +1323,22 @@ class MainWindow(QMainWindow):
         self._select_rows()
 
     def _select_rows(self):
+        """Select in the list the rows of the boxes selected, all at once (one row at a
+        time, thousands of boxes would take minutes: each one redraws the list)."""
+        chosen = set(self.selected)
+        model = self.table.model()
+        last = self.table.columnCount() - 1
+        selection = QItemSelection()
+        start = None
+        for row, i in enumerate(self._rows + [None]):
+            if i is not None and i in chosen:
+                if start is None:
+                    start = row
+            elif start is not None:  # (a run of selected rows ends: one range for all of it)
+                selection.select(model.index(start, 0), model.index(row - 1, last))
+                start = None
         self.table.blockSignals(True)
-        self.table.clearSelection()
-        mode = self.table.selectionMode()
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
-        for row, i in enumerate(self._rows):
-            if i in self.selected:
-                self.table.selectRow(row)
-        self.table.setSelectionMode(mode)
+        self.table.selectionModel().select(selection, QItemSelectionModel.SelectionFlag.ClearAndSelect)
         self.table.blockSignals(False)
 
     def _show_panel(self):

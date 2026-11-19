@@ -1473,4 +1473,16 @@
     <en>{name} can't be the name of a field: letters, digits, '.', '-' and '_', starting with a letter</en>
     <tr>{name} no puede ser el nombre de un campo: letras, dígitos, '.', '-' y '_', empezando por una letra</tr>
   </text>
+  <text>
+    <en>(stopped before the end)</en>
+    <tr>(detenida antes del final)</tr>
+  </text>
+  <text>
+    <en>Looking on page {done} of {total}…</en>
+    <tr>Buscando en la página {done} de {total}…</tr>
+  </text>
+  <text>
+    <en>Stop</en>
+    <tr>Detener</tr>
+  </text>
 </interface>

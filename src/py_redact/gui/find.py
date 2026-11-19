@@ -9,7 +9,7 @@ import re
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+    QApplication, QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
     QListWidgetItem, QPlainTextEdit, QPushButton, QSpinBox, QStackedWidget, QVBoxLayout, QWidget,
 )
 
@@ -36,6 +36,8 @@ class FindDialog(QDialog):
         self.window = window
         self.setWindowTitle(tr("Find and redact"))
         self.matches: list[Match] = []
+        self.searching = False  # (a search is going on: Find is then Stop)
+        self.stop_asked = False
         self.mode = QComboBox()
         for value, name in MODES:
             self.mode.addItem(tr(name), value)
@@ -85,7 +87,8 @@ class FindDialog(QDialog):
         self.pages.setEnabled(False)
         find = QPushButton(tr("Find"))
         find.setDefault(True)
-        find.clicked.connect(self.search)
+        find.clicked.connect(self._find_or_stop)
+        self.find_button = find
 
         self.results = QListWidget()
         self.results.currentItemChanged.connect(self._chosen)
@@ -195,7 +198,25 @@ class FindDialog(QDialog):
             return parse_pages(self.pages.text(), count)
         return None
 
+    def _find_or_stop(self):
+        if self.searching:
+            self.stop_asked = True
+        else:
+            self.search()
+
+    def _progress(self, done: int, total: int) -> bool:
+        """Show how far a search has gone, let the window answer, and say whether to go on."""
+        self.summary.setText(tr("Looking on page {done} of {total}…", done=done, total=total))
+        QApplication.processEvents()
+        return not self.stop_asked
+
+    def closeEvent(self, event):
+        self.stop_asked = True
+        super().closeEvent(event)
+
     def search(self):
+        if self.searching:
+            return
         self.results.clear()
         self.matches = []
         doc = self.window.doc
@@ -205,9 +226,14 @@ class FindDialog(QDialog):
             self._enable()
             return
         keep = (self.keep_start.value(), self.keep_end.value()) if self.partial.isChecked() else (0, 0)
+        self.searching, self.stop_asked = True, False
+        self.find_button.setText(tr("Stop"))
+        self.b_all.setEnabled(False)
+        self.b_ticked.setEnabled(False)
         try:
             self.matches = find_all(doc, queries, self.page_list(), self.case.isChecked(),
-                                    self.whole.isChecked() and self.mode.currentData() != "patterns", *keep)
+                                    self.whole.isChecked() and self.mode.currentData() != "patterns", *keep,
+                                    progress=self._progress)
         except re.error as e:
             self.summary.setText(tr("That regular expression can't be read: {error}", error=e))
             self._enable()
@@ -226,6 +252,8 @@ class FindDialog(QDialog):
         self.summary.setText(ntr("Found once", "Found {count} times", len(self.matches))
                              + (ntr(", on {count} page", ", on {count} pages", pages) if self.matches else "")
                              if self.matches else tr("Not found"))
+        if self.stop_asked:
+            self.summary.setText(self.summary.text() + " " + tr("(stopped before the end)"))
         self._enable()
 
     def queries(self) -> list[tuple[str, bool]]:
@@ -271,5 +299,7 @@ class FindDialog(QDialog):
             self.show_match.emit(self.matches[item.data(Qt.ItemDataRole.UserRole)])
 
     def _enable(self):
+        self.searching = False
+        self.find_button.setText(tr("Find"))
         self.b_all.setEnabled(bool(self.matches))
         self.b_ticked.setEnabled(bool(self.matches))

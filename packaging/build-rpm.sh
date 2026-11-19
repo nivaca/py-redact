@@ -9,7 +9,9 @@
 # WARRANTY; see the LICENSE file, or <https://www.gnu.org/licenses/>.
 #
 # Builds py-redact's RPM (and source RPM) from this checkout, into
-# build/rpm/ — not ~/rpmbuild, so nothing outside the repo is touched.
+# build/rpm/ — not ~/rpmbuild, so nothing outside the repo is touched. The
+# RPM (signed, with --sign) is also copied to dist/, next to the AppImage,
+# the wheel and the zip.
 #
 #   packaging/build-rpm.sh [--sign[=KEY]]
 #
@@ -140,10 +142,19 @@ if [ "$SIGN" = 1 ]; then
     done
 fi
 
+# The latest RPM in dist/ too (after signing, so that it is the signed one)
+mkdir -p "$DIR/dist"
+for rpm in "$TOP"/RPMS/*/*.rpm; do
+    cp -p "$rpm" "$DIR/dist/"
+done
+
 echo
 echo "Built:"
 for rpm in "${RPMS[@]}"; do
     echo "  $rpm"
+done
+for rpm in "$TOP"/RPMS/*/*.rpm; do
+    echo "  dist/$(basename "$rpm")"
 done
 if [ "$SIGN" = 1 ]; then
     echo "Signed by $FPR; public key: $TOP/RPM-GPG-KEY-py-redact"

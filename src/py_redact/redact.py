@@ -287,6 +287,42 @@ def page_chars(page: pymupdf.Page) -> tuple[str, list]:
     return "".join(text), where
 
 
+def _compile(query: str, case: bool, whole_words: bool, regex: bool):
+    import re
+
+    pattern = query if regex else r"\s+".join(re.escape(w) for w in query.split())
+    if whole_words:
+        pattern = rf"(?<!\w)(?:{pattern})(?!\w)"
+    return re.compile(pattern, 0 if case else re.IGNORECASE)
+
+
+def _matches_on(number: int, text: str, where: list, found_re, keep_start: int, keep_end: int) -> list[Match]:
+    """The places of PAGE_CHARS' TEXT (of page NUMBER) where FOUND_RE is."""
+    out = []
+    for m in found_re.finditer(text):
+        start, end = m.span()
+        if end <= start:
+            continue
+        real = [i for i in range(start, end) if where[i] is not None and not text[i].isspace()]
+        chosen = real[keep_start:len(real) - keep_end if keep_end else None]
+        if not chosen:
+            continue
+        lines: dict[tuple[int, int], pymupdf.Rect] = {}
+        for i in range(chosen[0], chosen[-1] + 1):
+            if where[i] is None:
+                continue
+            b, n, r = where[i]
+            lines[(b, n)] = lines[(b, n)] | r if (b, n) in lines else pymupdf.Rect(r)
+        rects = tuple((round(r.x0 - 0.5, 2), round(r.y0 - 0.5, 2), round(r.x1 + 0.5, 2), round(r.y1 + 0.5, 2))
+                      for r in lines.values())
+        before = text[max(start - 40, 0):start].split(" ", 1)[-1] if start > 40 else text[:start]
+        after = text[end:end + 40].rsplit(" ", 1)[0] if len(text) > end + 40 else text[end:]
+        snippet = m.group(0).strip()
+        context = " ".join(p for p in (before.strip(), f"[{snippet}]", after.strip()) if p)
+        out.append(Match(number, rects, snippet, context))
+    return out
+
+
 def find_text(doc: pymupdf.Document, query: str, pages: list[int] | None = None, case: bool = False,
               whole_words: bool = False, regex: bool = False, keep_start: int = 0, keep_end: int = 0) -> list[Match]:
     """Where QUERY is on PAGES (0-based; all if None) of DOC. The text of a page
@@ -295,54 +331,34 @@ def find_text(doc: pymupdf.Document, query: str, pages: list[int] | None = None,
     expression (raises re.error if it is wrong). KEEP_START and KEEP_END leave
     that many characters of each place found out of its boxes (the last four
     digits of a card number stay visible, for instance)."""
-    import re
-
-    if not query.strip():
-        return []
-    pattern = query if regex else r"\s+".join(re.escape(w) for w in query.split())
-    if whole_words:
-        pattern = rf"(?<!\w)(?:{pattern})(?!\w)"
-    found_re = re.compile(pattern, 0 if case else re.IGNORECASE)
-    out = []
-    for number in (range(doc.page_count) if pages is None else pages):
-        page = doc[number]
-        text, where = page_chars(page)
-        for m in found_re.finditer(text):
-            start, end = m.span()
-            if end <= start:
-                continue
-            real = [i for i in range(start, end) if where[i] is not None and not text[i].isspace()]
-            chosen = real[keep_start:len(real) - keep_end if keep_end else None]
-            if not chosen:
-                continue
-            lines: dict[tuple[int, int], pymupdf.Rect] = {}
-            for i in range(chosen[0], chosen[-1] + 1):
-                if where[i] is None:
-                    continue
-                b, n, r = where[i]
-                lines[(b, n)] = lines[(b, n)] | r if (b, n) in lines else pymupdf.Rect(r)
-            rects = tuple((round(r.x0 - 0.5, 2), round(r.y0 - 0.5, 2), round(r.x1 + 0.5, 2), round(r.y1 + 0.5, 2))
-                          for r in lines.values())
-            before = text[max(start - 40, 0):start].split(" ", 1)[-1] if start > 40 else text[:start]
-            after = text[end:end + 40].rsplit(" ", 1)[0] if len(text) > end + 40 else text[end:]
-            snippet = m.group(0).strip()
-            context = " ".join(p for p in (before.strip(), f"[{snippet}]", after.strip()) if p)
-            out.append(Match(number, rects, snippet, context))
-    return out
+    return find_all(doc, [(query, regex)], pages, case, whole_words, keep_start, keep_end)
 
 
 def find_all(doc: pymupdf.Document, queries: list[tuple[str, bool]], pages: list[int] | None = None,
-             case: bool = False, whole_words: bool = False, keep_start: int = 0, keep_end: int = 0) -> list[Match]:
-    """Where any of QUERIES ((text, whether it is a regular expression)) is, in
-    page order; a place found by two of them is given once."""
+             case: bool = False, whole_words: bool = False, keep_start: int = 0, keep_end: int = 0,
+             progress=None) -> list[Match]:
+    """Where any of QUERIES ((text, whether it is a regular expression)) is (see
+    find_text), in page order; a place found by two of them is given once. Each
+    page is read once, whatever the number of QUERIES. PROGRESS, if given, is
+    called after each page with (pages done, pages in all); if it returns False,
+    the search stops there, with what it found so far."""
+    compiled = [_compile(q, case, whole_words, regex) for q, regex in queries if q.strip()]
+    if not compiled:
+        return []
+    numbers = list(range(doc.page_count) if pages is None else pages)
     seen, out = set(), []
-    for query, regex in queries:
-        for m in find_text(doc, query, pages, case, whole_words, regex, keep_start, keep_end):
-            key = (m.page, m.rects)
-            if key not in seen:
-                seen.add(key)
-                out.append(m)
-    return sorted(out, key=lambda m: (m.page, m.rects[0][1], m.rects[0][0]))
+    for done, number in enumerate(numbers, 1):
+        text, where = page_chars(doc[number])
+        found = []
+        for found_re in compiled:
+            for m in _matches_on(number, text, where, found_re, keep_start, keep_end):
+                if (m.page, m.rects) not in seen:
+                    seen.add((m.page, m.rects))
+                    found.append(m)
+        out += sorted(found, key=lambda m: (m.rects[0][1], m.rects[0][0]))
+        if progress is not None and progress(done, len(numbers)) is False:
+            break
+    return out
 
 
 def text_under(page: pymupdf.Page, rect: Rect) -> str:
