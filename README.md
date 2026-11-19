@@ -589,8 +589,11 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 1.0.0. `py-redact --version` says which one is installed.
+This is py-redact 1.0.1. `py-redact --version` says which one is installed.
 
+- 1.0.1:
+  - A new icon, with colour: a page with two lines blacked out and a red
+    marker, drawn plainer for the small sizes.
 - 1.0.0:
   - Installers for Linux, macOS and Windows (`install/`), which install
     py-redact from its source to run with Python 3.14 or later, in an

@@ -1,4 +1,4 @@
-# py-redact 1.0.0: descripción
+# py-redact 1.0.1: descripción
 
 ## Análisis
 

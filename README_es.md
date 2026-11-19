@@ -608,9 +608,12 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 1.0.0 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 1.0.1 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 1.0.1:
+  - Un icono nuevo, con color: una página con dos líneas tachadas y un
+    marcador rojo, dibujado más simple para los tamaños pequeños.
 - 1.0.0:
   - Instaladores para Linux, macOS y Windows (`install/`), que instalan
     py-redact desde su código para correr con Python 3.14 o posterior, en
