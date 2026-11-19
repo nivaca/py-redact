@@ -94,3 +94,17 @@ def test_installers(tmp_path):
     assert "param(" in ps1 and "-m py_redact.gui" in ps1 and "LOCALAPPDATA" in ps1
     assert ps1.isascii()  # (Windows PowerShell reads a file without a BOM as ANSI)
     assert "install.ps1" in (ROOT / "install/install.bat").read_text()
+
+
+@pytest.mark.skipif(not shutil.which("uv"), reason="uv not installed")
+def test_the_appimage_takes_the_locked_versions(tmp_path):
+    """The AppImage gets PyMuPDF and PySide6 in the versions of uv.lock, those the tests run with."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("bundle", ROOT / "tools" / "bundle-appimage.py")
+    bundle = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bundle)
+    lock = tomllib.loads((ROOT / "uv.lock").read_text())
+    locked = {p["name"]: p["version"] for p in lock["package"]}
+    wanted = bundle.locked(tmp_path).read_text().split()
+    assert f"pymupdf=={locked['pymupdf']}" in wanted and f"pyside6-essentials=={locked['pyside6-essentials']}" in wanted

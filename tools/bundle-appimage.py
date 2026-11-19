@@ -17,7 +17,9 @@ installing anything.
 What it needs is downloaded the first time and kept in the user's cache
 folder (~/.cache/py-redact-build): the Python and appimagetool
 (https://github.com/AppImage/appimagetool). The program's wheel is made with
-"uv build", and its dependencies come from PyPI (so this needs the network).
+"uv build", and its dependencies come from PyPI (so this needs the network),
+in the versions of uv.lock: the AppImage runs the PyMuPDF and the PySide6
+that the tests ran with, not whatever is newest on PyPI that day.
 """
 
 from __future__ import annotations
@@ -138,6 +140,15 @@ def wheel(folder: Path) -> Path:
     return found[0]
 
 
+def locked(folder: Path) -> Path:
+    """The versions of uv.lock, as a file of constraints for pip."""
+    target = folder / "constraints.txt"
+    subprocess.run(["uv", "export", "--frozen", "--no-dev", "--no-hashes", "--no-emit-project",
+                    "--no-header", "--no-annotate", "-o", str(target)], cwd=ROOT, check=True,
+                   stdout=subprocess.DEVNULL)
+    return target
+
+
 def make_appdir(appdir: Path, whl: Path):
     """Turn the AppDir of the Python into that of py-redact."""
     pythons = [p for p in sorted(appdir.glob("opt/python3*/bin/python3.*")) if not p.name.endswith("-config")]
@@ -149,7 +160,8 @@ def make_appdir(appdir: Path, whl: Path):
     # site-packages (or another environment) as already installed.
     env = clean_env()
     subprocess.run([str(python), "-s", "-m", "pip", "install", "--isolated", "--no-cache-dir",
-                    "--no-warn-script-location", "--disable-pip-version-check", "--quiet", str(whl)],
+                    "--no-warn-script-location", "--disable-pip-version-check", "--quiet",
+                    "-c", str(locked(whl.parent)), str(whl)],
                    check=True, env=env)
     site = next(appdir.glob("opt/python3*/lib/python3.*/site-packages"))
     for rel in PRUNE:

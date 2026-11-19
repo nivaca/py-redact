@@ -277,10 +277,17 @@ safe as one checked. The longest stop of the window went from five seconds
 to a tenth; the whole saving takes some seconds more, the time of starting
 the processes.
 
+The AppImage, too, had drifted from what was tested: it was made by
+installing py-redact from PyPI, which gave it the newest PyMuPDF, 2.1,
+while the tests and the RPM ran with 1.28. It is now made with the versions
+of the project's lock file, the same the tests run with. The installers
+still take the newest, which the tests on GitHub's machines now run with on
+each change.
+
 Testing
 -------
 
-The program has 97 tests (`uv run pytest`). The tests of the redaction make
+The program has 98 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use

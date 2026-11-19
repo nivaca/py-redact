@@ -271,7 +271,8 @@ Each package is made by one command:
 `tools/bundle-appimage.py` downloads, the first time, a Python made for
 AppImages ([python-appimage](https://github.com/niess/python-appimage)) and
 [appimagetool](https://github.com/AppImage/appimagetool), installs py-redact
-in that Python, makes a redaction with it to be sure that it works, and
+in that Python, with PyMuPDF and PySide6 in the versions of `uv.lock` (those
+the tests ran with), makes a redaction with it to be sure that it works, and
 writes the AppImage. `packaging/build-rpm.sh` builds the RPM with Fedora's
 own Python and packages, running all the tests; `--sign` signs it.
 `tools/release.py` does all of it and publishes a version on GitHub,
@@ -588,7 +589,7 @@ Testing
 
     $ uv run pytest
 
-There are 97 tests. They cover the redaction (of text, pictures, drawings,
+There are 98 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the
@@ -601,8 +602,12 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 1.0.7. `py-redact --version` says which one is installed.
+This is py-redact 1.0.8. `py-redact --version` says which one is installed.
 
+- 1.0.8:
+  - The AppImage carries PyMuPDF and PySide6 in the versions the tests run
+    with (those of uv.lock), not the newest on PyPI: PyMuPDF 1.28 instead of
+    2.1.
 - 1.0.7:
   - The installers are now run on each change on Windows, macOS and Linux
     (GitHub Actions), with the tests run against the program installed. This

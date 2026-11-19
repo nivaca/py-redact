@@ -276,8 +276,9 @@ Cada paquete lo hace una orden:
 `tools/bundle-appimage.py` descarga, la primera vez, un Python hecho para
 AppImages ([python-appimage](https://github.com/niess/python-appimage)) y
 [appimagetool](https://github.com/AppImage/appimagetool), instala py-redact
-en ese Python, hace con él una censura para asegurarse de que funciona y
-escribe la AppImage. `packaging/build-rpm.sh` construye el RPM con el Python
+en ese Python, con PyMuPDF y PySide6 en las versiones de `uv.lock` (aquellas
+con las que corrieron las pruebas), hace con él una censura para asegurarse
+de que funciona y escribe la AppImage. `packaging/build-rpm.sh` construye el RPM con el Python
 y los paquetes de Fedora, corriendo todas las pruebas; `--sign` lo firma.
 `tools/release.py` hace todo eso y publica una versión en GitHub, Codeberg y
 Copr; `packaging/RELEASING.md` cuenta cómo.
@@ -608,7 +609,7 @@ Pruebas
 
     $ uv run pytest
 
-Hay 97 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 98 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando
@@ -621,9 +622,13 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 1.0.7 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 1.0.8 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 1.0.8:
+  - La AppImage lleva PyMuPDF y PySide6 en las versiones con que corren las
+    pruebas (las de uv.lock), no las más nuevas de PyPI: PyMuPDF 1.28 en
+    lugar de 2.1.
 - 1.0.7:
   - Los instaladores se corren ahora con cada cambio en Windows, macOS y
     Linux (GitHub Actions), con las pruebas sobre el programa instalado. Así
