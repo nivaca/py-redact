@@ -77,3 +77,20 @@ def test_signing_without_the_key_says_how_to_import_it(tmp_path):
                        env=env)
     assert r.returncode == 1
     assert f"no secret key matching {pinned_key()}" in r.stderr and "gpg --import" in r.stderr
+
+
+@pytest.mark.skipif(not (ROOT / "install").is_dir(), reason="the installers are not here")
+def test_installers(tmp_path):
+    """The installers parse, explain themselves, and refuse what they can't do."""
+    sh = ROOT / "install/install.sh"
+    assert subprocess.run(["bash", "-n", str(sh)]).returncode == 0
+    r = subprocess.run(["bash", str(sh), "--help"], capture_output=True, text=True)
+    assert r.returncode == 0 and "--uninstall" in r.stdout and "#" not in r.stdout
+    r = subprocess.run(["bash", str(sh), "--python", str(tmp_path / "none")], capture_output=True, text=True,
+                       env={"HOME": str(tmp_path), "PATH": "/usr/bin:/bin"})
+    assert r.returncode == 1 and "3.14 or later" in r.stderr
+    assert not (tmp_path / ".local").exists()  # (nothing made)
+    ps1 = (ROOT / "install/install.ps1").read_text()
+    assert "param(" in ps1 and "-m py_redact.gui" in ps1 and "LOCALAPPDATA" in ps1
+    assert ps1.isascii()  # (Windows PowerShell reads a file without a BOM as ANSI)
+    assert "install.ps1" in (ROOT / "install/install.bat").read_text()

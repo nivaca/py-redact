@@ -17,7 +17,8 @@ and anyone can select it, copy it or search for it. py-redact takes it out
 of the file, and after saving it checks the copy to make sure that nothing
 which was under a mark can still be read there.
 
-It has a window, in English and in Spanish, and works on Linux. Drag over
+It has a window, in English and in Spanish, and works on Linux, Windows
+and macOS. Drag over
 text to mark it, or elsewhere to draw a box; find and mark every place where a word, a
 list of words or a pattern (phone numbers, e-mail addresses, card numbers,
 dates, identity numbers, bank accounts) appears; repeat a mark on other
@@ -60,14 +61,18 @@ Installation
 
 ### What is needed
 
-Linux. The AppImage needs nothing else: it brings its own Python, Qt and
-PyMuPDF, and runs with glibc 2.34 or later (Ubuntu 22.04, Debian 12, Fedora
-35 and later). The Fedora package needs Fedora 45 or later, and brings in
-Fedora's own Python, PyMuPDF and PySide6. From the source, it needs Python
-3.14 or later and [uv](https://docs.astral.sh/uv/), which brings the rest
-(PyMuPDF and PySide6). To save PDF/A or PDF/X, any of them needs
-[pdf2iso](https://github.com/nivaca/pdf2iso) (see "PDF/A and
-PDF/X").
+* **Linux**: the AppImage needs nothing else: it brings its own Python, Qt
+  and PyMuPDF, and runs with glibc 2.34 or later (Ubuntu 22.04, Debian 12,
+  Fedora 35 and later). The Fedora package needs Fedora 45 or later, and
+  brings in Fedora's own Python, PyMuPDF and PySide6.
+* **Windows and macOS** (and Linux, if you prefer it): Python 3.14 or later.
+  The installer of the source (see "With the installers") installs PyMuPDF
+  and PySide6 for py-redact alone; there are no binaries to download.
+* **From the source**, by hand: Python 3.14 or later and
+  [uv](https://docs.astral.sh/uv/), which brings the rest.
+
+To save PDF/A or PDF/X, any of them needs
+[pdf2iso](https://github.com/nivaca/pdf2iso) (see "PDF/A and PDF/X").
 
 ### Getting the program
 
@@ -76,16 +81,69 @@ Every version is in the
 [Codeberg](https://codeberg.org/nivaca/py-redact/releases), with these
 files:
 
-    py-redact-VERSION-x86_64.AppImage     the AppImage
+    py-redact-VERSION.zip                 the source, as a zip, with the installers
+    py-redact-VERSION-x86_64.AppImage     the AppImage (Linux)
     py-redact-VERSION-1.fc45.noarch.rpm   the Fedora package, signed
     RPM-GPG-KEY-py-redact                 the key that signs it
-    py-redact-VERSION.zip                 the source, as a zip
     py_redact-VERSION.tar.gz              the source package, for Python
     py_redact-VERSION-py3-none-any.whl    the wheel, for Python
 
 The source can also be cloned:
 
     $ git clone https://github.com/nivaca/py-redact.git
+
+### With the installers (Windows, macOS, Linux)
+
+The folder `install/` of the source has an installer for each system. Each
+one makes a Python environment of its own for py-redact, installs py-redact
+in it with PyMuPDF and PySide6 (downloaded from PyPI, so it needs internet
+the first time, and some minutes), and adds it to the menu of the system.
+Nothing is compiled, nothing needs administrator rights, and the settings
+are never touched. First install Python 3.14 or later, if it isn't there
+yet, then download `py-redact-VERSION.zip` and unpack it (or clone the
+source).
+
+**Windows.** Python comes from
+[python.org](https://www.python.org/downloads/windows/). Then double-click
+`install\install.bat` in the unpacked folder, or run it from a command
+prompt:
+
+    > install\install.bat              install, or update
+    > install\install.bat -Desktop     also a shortcut on the desktop
+    > install\install.bat -Python C:\path\to\python.exe
+    > install\install.bat -Uninstall
+
+It looks for Python with the `py` launcher (`py -3.14` and later) and as
+`python`. It installs py-redact in `%LOCALAPPDATA%\py-redact\venv` and adds
+*py-redact* to the Start menu. From a command prompt, the program is
+`%LOCALAPPDATA%\py-redact\venv\Scripts\py-redact.exe [file.pdf]`.
+(`install.bat` only runs `install.ps1` with PowerShell, allowing that one
+script to run.)
+
+**macOS.** Python comes from
+[python.org](https://www.python.org/downloads/macos/) or from Homebrew
+(`brew install python@3.14`). Then, in the Terminal, in the unpacked
+folder:
+
+    $ install/install.sh                 install, or update
+    $ install/install.sh --python /path/to/python3.14
+    $ install/install.sh --uninstall
+
+It installs py-redact in `~/Library/Application Support/py-redact/venv`
+and makes `~/Applications/py-redact.app`, which starts it from the Finder,
+Launchpad or Spotlight. The app is a small script that runs that Python,
+not a binary. (If the zip was unpacked without the permission to run the
+installer, `bash install/install.sh` runs it all the same.)
+
+**Linux.** The same `install/install.sh`. It installs py-redact in
+`~/.local/share/py-redact/venv`, with a menu entry (also offered for opening
+PDF files) and its icons. Debian and Ubuntu need the `venv` module of their
+Python as a package of its own (`python3.14-venv`).
+
+On macOS and Linux, the command `py-redact` is linked in `~/bin`, if that
+folder exists, or else in `~/.local/bin`. The installers look for
+`python3.14` and later, and for `python3`, and use the first that is 3.14 or
+later; `--python` (or `-Python`) gives another one.
 
 ### An AppImage (any Linux)
 
@@ -118,7 +176,7 @@ Its fingerprint is `8187 0643 CA22 1AF9 0C30 554E BE68 32CD 3599 4948`:
     $ sudo rpm --import RPM-GPG-KEY-py-redact
     $ sudo dnf install ./py-redact-*.noarch.rpm
 
-### From the source
+### From the source, with uv
 
 In the folder of the source (cloned, or the zip unpacked):
 
@@ -134,9 +192,9 @@ command `py-redact` everywhere, install it as a uv tool, which puts it in
 
 ### A menu entry
 
-The AppImage (through AppImageLauncher or Gear Lever) and the Fedora
-package have their own. For the uv tool, copy the menu entry and the icons
-to your folder of applications:
+The installers, the AppImage (through AppImageLauncher or Gear Lever) and
+the Fedora package have their own. For the uv tool on Linux, copy the menu
+entry and the icons to your folder of applications:
 
     $ install -Dm644 packaging/py-redact.desktop ~/.local/share/applications/py-redact.desktop
     $ cp -r src/py_redact/icons/linux/hicolor ~/.local/share/icons/
@@ -159,7 +217,9 @@ out and everything else works.
 ### Updating
 
 The Fedora package is updated with the rest of the system, `sudo dnf
-upgrade`. The AppImage is replaced by the new one. From the source, `git
+upgrade`. The AppImage is replaced by the new one. With the installers,
+unpack the new zip (or `git pull`) and run the installer again: it makes
+the environment anew. From the source, `git
 pull` (or the new zip) and then `uv sync`, or `uv tool install --reinstall .`
 for the uv tool. The settings and the redaction codes are kept.
 
@@ -168,6 +228,8 @@ for the uv tool. The settings and the redaction codes are kept.
     $ sudo dnf remove py-redact                  # the Fedora package
     $ sudo dnf copr disable nivaca/py-redact     # and its repository
     $ uv tool uninstall py-redact                # the uv tool
+    $ install/install.sh --uninstall             # the installer (Linux, macOS)
+    > install\install.bat -Uninstall             # the installer (Windows)
 
 The AppImage, or the folder of the source, is simply deleted, and so are the
 menu entry and the icons copied by hand
@@ -179,6 +241,8 @@ to be deleted too if they are not wanted.
 What is where
 -------------
 
+    install/                the installers: install.sh (Linux, macOS),
+                            install.bat and install.ps1 (Windows)
     src/py_redact/          the program (see "How it works")
       locale/es.xml         the Spanish of the window
       icons/                its icon, in every size, and those of the toolbar
@@ -447,8 +511,10 @@ Settings and files
 ------------------
 
 The settings are kept in a small TOML file, `config.toml`, in the user's
-configuration folder: `~/.config/py-redact/` on Linux, or the folder that
-`$PY_REDACT_CONFIG` names. Under `[parameters]` it has the language of the
+configuration folder: `~/.config/py-redact/` on Linux,
+`~/Library/Application Support/py-redact/` on macOS and
+`%APPDATA%\py-redact\` on Windows, or the folder that `$PY_REDACT_CONFIG`
+names. Under `[parameters]` it has the language of the
 window (`interface`), the look of new marks (`redact_color`, `box_text`,
 `box_text_color`, `box_font_size`, `box_align`, `box_repeat_text`), what
 redaction does to pictures and drawings (`redact_images`, `redact_drawings`),
@@ -460,7 +526,8 @@ stops the program; deleting the file brings back all the usual values.
 
 The user's own redaction codes are in `codes.xml`, in the same folder. The
 size of the window, the recent files and the last folder used are kept by Qt
-(`~/.config/py-redact/py-redact.conf`).
+(`~/.config/py-redact/py-redact.conf` on Linux; in the preferences of macOS
+and in the registry of Windows).
 
 How it works
 ------------
@@ -487,7 +554,18 @@ The program is in `src/py_redact/`:
 | `interface.py`, `locale/es.xml` | The language of the window |
 | `gui/window.py` | The window |
 | `gui/canvas.py` | The page and its marks |
-| `gui/find.py`, `gui/props.py`, `gui/prefs.py`, `gui/codes_dialog.py`, `gui/hidden_dialog.py` | The dialogs |
+| `rendering.py`, `gui/renderer.py` | Drawing the pages in processes of their own |
+| `gui/find.py`, `gui/props.py`, `gui/prefs.py`, `gui/codes_dialog.py`, `gui/hidden_dialog.py`, `gui/meta_dialog.py` | The dialogs |
+
+The pages are drawn in two processes of their own, one for the page shown
+and those next to it, the other for the thumbnails. PyMuPDF keeps Python
+busy while it draws a page, and a scanned page can take a fifth of a
+second; drawn in the window's own process, every page turned would stop the
+window that long. So a click on a thumbnail shows that thumbnail, enlarged,
+at once, and the page replaces it as soon as it is drawn; a page that is no
+longer wanted is not drawn. The last pages drawn are kept, and the next and
+previous ones are drawn ahead. If those processes can't be started, the
+window draws the pages itself.
 
 `docs/DESCRIPTION.md` tells how it was made.
 
@@ -496,20 +574,31 @@ Testing
 
     $ uv run pytest
 
-There are 90 tests. They cover the redaction (of text, pictures, drawings,
+There are 92 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the
 mouse, marking text, finding, saving, and making PDF/A and PDF/X when
-pdf2iso is installed. A test checks that every text of the window has
+pdf2iso is installed, the drawing of the pages in processes of their own,
+and the installers. A test checks that every text of the window has
 its Spanish translation. The RPM runs them all again when it is built, with
 Fedora's own Python and packages.
 
 Version
 -------
 
-This is py-redact 0.4.9. `py-redact --version` says which one is installed.
+This is py-redact 1.0.0. `py-redact --version` says which one is installed.
 
+- 1.0.0:
+  - Installers for Linux, macOS and Windows (`install/`), which install
+    py-redact from its source to run with Python 3.14 or later, in an
+    environment of its own, with an entry in the menu of the system (an app
+    in `~/Applications` on macOS, the Start menu on Windows).
+  - The pages are drawn in processes of their own, so the window never
+    waits for them: a click on a thumbnail shows it, enlarged, at once,
+    and the page follows as soon as it is drawn; quick clicks no longer
+    pile up.
+  - On Windows, pdf2iso is run through Python.
 - 0.4.9:
   - The window is lighter. A page is rendered once and kept, so drawing,
     moving or recolouring a box no longer renders it again; the next and

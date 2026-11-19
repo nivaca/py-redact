@@ -4,10 +4,10 @@ How py-redact was made
 py-redact is a program for redacting PDF documents: what lies under the
 marks drawn on the pages is removed from the file for good, and the place
 is filled with a colour, or left empty, with a text over it if wanted.
-Nicolas Vaughan made it in 2026, in one day, as a companion to two other
-PDF programs of his, py-foliation (the page labels of a PDF) and
-py-imposition (imposition for printing), from which it took its shape.
-Here I explain how it was made, in eight stages.
+Nicolas Vaughan made it in November 2026, in a few days, as a companion
+to two other PDF programs of his, py-foliation (the page labels of a PDF)
+and py-imposition (imposition for printing), from which it took its shape.
+Here I explain how it was made, in ten stages.
 
 It is free software, under the GNU General Public License, version 3 or
 later. The redaction is done by PyMuPDF (GNU AGPL 3) and the window by
@@ -182,10 +182,59 @@ so that a field left out is really gone. A date is shown as `2026-11-17
 keeps the very form it had, so that opening the dialog and closing it
 changes nothing.
 
+9. Large documents
+------------------
+
+The first real use was a scanned book of 303 pages, and the window, which
+had been quick on letters of a few pages, hung. Each cause was found by
+timing the window on that book, drawn off the screen at the resolution of
+a modern screen. Marking all 6,710 places where a word was found never
+finished, because each mark was selected in the list one row at a time,
+and each row redrew the list; one selection of all the rows takes a second.
+The thumbnails were drawn in groups, and each group stopped the window for
+a second; now they are drawn one at a time, those in view first. Find and
+redact read every page once for each word it looked for; now it reads each
+page once, shows how far it has gone, and can be stopped.
+
+The window was still heavy. Every change of the marks, even selecting one,
+drew the whole page again from the PDF, and recomposed all 303 thumbnails.
+Now the last pages drawn are kept, only the marks over them are drawn
+again, and only the thumbnails whose marks changed. Drawing a mark went
+from 190 to 20 milliseconds.
+
+Then a click on a thumbnail still took seconds when the clicks came
+quickly. A scanned page takes a fifth of a second to draw, whatever its
+size, because its picture has to be decoded, and PyMuPDF keeps Python busy
+all that time: a thread doesn't help, since the window can't run while
+another thread holds Python. So the pages are drawn in two processes of
+their own, one for the page shown and those next to it, and one for the
+thumbnails, each with a queue in which the page just asked for goes first
+and the pages left behind are dropped. Until the page arrives, its
+thumbnail is shown enlarged. The window answers a click in a few
+milliseconds; the page is sharp a quarter of a second later, or at once if
+it was drawn ahead.
+
+10. Installers
+--------------
+
+Version 1.0 added installers for Linux, macOS and Windows, to run py-redact
+with Python rather than as a binary. Each makes a virtual environment of
+its own, installs py-redact from the source with PyMuPDF and PySide6, which
+have wheels for the three systems, and adds it to the system's menu: a
+desktop entry with its icons on Linux, a small application in
+`~/Applications` on macOS (a script inside the bundle, which runs that
+Python), and a Start menu shortcut on Windows, with an icon made from the
+program's own pictures. The program needed very little for this: its
+configuration already had a folder for each system, and only the way of
+running pdf2iso had to change on Windows, where a script is run through
+Python. The pages are drawn by processes started the same way on the three
+systems, so the program's main modules are guarded against being run again
+by those processes.
+
 Testing
 -------
 
-The program has 90 tests (`uv run pytest`). The tests of the redaction make
+The program has 92 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use
@@ -193,5 +242,9 @@ it, with mouse events on the page: drawing, moving and resizing marks,
 selecting text, double clicks, the tools, finding, marking, saving, and the
 right-click menus. A test checks that every text of the window has its
 Spanish translation, and no other. The conversion to PDF/A and PDF/X is
-tested when pdf2iso is installed. The RPM runs all the tests again
-with Fedora's own packages. The program has 20 files, around 3,900 lines.
+tested when pdf2iso is installed. Another test draws the pages through the
+processes of their own, and the installers are checked as far as Linux
+allows; the Linux installer was also run in a home folder made for the
+test. The Windows and macOS installers have not yet been tried on those
+systems. The RPM runs all the tests again with Fedora's own packages. The
+program has 25 files, around 5,000 lines.

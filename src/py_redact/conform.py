@@ -95,9 +95,12 @@ def command(path: str | None = None) -> list[str] | None:
     script = find(configured() if path is None else path)
     if script is None:
         return None
-    if os.access(script, os.X_OK):
+    # (on Windows every file passes os.access(X_OK), and a script runs only through Python)
+    if sys.platform != "win32" and os.access(script, os.X_OK):
         return [str(script)]
-    python = shutil.which("python3", path=clean_env()["PATH"]) or "/usr/bin/python3"
+    path = clean_env()["PATH"]
+    names = ("py", "python", "python3") if sys.platform == "win32" else ("python3",)
+    python = next((p for p in map(lambda n: shutil.which(n, path=path), names) if p), None) or "/usr/bin/python3"
     return [python, str(script)]
 
 

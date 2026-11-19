@@ -1,8 +1,8 @@
-# py-redact 0.4.9: descripción
+# py-redact 1.0.0: descripción
 
 ## Análisis
 
-py-redact censura documentos PDF. Sobre las páginas se marca lo que debe desaparecer (un nombre, un número de teléfono, un encabezado que se repite, una imagen), y en la copia censurada se elimina del archivo, para siempre, lo que hay debajo de cada recuadro: el texto, la parte de las imágenes que queda debajo, los dibujos que cubre y las anotaciones y campos de formulario que toca. El lugar se rellena con un color, o se deja vacío, y encima puede escribirse un texto (`CENSURADO`, un código de excepción). Lo hice en 2026, en un día, como compañero de otros dos programas míos para PDF, py-foliation (las etiquetas de página) y py-imposition (la imposición para imprenta), de los que tomó su forma.
+py-redact censura documentos PDF. Sobre las páginas se marca lo que debe desaparecer (un nombre, un número de teléfono, un encabezado que se repite, una imagen), y en la copia censurada se elimina del archivo, para siempre, lo que hay debajo de cada recuadro: el texto, la parte de las imágenes que queda debajo, los dibujos que cubre y las anotaciones y campos de formulario que toca. El lugar se rellena con un color, o se deja vacío, y encima puede escribirse un texto (`CENSURADO`, un código de excepción). Lo hice en noviembre de 2026, en unos pocos días, como compañero de otros dos programas míos para PDF, py-foliation (las etiquetas de página) y py-imposition (la imposición para imprenta), de los que tomó su forma.
 
 El requisito central salía de un error frecuente. Tapar un texto con un rectángulo negro lo oculta a la vista, pero el texto sigue en el archivo, y cualquiera puede seleccionarlo, copiarlo o buscarlo. El programa tenía que sacarlo del archivo, y además comprobarlo: no basta con que la copia se vea bien.
 
@@ -24,7 +24,7 @@ La copia censurada nunca es el original. Se escribe al lado, como `NOMBRE-redact
 
 ## Implementación
 
-Está escrito en Python 3.14 o superior, con PyMuPDF y PySide6 (Qt 6). Son 20 archivos, unas 3900 líneas. El proyecto se maneja con uv.
+Está escrito en Python 3.14 o superior, con PyMuPDF y PySide6 (Qt 6). Son 25 archivos, unas 5000 líneas. El proyecto se maneja con uv.
 
 La página se dibuja con PyMuPDF a la resolución de la pantalla y se muestra en una vista gráfica de Qt, donde los recuadros se dibujan, se mueven y se redimensionan con el ratón. La herramienta *Censurar* decide qué hacer según dónde empieza el arrastre: sobre un texto lo selecciona, en otra parte dibuja un recuadro, y con Ctrl siempre dibuja un recuadro. Un doble clic marca una palabra o una imagen entera. Mientras no se aplican, los recuadros son transparentes, con un contorno rojo; con el ratón encima se ven como quedarán. "Mostrar el resultado" censura en memoria una copia de la página mostrada y la dibuja.
 
@@ -46,27 +46,39 @@ Un documento bien censurado todavía puede delatarse por sus marcadores: un tít
 
 *Archivo ▸ Metadatos…* muestra todos los metadatos del documento: los campos de la información del documento (título, autor, asunto, palabras clave, creador, productor, las dos fechas, reventado), cualquier otro campo, el idioma del documento y el paquete XMP. Cada campo tiene un botón para quitarlo. Lo elegido se le da a la copia al guardarla, después de cualquier saneamiento, y se escribe clave por clave, de modo que un campo que se deja fuera desaparece de verdad. Una fecha se muestra como `2026-11-17 07:57:28 -05:00` y se vuelve a escribir en la forma del PDF; una fecha que no se toca conserva exactamente la forma que tenía, así que abrir el diálogo y cerrarlo no cambia nada.
 
+### Documentos grandes
+
+El primer uso de verdad fue un libro escaneado de 303 páginas, y la ventana, que iba rápida con cartas de pocas páginas, se colgó. Cada causa salió de medir la ventana con ese libro, dibujada fuera de la pantalla a la resolución de una pantalla moderna. Marcar los 6710 lugares donde aparecía una palabra no terminaba nunca, porque cada recuadro se seleccionaba en la lista fila por fila y cada fila redibujaba la lista; una sola selección de todas las filas tarda un segundo. Las miniaturas se dibujaban por grupos, y cada grupo detenía la ventana un segundo; ahora se dibujan de a una, primero las que están a la vista. Buscar y censurar leía cada página una vez por cada término; ahora la lee una sola vez, muestra cuánto lleva y puede detenerse.
+
+La ventana seguía pesada. Cualquier cambio de los recuadros, aunque fuera seleccionar uno, volvía a dibujar la página entera desde el PDF y recomponía las 303 miniaturas. Ahora se guardan las últimas páginas dibujadas, se redibujan solo los recuadros que van encima y solo las miniaturas cuyos recuadros cambiaron. Dibujar un recuadro pasó de 190 a 20 milisegundos.
+
+Quedaba un clic en una miniatura que tardaba segundos cuando los clics venían seguidos. Una página escaneada tarda un quinto de segundo en dibujarse, sea cual sea su tamaño, porque hay que decodificar su imagen, y PyMuPDF retiene a Python todo ese tiempo: un hilo aparte no sirve, porque la ventana no puede correr mientras otro hilo tiene a Python. Por eso las páginas se dibujan en dos procesos propios, uno para la página que se muestra y sus vecinas y otro para las miniaturas, cada uno con su cola, en la que la página recién pedida pasa primero y las que quedaron atrás se descartan. Mientras llega la página, se muestra su miniatura ampliada. La ventana responde a un clic en unos milisegundos; la página está nítida un cuarto de segundo después, o al instante si ya se había dibujado.
+
+### Instaladores
+
+La versión 1.0 trajo instaladores para Linux, macOS y Windows, para correr py-redact con Python y no como binario. Cada uno crea un entorno virtual propio, instala py-redact desde el código con PyMuPDF y PySide6 (que tienen ruedas para los tres sistemas) y lo añade al menú del sistema: una entrada de escritorio con sus iconos en Linux, una aplicación pequeña en `~/Applications` en macOS (dentro del paquete hay un script que ejecuta ese Python) y un acceso directo en el menú Inicio de Windows, con un icono hecho a partir de las imágenes del programa. El programa pedía poco para esto. Su configuración ya tenía una carpeta para cada sistema, y solo hubo que cambiar la manera de ejecutar pdf2iso en Windows, donde un script corre por medio de Python. Los procesos que dibujan las páginas arrancan igual en los tres sistemas, de modo que los módulos principales del programa están protegidos para que esos procesos no los vuelvan a ejecutar.
+
 ### PDF/A y PDF/X
 
 El paso a PDF/A o PDF/X-4 lo hace pdf2iso, otro programa mío, que usa Ghostscript y pikepdf y revisa el resultado. py-redact escribe la copia censurada y se la pasa, si está instalado; si no, esas opciones aparecen desactivadas. Un programa abierto desde el menú del escritorio a menudo no tiene en su PATH la carpeta `~/bin`, donde suele vivir un script como este, así que py-redact también lo busca allí y en `~/.local/bin`, y la configuración permite indicar dónde está. pdf2iso se ejecuta siempre sin el entorno de Python de py-redact (su entorno virtual o la AppImage), porque, si no, correría con un Python que no tiene pikepdf.
 
 ### Proceso y distribución
 
-El trabajo pasó por ocho etapas: una ventana que censura, con recuadros repetidos y relleno de cualquier color; los paquetes (la AppImage, el RPM y su publicación); el menú del botón derecho, la configuración y la selección de texto; buscar y censurar; PDF/A y PDF/X; una sola herramienta para texto y zonas, con las propiedades de los recuadros y la revisión de la copia, listas de palabras, patrones, censura parcial, códigos de censura e información oculta, y por último el editor de metadatos. `docs/DESCRIPTION.md` cuenta cada una.
+El trabajo pasó por diez etapas: una ventana que censura, con recuadros repetidos y relleno de cualquier color; los paquetes (la AppImage, el RPM y su publicación); el menú del botón derecho, la configuración y la selección de texto; buscar y censurar; PDF/A y PDF/X; una sola herramienta para texto y zonas, con las propiedades de los recuadros y la revisión de la copia, listas de palabras, patrones, censura parcial, códigos de censura e información oculta; el editor de metadatos; la ventana ágil con documentos grandes, y por último los instaladores. `docs/DESCRIPTION.md` cuenta cada una.
 
 El código se maneja con git, en un repositorio publicado en GitHub (https://github.com/nivaca/py-redact) y en Codeberg (https://codeberg.org/nivaca/py-redact). Un solo script publica cada versión: corre las pruebas, hace la rueda, el paquete fuente, el ZIP, la AppImage y el RPM firmado, pone la etiqueta, publica en los dos sitios y manda el RPM fuente a Copr.
 
 ## Validación
 
-Hay 90 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
+Hay 92 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
 
-La ventana se prueba manejándola como lo haría un usuario, con eventos del ratón sobre la página: dibujar, mover y redimensionar recuadros, seleccionar texto, hacer doble clic, cambiar de herramienta, buscar, marcar, guardar y abrir los menús del botón derecho. Un aviso que en uso normal esperaría un clic hace fallar la prueba en lugar de esperar. El paso a PDF/A y PDF/X se prueba cuando pdf2iso está instalado.
+La ventana se prueba manejándola como lo haría un usuario, con eventos del ratón sobre la página: dibujar, mover y redimensionar recuadros, seleccionar texto, hacer doble clic, cambiar de herramienta, buscar, marcar, guardar y abrir los menús del botón derecho. Un aviso que en uso normal esperaría un clic hace fallar la prueba en lugar de esperar. El paso a PDF/A y PDF/X se prueba cuando pdf2iso está instalado. Otra prueba dibuja las páginas en los procesos propios, y los instaladores se revisan hasta donde Linux lo permite; el de Linux se probó además en una carpeta personal creada para la prueba. Los de Windows y macOS no se han probado en esos sistemas.
 
 El RPM vuelve a correr todas las pruebas sobre el paquete instalado, con el Python, el PyMuPDF y el PySide6 de Fedora, y la AppImage censura un documento con su propio Python antes de terminar de armarse. Las ventanas se revisaron además a ojo, con capturas de pantalla en los dos idiomas.
 
 ## Plataforma
 
-Funciona en Linux. La AppImage lleva su propio Python, Qt y PyMuPDF, y corre en cualquier Linux con glibc 2.34 o posterior; el RPM es para Fedora 45 y posteriores, y Copr lo construye para cada versión. Desde el código fuente basta Python 3.14 y uv. Para PDF/A y PDF/X hace falta pdf2iso, con Ghostscript.
+Funciona en Linux, Windows y macOS. La AppImage lleva su propio Python, Qt y PyMuPDF, y corre en cualquier Linux con glibc 2.34 o posterior; el RPM es para Fedora 45 y posteriores, y Copr lo construye para cada versión. En Windows y macOS (y en Linux, si se prefiere) se instala desde el código con los instaladores de `install/`, que solo necesitan Python 3.14 o posterior. Desde el código fuente, a mano, basta Python 3.14 y uv. Para PDF/A y PDF/X hace falta pdf2iso, con Ghostscript.
 
 Es una aplicación de escritorio y no necesita internet. Nada sale del equipo: los documentos, la configuración y los códigos de censura se quedan en él.
 
@@ -74,4 +86,4 @@ Es una aplicación de escritorio y no necesita internet. Nada sale del equipo: l
 
 Lo desarrollé en Fedora Linux 45 con KDE Plasma, con Python 3.14 y uv, y con git, con repositorios en GitHub y Codeberg. Las versiones se publican en los dos sitios y en Copr (https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/).
 
-Para usarlo basta descargar la AppImage, hacerla ejecutable y abrirla; en Fedora, `sudo dnf copr enable nivaca/py-redact` y `sudo dnf install py-redact` lo instalan con su entrada en el menú. La configuración queda en la carpeta de configuración del usuario (`~/.config/py-redact/config.toml` en Linux), con los códigos de censura propios en `codes.xml`.
+Para usarlo en Linux basta descargar la AppImage, hacerla ejecutable y abrirla; en Fedora, `sudo dnf copr enable nivaca/py-redact` y `sudo dnf install py-redact` lo instalan con su entrada en el menú. La configuración queda en la carpeta de configuración del usuario (`~/.config/py-redact/config.toml` en Linux), con los códigos de censura propios en `codes.xml`; en macOS, en `~/Library/Application Support/py-redact/`, y en Windows, en `%APPDATA%\py-redact\`. En Windows y macOS, el instalador de `install/` lo deja en el menú Inicio o en `~/Applications`.
