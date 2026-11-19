@@ -263,10 +263,24 @@ the checks, and its list of pages with the thumbnails went to modules of
 their own, as parts mixed into the window's class, so that nothing else
 had to change; the window itself is now under 900 lines.
 
+Last, saving. Writing the copy of the book with its 5,100 marks and
+checking it took five seconds, in which the window was frozen, for the same
+reason as the pages: PyMuPDF keeps Python busy. The writing and each check
+now run in a process of their own, started for each, while the window waits
+for the result in a loop of its own: it goes on drawing itself, and after
+four tenths of a second shows what is being done. Saving keeps its steps in
+order, with the question about the bookmarks between them, as before. The
+writing can be stopped: the copy is written under another name and renamed
+only when it is complete, so that a stopped copy is simply removed. The
+checks can't be stopped, since a copy saved but not checked would look as
+safe as one checked. The longest stop of the window went from five seconds
+to a tenth; the whole saving takes some seconds more, the time of starting
+the processes.
+
 Testing
 -------
 
-The program has 95 tests (`uv run pytest`). The tests of the redaction make
+The program has 96 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use
@@ -279,4 +293,4 @@ processes of their own, and the installers are checked as far as Linux
 allows; the Linux installer was also run in a home folder made for the
 test. The Windows and macOS installers have not yet been tried on those
 systems. The RPM runs all the tests again with Fedora's own packages. The
-program has 28 files, around 5,100 lines.
+program has 30 files, around 5,300 lines.

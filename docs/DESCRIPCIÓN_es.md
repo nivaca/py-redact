@@ -1,4 +1,4 @@
-# py-redact 1.0.5: descripción
+# py-redact 1.0.6: descripción
 
 ## Análisis
 
@@ -24,7 +24,7 @@ La copia censurada nunca es el original. Se escribe al lado, como `NOMBRE-redact
 
 ## Implementación
 
-Está escrito en Python 3.14 o superior, con PyMuPDF y PySide6 (Qt 6). Son 28 archivos, unas 5100 líneas.
+Está escrito en Python 3.14 o superior, con PyMuPDF y PySide6 (Qt 6). Son 30 archivos, unas 5300 líneas.
 
 La página se dibuja con PyMuPDF a la resolución de la pantalla y se muestra en una vista gráfica de Qt, donde los recuadros se dibujan, se mueven y se redimensionan con el ratón. La herramienta *Censurar* decide qué hacer según dónde empieza el arrastre: sobre un texto lo selecciona, en otra parte dibuja un recuadro. Cada texto de la interfaz se busca por su inglés en `locale/es.xml`. Cada valor de la configuración (un archivo TOML) se comprueba al leerlo, de modo que un archivo editado a mano no puede detener el programa.
 
@@ -42,9 +42,9 @@ El editor de metadatos (*Archivo ▸ Metadatos…*) escribe en la copia, despué
 
 Con un libro escaneado de 303 páginas, la ventana se colgó, y cada causa salió de medirla con él. Marcar 6710 lugares no terminaba nunca, porque cada fila de la lista se seleccionaba aparte y la redibujaba; una sola selección de todas tarda un segundo. Las miniaturas se dibujan de a una, y buscar lee cada página una sola vez, no una por término. Se guardan las últimas páginas dibujadas y solo se redibujan los recuadros y las miniaturas que cambiaron: dibujar un recuadro pasó de 190 a 20 milisegundos.
 
-Una página escaneada tarda un quinto de segundo en dibujarse, y PyMuPDF retiene a Python todo ese tiempo, así que un hilo aparte no sirve. Las páginas se dibujan en dos procesos propios, uno para la página que se muestra y sus vecinas y otro para las miniaturas, cada uno con una cola en la que la página recién pedida pasa primero. La ventana responde a un clic en unos milisegundos.
+Una página escaneada tarda un quinto de segundo en dibujarse, y PyMuPDF retiene a Python todo ese tiempo, así que un hilo aparte no sirve. Las páginas se dibujan en dos procesos propios, uno para la página que se muestra y sus vecinas y otro para las miniaturas, con colas en las que la página recién pedida pasa primero. La ventana responde a un clic en unos milisegundos.
 
-Después de la 1.0 se buscó lo que seguía siendo lento, con un libro inventado de 300 páginas y 5100 recuadros. Las revisiones de la copia y la búsqueda creaban un rectángulo de PyMuPDF por cada palabra o letra; ahora usan números, y cada página se lee una vez. Revisar la copia pasó de 140 segundos a 2, los marcadores de 85 a 1 y buscar de 15 a 1,5, y el texto leído se guarda para la búsqueda siguiente.
+Después de la 1.0 se midió todo otra vez, con un libro inventado de 300 páginas y 5100 recuadros. Las revisiones de la copia y la búsqueda creaban un rectángulo de PyMuPDF por cada palabra o letra; ahora usan números, y cada página se lee una vez. Revisar la copia pasó de 140 segundos a 2, los marcadores de 85 a 1 y buscar de 15 a 1,5. La copia se escribe y se revisa en un proceso propio, y la escritura puede cancelarse: la ventana ya no se detiene al guardar.
 
 ### Instaladores, PDF/A y distribución
 
@@ -54,7 +54,7 @@ El paso a PDF/A o PDF/X-4 lo hace pdf2iso, otro programa del autor, que usa Ghos
 
 ## Validación
 
-Hay 95 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
+Hay 96 pruebas automáticas (`uv run pytest`). Las de la censura hacen documentos con texto, imágenes, anotaciones, campos de formulario, páginas giradas y contraseñas, los censuran y leen el resultado: lo que estaba debajo de un recuadro tiene que haber desaparecido, y lo demás tiene que seguir ahí. Se comprueban también los colores del relleno, la falta de relleno, el texto encima, los recuadros que no caben en una página más pequeña y los tres tratamientos de las imágenes.
 
 La ventana se prueba manejándola como lo haría un usuario, con eventos del ratón sobre la página: dibujar, mover y redimensionar recuadros, seleccionar texto, hacer doble clic, cambiar de herramienta, buscar, marcar, guardar y abrir los menús del botón derecho. Un aviso que en uso normal esperaría un clic hace fallar la prueba en lugar de esperar. El paso a PDF/A y PDF/X se prueba cuando pdf2iso está instalado. Otra prueba dibuja las páginas en los procesos propios, y los instaladores se revisan hasta donde Linux lo permite; el de Linux se probó además en una carpeta personal creada para la prueba. Los de Windows y macOS no se han probado en esos sistemas.
 

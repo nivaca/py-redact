@@ -1485,4 +1485,36 @@
     <en>Stop</en>
     <tr>Detener</tr>
   </text>
+  <text>
+    <en>Cancel</en>
+    <tr>Cancelar</tr>
+  </text>
+  <text>
+    <en>The work stopped before it was done</en>
+    <tr>El trabajo se detuvo antes de terminar</tr>
+  </text>
+  <text>
+    <en>Writing the redacted copy…</en>
+    <tr>Escribiendo la copia censurada…</tr>
+  </text>
+  <text>
+    <en>Saving was stopped: nothing was written</en>
+    <tr>Se detuvo el guardado: no se escribió nada</tr>
+  </text>
+  <text>
+    <en>Checking the bookmarks of the copy…</en>
+    <tr>Revisando los marcadores de la copia…</tr>
+  </text>
+  <text>
+    <en>Removing the bookmarks…</en>
+    <tr>Quitando los marcadores…</tr>
+  </text>
+  <text>
+    <en>Checking that nothing under the boxes can be read…</en>
+    <tr>Revisando que nada de lo que está debajo de los recuadros pueda leerse…</tr>
+  </text>
+  <text>
+    <en>Writing the sanitized copy…</en>
+    <tr>Escribiendo la copia saneada…</tr>
+  </text>
 </interface>

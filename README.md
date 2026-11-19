@@ -558,6 +558,7 @@ The program is in `src/py_redact/`:
 | `gui/menus.py`, `gui/saving.py`, `gui/thumbnails.py`, `gui/common.py` | Its menus, its saving with the checks, its list of pages, and what they share |
 | `gui/canvas.py` | The page and its marks |
 | `rendering.py`, `gui/renderer.py` | Drawing the pages in processes of their own |
+| `worker.py`, `gui/background.py` | Saving and checking the copy in a process of its own |
 | `gui/find.py`, `gui/props.py`, `gui/prefs.py`, `gui/codes_dialog.py`, `gui/hidden_dialog.py`, `gui/meta_dialog.py` | The dialogs |
 
 The pages are drawn in two processes of their own, one for the page shown
@@ -570,6 +571,13 @@ longer wanted is not drawn. The last pages drawn are kept, and the next and
 previous ones are drawn ahead. If those processes can't be started, the
 window draws the pages itself.
 
+For the same reason, the redacted copy is written, and then checked, in a
+process of its own; the window goes on drawing itself, and after a moment
+shows what is being done. While the copy is being written, Cancel stops it,
+and nothing is left behind; the checks can't be stopped, since a copy
+saved but not checked would look as safe as a checked one. Making PDF/A or
+PDF/X is done by pdf2iso, and the window waits for it in the same way.
+
 `docs/DESCRIPTION.md` tells how it was made.
 
 Testing
@@ -577,21 +585,26 @@ Testing
 
     $ uv run pytest
 
-There are 95 tests. They cover the redaction (of text, pictures, drawings,
+There are 96 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the
 mouse, marking text, finding, saving, and making PDF/A and PDF/X when
-pdf2iso is installed, the drawing of the pages in processes of their own,
-and the installers. A test checks that every text of the window has
+pdf2iso is installed, the drawing of the pages and the saving in processes
+of their own, and the installers. A test checks that every text of the window has
 its Spanish translation. The RPM runs them all again when it is built, with
 Fedora's own Python and packages.
 
 Version
 -------
 
-This is py-redact 1.0.5. `py-redact --version` says which one is installed.
+This is py-redact 1.0.6. `py-redact --version` says which one is installed.
 
+- 1.0.6:
+  - Saving no longer stops the window: the copy is written and checked in a
+    process of its own (on 300 pages with 5,100 boxes, the longest stop went
+    from 5 seconds to a tenth), with a dialog that says what is being done;
+    while the copy is being written, Cancel stops it.
 - 1.0.5:
   - The code of the window is split: its menus, its saving with the checks,
     and its list of pages are modules of their own (gui/menus.py,

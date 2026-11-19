@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from .. import conform
 from ..interface import ntr, tr
 from ..pagesel import check
 from ..redact import RedactError, bookmark_leaks, check_redacted, remove_bookmarks, sanitize, write_redacted
+from . import background
+from .background import Cancelled
 
 
 class SavingMixin:
@@ -54,14 +55,22 @@ class SavingMixin:
         if replacing:  # (the file is about to change under the open document)
             self.doc.close()
             self.doc = None
+        # (in a process of its own, which can be stopped: see background.py; until
+        # the copy is complete, it is written as PART, next to it)
+        part = target.with_name(f".{target.name}.part")
         try:
-            done = write_redacted(self.path, self.boxes, target, self.password, self.prefs.clean,
-                                  self.prefs.images, self.prefs.drawings, self.meta)
-        except RedactError as e:
+            done = background.run(self, tr("Writing the redacted copy…"), write_redacted, self.path, self.boxes,
+                                  target, self.password, self.prefs.clean, self.prefs.images, self.prefs.drawings,
+                                  self.meta, part, cancel=True)
+        except (RedactError, Cancelled) as e:
+            part.unlink(missing_ok=True)
             if replacing:
                 self._load(self.path, self.password)
                 self.refresh()
-            self.status(str(e), error=True)
+            if isinstance(e, Cancelled):
+                self.status(tr("Saving was stopped: nothing was written"))
+            else:
+                self.status(str(e), error=True)
             return False
         # (before PDF/A or PDF/X: changing the copy afterwards could undo its conformance)
         bookmarks = "" if replacing else self.check_bookmarks(target)
@@ -71,20 +80,15 @@ class SavingMixin:
                                                   "installed (or not where Settings say)", command=conform.COMMAND))
             standard = ""
         if standard:
-            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            self.status(tr("Making {standard} with {command}…", standard=conform.label(standard),
-                           command=conform.COMMAND))
-            QApplication.processEvents()
-            try:
-                check_ = conform.convert(target, target, standard, self.password)
+            try:  # (another program: in a thread, which waits for it)
+                check_ = background.run(self, tr("Making {standard} with {command}…", standard=conform.label(standard),
+                                                 command=conform.COMMAND),
+                                        conform.convert, target, target, standard, self.password, thread=True)
             except conform.ConformError as e:
-                QApplication.restoreOverrideCursor()
                 self.warn(conform.label(standard),
-                                    tr("The redacted copy was saved as a plain PDF, but it could not be made "
-                                       "{standard}:\n\n{error}", standard=conform.label(standard), error=e))
+                          tr("The redacted copy was saved as a plain PDF, but it could not be made "
+                             "{standard}:\n\n{error}", standard=conform.label(standard), error=e))
                 standard = ""
-            else:
-                QApplication.restoreOverrideCursor()
         self.settings.setValue("last_dir", str(target.parent))
         self.add_recent(target)
         leaks = [] if replacing else self.check_copy(target)
@@ -120,7 +124,8 @@ class SavingMixin:
         """Look for bookmarks of TARGET that give away what was redacted, and
         take them out if the user wants. Returns what was done, for the status bar."""
         try:
-            leaks = bookmark_leaks(self.path, target, self.boxes, self.password)
+            leaks = background.run(self, tr("Checking the bookmarks of the copy…"), bookmark_leaks, self.path, target,
+                                   self.boxes, self.password)
         except RedactError as e:
             self.status(str(e), error=True)
             return ""
@@ -131,7 +136,8 @@ class SavingMixin:
             return ntr("{count} bookmark that gives away what was redacted was kept",
                        "{count} bookmarks that give away what was redacted were kept", len(leaks))
         try:
-            remove_bookmarks(target, None if choice == "all" else {i for i, _, _ in leaks}, self.password)
+            background.run(self, tr("Removing the bookmarks…"), remove_bookmarks, target,
+                           None if choice == "all" else {i for i, _, _ in leaks}, self.password)
         except RedactError as e:
             self.status(str(e), error=True)
             return ""
@@ -158,7 +164,8 @@ class SavingMixin:
     def check_copy(self, target: Path) -> list[tuple[int, str]]:
         """What can still be read under the boxes in TARGET (see redact.check_redacted)."""
         try:
-            return check_redacted(self.path, target, self.boxes, self.password)
+            return background.run(self, tr("Checking that nothing under the boxes can be read…"), check_redacted,
+                                  self.path, target, self.boxes, self.password)
         except RedactError as e:
             self.status(str(e), error=True)
             return []
@@ -176,7 +183,7 @@ class SavingMixin:
             self.status(tr("Choose another name: the document stays open"), error=True)
             return False
         try:
-            sanitize(self.path, target, self.password, kinds)
+            background.run(self, tr("Writing the sanitized copy…"), sanitize, self.path, target, self.password, kinds)
         except RedactError as e:
             self.status(str(e), error=True)
             return False

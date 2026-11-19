@@ -553,3 +553,50 @@ def test_pages_rendered_in_another_process(app, sample, tmp_path, monkeypatch):
         w.saved = list(w.boxes)
         w.close()
         R.renderer().shutdown()
+
+
+def test_saving_in_another_process(app, sample, tmp_path, monkeypatch):
+    """The copy is written and checked in a process of its own, while the window
+    goes on answering; an error there comes back as it is; Cancel stops it."""
+    import time
+
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QProgressDialog
+
+    from py_redact.gui import background as B
+    from py_redact.redact import Box, RedactError, open_pdf
+
+    monkeypatch.setattr(B, "ENABLED", True)
+    w = MainWindow()
+    w.warn = lambda *a: (_ for _ in ()).throw(AssertionError(a))
+    assert w.open_path(sample)
+    w.change([Box(0, (60, 105, 300, 126))])
+    out = tmp_path / "out.pdf"
+    assert w.save_to(out)
+    assert "Person1" not in pymupdf.open(out)[0].get_text()
+    assert "nothing under the boxes" in w.statusBar().currentMessage()
+    assert not (tmp_path / ".out.pdf.part").exists()
+
+    with pytest.raises(RedactError):
+        B.run(w, "…", open_pdf, tmp_path / "missing.pdf")
+
+    ticks = []
+    timer = QTimer()
+    timer.timeout.connect(lambda: ticks.append(1))
+    timer.start(50)
+
+    def press_cancel():
+        dialogs = [d for d in w.findChildren(QProgressDialog) if d.isVisible()]
+        assert dialogs, "no dialog shown"
+        from PySide6.QtWidgets import QPushButton
+
+        dialogs[0].findChild(QPushButton).click()  # (as the user would)
+
+    QTimer.singleShot(B.SHOW_AFTER + 300, press_cancel)
+    start = time.monotonic()
+    with pytest.raises(B.Cancelled):
+        B.run(w, "…", time.sleep, 20, cancel=True)
+    assert time.monotonic() - start < 5 and len(ticks) >= 5  # (stopped; and the window went on meanwhile)
+    timer.stop()
+    w.boxes = w.saved = []
+    w.close()

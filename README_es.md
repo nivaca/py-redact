@@ -577,6 +577,7 @@ El programa está en `src/py_redact/`:
 | `gui/menus.py`, `gui/saving.py`, `gui/thumbnails.py`, `gui/common.py` | Sus menús, el guardado con sus revisiones, la lista de páginas y lo que comparten |
 | `gui/canvas.py` | La página y sus recuadros |
 | `rendering.py`, `gui/renderer.py` | El dibujo de las páginas en procesos propios |
+| `worker.py`, `gui/background.py` | El guardado y la revisión de la copia en un proceso propio |
 | `gui/find.py`, `gui/props.py`, `gui/prefs.py`, `gui/codes_dialog.py`, `gui/hidden_dialog.py`, `gui/meta_dialog.py` | Los diálogos |
 
 Las páginas se dibujan en dos procesos propios, uno para la página que se
@@ -589,6 +590,14 @@ página que ya no se quiere no se dibuja. Las últimas páginas dibujadas se
 guardan, y la siguiente y la anterior se dibujan por adelantado. Si esos
 procesos no pueden arrancar, la ventana dibuja las páginas ella misma.
 
+Por la misma razón, la copia censurada se escribe, y luego se revisa, en un
+proceso propio; la ventana sigue dibujándose y, pasado un momento, muestra
+lo que se está haciendo. Mientras se escribe la copia, *Cancelar* la
+detiene sin dejar nada a medias; las revisiones no se pueden detener,
+porque una copia guardada sin revisar parecería tan segura como una
+revisada. El PDF/A o PDF/X lo hace pdf2iso, y la ventana lo espera de la
+misma manera.
+
 `docs/DESCRIPCIÓN_es.md` describe el programa con más detalle.
 
 Pruebas
@@ -596,22 +605,27 @@ Pruebas
 
     $ uv run pytest
 
-Hay 95 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 96 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando
 recuadros con el ratón, marcando texto, buscando, guardando y haciendo PDF/A
-y PDF/X cuando pdf2iso está instalado; también el dibujo de las páginas
-en procesos propios y los instaladores. Una prueba comprueba que cada
+y PDF/X cuando pdf2iso está instalado; también el dibujo de las páginas y
+el guardado en procesos propios, y los instaladores. Una prueba comprueba que cada
 texto de la ventana tenga su traducción al español. El RPM las vuelve a
 correr todas al construirse, con el Python y los paquetes de Fedora.
 
 Versión
 -------
 
-Esta es la versión 1.0.5 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 1.0.6 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 1.0.6:
+  - Guardar ya no detiene la ventana: la copia se escribe y se revisa en un
+    proceso propio (en 300 páginas con 5100 recuadros, la parada más larga
+    pasó de 5 segundos a una décima), con un diálogo que dice lo que se está
+    haciendo; mientras se escribe la copia, Cancelar la detiene.
 - 1.0.5:
   - El código de la ventana está dividido: sus menús, el guardado con sus
     revisiones y la lista de páginas tienen módulos propios (gui/menus.py,
