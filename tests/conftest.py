@@ -18,6 +18,14 @@ def own_config(tmp_path, monkeypatch):
     interface.use(None)
 
 
+@pytest.fixture(autouse=True)
+def pages_here(monkeypatch):
+    """Pages rendered in the tests' own process, at once (a test may turn this off)."""
+    from py_redact.gui import renderer
+
+    monkeypatch.setattr(renderer, "ENABLED", False)
+
+
 @pytest.fixture
 def sample(tmp_path):
     """A PDF of 5 pages: a header on each, a name on each, and a body of text."""

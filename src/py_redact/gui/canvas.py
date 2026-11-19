@@ -156,6 +156,11 @@ class PageCanvas(QGraphicsView):
         self._ahead: list[pymupdf.Page] = []  # pages to render while the window is idle
         self.ahead_timer = QTimer(self, singleShot=True, interval=60)
         self.ahead_timer.timeout.connect(self._render_ahead)
+        # (path, password, stamp) of the document on disk, if the pages can be rendered in
+        # another process (see renderer.py); and a picture to show until the page arrives
+        self.source = None
+        self.placeholder: QImage | None = None
+        self._wanted: tuple | None = None  # the key of the rendering awaited for the page shown
 
     # ----------------------------------------------------------------- page and boxes
 
@@ -167,6 +172,7 @@ class PageCanvas(QGraphicsView):
         self.items_, self.pixmap_item, self.sheet, self._drag = [], None, None, None
         if page is not self.page:
             self._words = None
+            self._wanted = None
         self.page = page
         self.editable = editable
         if page is None:
@@ -217,11 +223,38 @@ class PageCanvas(QGraphicsView):
         self._cache.clear()
         self._ahead = []
 
+    def _remote(self):
+        """The renderer of other processes, if pages are rendered there."""
+        from .renderer import renderer
+
+        r = renderer()
+        return r if self.source is not None and r.available() else None
+
     def render_ahead(self, pages: list[pymupdf.Page]):
         """Render PAGES (the next and previous ones) when the window is idle, so that
         turning to them is at once."""
+        remote = self._remote()
+        if remote is None:
+            self._ahead = list(pages)
+            self.ahead_timer.start()
+            return
         self._ahead = list(pages)
-        self.ahead_timer.start()
+        shown = self.page.number if self.page is not None else -1
+        remote.drop("view", keep=lambda path, number: number == shown)
+        self._request_ahead(remote)
+
+    def _request_ahead(self, remote):
+        """Ask the other process for the pages to render ahead (at the zoom of now)."""
+        for page in self._ahead:
+            try:
+                scale = self._scale_for(page)
+            except (RuntimeError, ValueError):  # (the document was closed meanwhile)
+                self._ahead = []
+                return
+            key = (id(page.parent), page.number, scale)
+            if key not in self._cache:
+                remote.request("view", self.source, page.number, scale,
+                               lambda image, key=key: self._arrived(key, image))
 
     def _render_ahead(self):
         if not self._ahead:
@@ -235,6 +268,26 @@ class PageCanvas(QGraphicsView):
         if self._ahead:
             self.ahead_timer.start()
 
+    def _keep(self, key: tuple, image: QImage) -> QPixmap:
+        pixmap = QPixmap.fromImage(image)
+        self._cache[key] = pixmap
+        while len(self._cache) > CACHED_PAGES:
+            self._cache.popitem(last=False)
+        return pixmap
+
+    def _arrived(self, key: tuple, image: QImage | None):
+        """A rendering from another process (None: it couldn't be made there)."""
+        if image is not None:
+            pixmap = self._keep(key, image)
+        elif key == self._wanted and self.page is not None:
+            pixmap = self._pixmap(self.page, key[2])  # (rendered here, then)
+        else:
+            return
+        if key == self._wanted and self.pixmap_item is not None:
+            self._wanted = None
+            self.pixmap_item.setPixmap(pixmap)
+            self.pixmap_item.setScale(1 / key[2])
+
     def _render(self):
         if self.page is None or self.pixmap_item is None:
             return
@@ -242,11 +295,31 @@ class PageCanvas(QGraphicsView):
         if abs(scale - self._rendered) < 1e-3:
             return
         self._rendered = scale
-        # (the result shown is a page of a document of its own, made each time: not kept)
-        pixmap = self._pixmap(self.page, scale) if self.editable \
-            else QPixmap.fromImage(page_image(self.page, scale))
-        self.pixmap_item.setPixmap(pixmap)
-        self.pixmap_item.setScale(1 / scale)
+        if not self.editable:  # (the result shown is a page of a document of its own, made each time: not kept)
+            self.pixmap_item.setPixmap(QPixmap.fromImage(page_image(self.page, scale)))
+            self.pixmap_item.setScale(1 / scale)
+            return
+        key = (id(self.page.parent), self.page.number, scale)
+        remote = self._remote()
+        if key in self._cache or remote is None:
+            self._wanted = None
+            self.pixmap_item.setPixmap(self._pixmap(self.page, scale))
+            self.pixmap_item.setScale(1 / scale)
+            return
+        # (meanwhile, the page as it was, at another zoom, or its thumbnail made larger)
+        if self.pixmap_item.pixmap().isNull():
+            old = next((k for k in reversed(self._cache) if k[:2] == key[:2]), None)
+            if old is not None:
+                self.pixmap_item.setPixmap(self._cache[old])
+                self.pixmap_item.setScale(1 / old[2])
+            elif self.placeholder is not None and not self.placeholder.isNull():
+                self.pixmap_item.setPixmap(QPixmap.fromImage(self.placeholder))
+                self.pixmap_item.setScale(self.page_size.width() / self.placeholder.width())
+        self._wanted = key
+        remote.drop("view")  # (the pages next to one left behind, or at an older zoom)
+        remote.request("view", self.source, self.page.number, scale, lambda image: self._arrived(key, image),
+                       first=True)
+        self._request_ahead(remote)
 
     # ----------------------------------------------------------------- zoom
 

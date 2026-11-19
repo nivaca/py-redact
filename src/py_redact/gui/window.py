@@ -28,6 +28,7 @@ from .codes_dialog import CodesDialog
 from .hidden_dialog import HiddenDialog
 from .meta_dialog import MetadataDialog
 from .props import PropertiesDialog
+from .renderer import renderer
 
 RECENT = 10  # documents in File ▸ Open recent
 AUTHOR = '<a href="https://nicolasvaughan.org">Nicolas Vaughan</a>'
@@ -508,6 +509,11 @@ class MainWindow(QMainWindow):
         self._by_page: list[list[Box]] = [[] for _ in range(self.count)]  # the boxes on each page
         self._thumb_shown: dict[int, tuple] = {}  # page -> the boxes its thumbnail shows
         self.canvas.clear_cache()
+        try:  # (so that pages are rendered in another process: see renderer.py)
+            st = path.stat()
+            self.canvas.source = (str(path.resolve()), password, (st.st_mtime_ns, st.st_size))
+        except OSError:
+            self.canvas.source = None
         self._fill_pages()
         return True
 
@@ -1220,6 +1226,7 @@ class MainWindow(QMainWindow):
             here = [(i, b, b.page == page) for i, b in enumerate(self.boxes) if b.on(page, self.count)]
             self.canvas.mark_outline = QColor(self.prefs.mark_outline)
             self.canvas.mark_opacity = self.prefs.mark_opacity
+            self.canvas.placeholder = self._thumbs.get(page)
             self.canvas.show_page(self.doc[page], here, self.selected, keep_view=keep_view)
             self.canvas.render_ahead([self.doc[n] for n in (page + 1, page - 1) if 0 <= n < self.count])
         self.page_spin.blockSignals(True)
@@ -1262,8 +1269,23 @@ class MainWindow(QMainWindow):
             return
         page = self.doc[n]
         scale = min(THUMB.width() / page.rect.width, THUMB.height() / page.rect.height)
+        remote = renderer()
+        if self.canvas.source is not None and remote.available():
+            # (in another process: the timer waits until it is drawn, then goes on with the next)
+            self.thumb_timer.stop()
+            source = self.canvas.source
+            remote.request("thumbs", source, n, round(scale, 4),
+                           lambda image: self._thumb_arrived(source, n, scale, image))
+            return
         self._thumbs[n] = page_image(page, scale)
         self._thumb(n)
+
+    def _thumb_arrived(self, source, n: int, scale: float, image: QImage | None):
+        if self.doc is None or source != self.canvas.source:
+            return  # (of a document no longer open)
+        self._thumbs[n] = image if image is not None else page_image(self.doc[n], scale)
+        self._thumb(n)
+        self.thumb_timer.start()
 
     def _thumb(self, n: int):
         """The thumbnail of page N, with its boxes (drawn again only if they changed)."""

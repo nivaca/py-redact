@@ -506,3 +506,46 @@ def test_saving_only_new_metadata(window, tmp_path, monkeypatch):
     assert M.read(pymupdf.open(out)).info == (("Title", "Public version"),) and not window.is_modified()
     window.set_metadata(M.read(window.doc))  # (the document's own again: nothing to give)
     assert window.meta is None
+
+
+def test_pages_rendered_in_another_process(app, sample, tmp_path, monkeypatch):
+    """The page shown, those next to it and the thumbnails come from the renderer's processes,
+    while the window goes on answering."""
+    import time
+
+    from py_redact.gui import renderer as R
+
+    monkeypatch.setattr(R, "ENABLED", True)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    w = MainWindow()
+    w.resize(1200, 800)
+    w.show()
+    app.processEvents()
+    try:
+        assert w.open_path(sample)
+
+        def wait(condition, seconds=30):
+            end = time.monotonic() + seconds
+            while not condition():
+                assert time.monotonic() < end, "the renderer didn't answer"
+                app.processEvents()
+                time.sleep(0.01)
+
+        canvas = w.canvas
+        wait(lambda: canvas._wanted is None and not canvas.pixmap_item.pixmap().isNull())
+        scale = canvas._scale_for(canvas.page)
+        assert canvas.pixmap_item.pixmap().width() == pytest.approx(595 * scale, abs=2)
+        wait(lambda: len(w._thumbs) == 5)
+        assert all(not image.isNull() for image in w._thumbs.values())
+
+        wait(lambda: (id(w.doc), 1, scale) in canvas._cache)  # (rendered ahead)
+        w.pages.setCurrentRow(1)
+        assert w.page == 1 and canvas._wanted is None  # (at once, from the cache)
+
+        w.pages.setCurrentRow(4)  # (not rendered yet: the thumbnail meanwhile, then the page)
+        wait(lambda: canvas._wanted is None)
+        assert canvas.pixmap_item.pixmap().width() == pytest.approx(595 * scale, abs=2)
+    finally:
+        w.saved = list(w.boxes)
+        w.close()
+        R.renderer().shutdown()
