@@ -5,6 +5,12 @@ ruedas, AppImages y RPM, están en
 [Codeberg](https://codeberg.org/nivaca/py-redact/releases) y
 [GitHub](https://github.com/nivaca/py-redact/releases).
 
+## 1.0.10 — 2026-11-21
+
+- `docs/SOFTWARE.md` y `docs/SOFTWARE_es.md`: el software libre que usa
+  py-redact, para funcionar, para guardar en PDF/A y PDF/X, para construir
+  los paquetes y para desarrollarlo, con sus licencias.
+
 ## 1.0.9 — 2026-11-19
 
 - En macOS, la aplicación se llama py-redact en la barra de menús (su

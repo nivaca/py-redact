@@ -5,6 +5,12 @@ AppImages and RPMs, are on
 [Codeberg](https://codeberg.org/nivaca/py-redact/releases) and
 [GitHub](https://github.com/nivaca/py-redact/releases).
 
+## 1.0.10 — 2026-11-21
+
+- `docs/SOFTWARE.md` and `docs/SOFTWARE_es.md`: the free and open-source
+  software py-redact uses, to run, to save PDF/A and PDF/X, to build the
+  packages and to develop it, with their licences.
+
 ## 1.0.9 — 2026-11-19
 
 - On macOS the application is called py-redact in the menu bar (its name

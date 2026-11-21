@@ -1,4 +1,4 @@
-# py-redact 1.0.9: descripción
+# py-redact 1.0.10: descripción
 
 ## Análisis
 
@@ -70,4 +70,4 @@ Es una aplicación de escritorio y no necesita internet. Nada sale del equipo: l
 
 Fue desarrollado en Fedora Linux 45 con KDE Plasma, con Python 3.14 y uv. El código se maneja con git, en repositorios publicados en GitHub (https://github.com/nivaca/py-redact) y en Codeberg (https://codeberg.org/nivaca/py-redact). Un solo script publica cada versión: corre las pruebas, hace la rueda, el paquete fuente, el ZIP, la AppImage y el RPM firmado, pone la etiqueta, publica en los dos sitios y manda el RPM fuente a Copr (https://copr.fedorainfracloud.org/coprs/nivaca/py-redact/).
 
-Para usarlo en Linux basta descargar la AppImage, hacerla ejecutable y abrirla; en Fedora, `sudo dnf copr enable nivaca/py-redact` y `sudo dnf install py-redact` lo instalan con su entrada en el menú. La configuración queda en la carpeta de configuración del usuario (`~/.config/py-redact/config.toml` en Linux), con los códigos de censura propios en `codes.xml`; en macOS, en `~/Library/Application Support/py-redact/`, y en Windows, en `%APPDATA%\py-redact\`. En Windows y macOS, el instalador de `install/` lo deja en el menú Inicio o en `~/Applications`.
+Para usarlo en Linux basta descargar la AppImage, hacerla ejecutable y abrirla; en Fedora, `sudo dnf copr enable nivaca/py-redact` y `sudo dnf install py-redact` lo instalan con su entrada en el menú. La configuración queda en la carpeta de configuración del usuario (`~/.config/py-redact/config.toml` en Linux), con los códigos de censura propios en `codes.xml`; en macOS, en `~/Library/Application Support/py-redact/`, y en Windows, en `%APPDATA%\py-redact\`. En Windows y macOS, el instalador de `install/` lo deja en el menú Inicio o en `~/Applications`. La lista del software libre que usa, con sus licencias, está en `docs/SOFTWARE.md` y `docs/SOFTWARE_es.md`.

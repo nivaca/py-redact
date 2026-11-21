@@ -1,6 +1,6 @@
 [project]
 name = "py-redact"
-version = "1.0.9"
+version = "1.0.10"
 description = "Redact PDF documents: remove what lies under boxes drawn on their pages"
 readme = "README.md"
 license = "GPL-3.0-or-later"

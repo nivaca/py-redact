@@ -253,7 +253,9 @@ What is where
                             (source/: the plainer drawing for the small sizes)
     tests/                  the tests (see "Testing")
     docs/                   DESCRIPTION.md and DESCRIPCIÓN_es.md: how it was
-                            made; img/: the screenshots of this README
+                            made; SOFTWARE.md and SOFTWARE_es.md: the software
+                            it uses, with the licences; img/: the screenshots
+                            of this README
     packaging/              the Fedora package: its spec, build-rpm.sh, the
                             menu entry, the public key, RELEASING.md
     tools/                  scripts to make the AppImage, the screenshots and
@@ -603,8 +605,11 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 1.0.9. `py-redact --version` says which one is installed.
+This is py-redact 1.0.10. `py-redact --version` says which one is installed.
 
+- 1.0.10:
+  - The list of the free and open-source software py-redact uses, with
+    their licences, in `docs/SOFTWARE.md` (and in Spanish).
 - 1.0.9:
   - On macOS, the menu bar calls the program py-redact, not Python. The
     AppImage is lighter (from 88 to 73 MB), without the parts of Qt and
@@ -792,4 +797,5 @@ any later version. It is distributed WITHOUT ANY WARRANTY; see the
 
 PyMuPDF is under the GNU Affero General Public License, version 3, and
 PySide6 under the GNU Lesser General Public License, version 3; the AppImage
-carries both.
+carries both. [docs/SOFTWARE.md](docs/SOFTWARE.md) lists all the free and
+open-source software py-redact uses, with their licences.

@@ -291,6 +291,11 @@ time it is built, looks at every library of Qt that stays and fails if one
 needs a library left out; it found two plugins of Qt that could never be
 loaded, since they needed libraries that were never there.
 
+Version 1.0.10 added a list of the free and open-source software the
+program uses, with their licences (`docs/SOFTWARE.md`, and in Spanish
+`docs/SOFTWARE_es.md`): what it needs to run, what saving PDF/A and PDF/X
+needs, what builds the packages, and what is used to develop and test it.
+
 Testing
 -------
 
