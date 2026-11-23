@@ -1,7 +1,7 @@
 Open-source software used by py-redact
 ======================================
 
-py-redact 1.0.10 is free software, under the GNU General Public License,
+py-redact is free software, under the GNU General Public License,
 version 3 or later (GPL-3.0-or-later). It is made with, and runs on, other
 free and open-source programs and libraries. This is the list of them, with
 their licences, grouped by where each one is used. The versions are those

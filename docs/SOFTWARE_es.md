@@ -1,7 +1,7 @@
 Software libre que usa py-redact
 ================================
 
-py-redact 1.0.10 es software libre, bajo la Licencia Pública General de GNU,
+py-redact es software libre, bajo la Licencia Pública General de GNU,
 versión 3 o posterior (GPL-3.0-or-later). Está hecho con otros programas y
 bibliotecas libres y de código abierto, y funciona sobre ellos. Esta es la
 lista, con sus licencias, agrupada según dónde se usa cada uno. Las
