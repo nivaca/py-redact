@@ -88,9 +88,23 @@ estos archivos:
     py-redact-VERSIÓN.zip                 el código fuente, en un zip, con los instaladores
     py-redact-VERSIÓN-x86_64.AppImage     la AppImage (Linux)
     py-redact-VERSIÓN-1.fc45.noarch.rpm   el paquete de Fedora, firmado
-    RPM-GPG-KEY-py-redact                 la clave que lo firma
     py_redact-VERSIÓN.tar.gz              el paquete fuente, para Python
     py_redact-VERSIÓN-py3-none-any.whl    la rueda (wheel), para Python
+    ARCHIVO.asc                           la firma de cada archivo
+    SHA256SUMS, SHA256SUMS.asc            las sumas de comprobación, y su firma
+    RPM-GPG-KEY-py-redact                 la clave que los firma todos
+
+Cada archivo, y la etiqueta de la versión, se firman con la misma clave.
+Para comprobar una descarga, se importa la clave una vez y luego se
+comprueban la firma del archivo y su suma:
+
+    $ gpg --import RPM-GPG-KEY-py-redact
+    $ gpg --verify py-redact-VERSIÓN.zip.asc py-redact-VERSIÓN.zip
+    $ gpg --verify SHA256SUMS.asc SHA256SUMS && sha256sum -c --ignore-missing SHA256SUMS
+
+El RPM lleva además su firma dentro: después de `sudo rpm --import
+RPM-GPG-KEY-py-redact` (véase "Fedora (Copr)"), `rpm -K` la comprueba. La
+etiqueta puede comprobarse en un clon con `git tag -v vVERSIÓN`.
 
 El código fuente también puede clonarse:
 

@@ -13,11 +13,15 @@
 2. Commit, then publish:
 
    ```bash
-   uv run python tools/release.py --rpm --notes-file NOTES.md
+   uv run python tools/release.py --notes-file NOTES.md
    ```
 
    This runs the tests; makes the wheel, the source package, the ZIP of the
-   source, the AppImage and the signed RPM; tags `vVERSION`; pushes to
+   source, the AppImage and the signed RPM (always now;
+   `--no-rpm` leaves it out); signs every file (`FILE.asc`), with
+   `SHA256SUMS` and its signature, and checks each signature with only the
+   public key that is published (`tools/sign_release.py`); tags `vVERSION`,
+   a signed tag, and checks it (`git tag -v`); pushes to
    GitHub (`origin`) and Codeberg (`codeberg`); and attaches the files to the
    release on both; then it sends the signed source RPM to Copr
    (project nivaca/py-redact). `--dry-run` only shows the commands.
@@ -38,7 +42,18 @@ The RPMs are signed with the same key as the author's other projects,
 `81870643CA221AF90C30554EBE6832CD35994948` (Nicolas Vaughan, RPM signing).
 `packaging/build-rpm.sh` pins it, and `--sign` stops if it is not in this
 machine's gpg keyring. A copy of the public key is
-`packaging/RPM-GPG-KEY-py-redact`.
+`packaging/RPM-GPG-KEY-py-redact`, published with every release.
+
+The same key signs everything a release publishes: the RPM (inside it), each
+file (a detached signature, `FILE.asc`), `SHA256SUMS`, and the tag. A
+release stops before publishing anything if one signature doesn't verify
+with the published key. gpg must have the key's passphrase cached when the
+release runs in the background (sign anything once first, e.g. `echo test |
+gpg --clearsign -u 81870643CA221AF90C30554EBE6832CD35994948 > /dev/null`).
+
+For GitHub to show the tags as "Verified", the public key must be added to
+the GitHub account (Settings > SSH and GPG keys), and its e-mail address be
+one of the account's verified addresses.
 
 ## Copr
 

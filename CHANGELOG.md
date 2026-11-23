@@ -5,6 +5,15 @@ AppImages and RPMs, are on
 [Codeberg](https://codeberg.org/nivaca/py-redact/releases) and
 [GitHub](https://github.com/nivaca/py-redact/releases).
 
+## Unreleased
+
+- **Every release signed**: besides the RPM, each file published (the
+  wheel, the source, the ZIP, the AppImage) comes with its signature
+  (`.asc`), with `SHA256SUMS` and its signature, and with the public key;
+  the tag of the version is signed too. Each signature is checked with the
+  published key before anything is published. The README says how to check
+  a download.
+
 ## 1.0.10 — 2026-11-21
 
 - `docs/SOFTWARE.md` and `docs/SOFTWARE_es.md`: the free and open-source

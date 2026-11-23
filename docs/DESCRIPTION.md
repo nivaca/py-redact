@@ -7,7 +7,7 @@ is filled with a colour, or left empty, with a text over it if wanted.
 Nicolas Vaughan made it in November 2026, in a few days, as a companion
 to two other PDF programs of his, py-foliation (the page labels of a PDF)
 and py-imposition (imposition for printing), from which it took its shape.
-Here I explain how it was made, in eleven stages.
+Here I explain how it was made, in twelve stages.
 
 It is free software, under the GNU General Public License, version 3 or
 later. The redaction is done by PyMuPDF (GNU AGPL 3) and the window by
@@ -296,10 +296,28 @@ program uses, with their licences (`docs/SOFTWARE.md`, and in Spanish
 `docs/SOFTWARE_es.md`): what it needs to run, what saving PDF/A and PDF/X
 needs, what builds the packages, and what is used to develop and test it.
 
+12. Every release signed
+------------------------
+
+Only the RPM was signed, and only when the release was asked for it; the
+wheel, the source, the ZIP and the AppImage went out with nothing to show
+where they came from, and so did the tag. For a program whose whole purpose
+is that a document can be trusted after it, this was a gap. Now the RPM is
+always made, and a release signs everything with the same key: a detached
+signature for each file, a list of their SHA-256 sums with its own
+signature, and the tag, signed by git. A signature nobody checks proves
+little, so the release checks each one before publishing, the way a user
+would, in a keyring of its own that holds only the public key published
+with the files; the build of the RPM already did the same for the RPM. A
+file changed after signing, or a published key that is not the one that
+signed, stops the release. The script and its tests came from py-pdftools,
+where I did this first. The tests sign with a key made for them, in a
+folder of their own, never with mine.
+
 Testing
 -------
 
-The program has 98 tests (`uv run pytest`). The tests of the redaction make
+The program has 101 tests (`uv run pytest`). The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use
@@ -324,5 +342,6 @@ redacted copy, checks it, and leaves pictures of the screen, which showed
 the window as it should be on the three systems. They showed one more
 fault: on macOS, the menu bar called the program "Python", the program that
 really runs it; the name is now given to macOS before the window opens. The
-RPM runs all the tests again with Fedora's own packages. The
-program has 30 files, around 5,300 lines.
+signing of a release is tested with a key made in the test. The RPM runs
+all the tests again with Fedora's own packages. The program has 32 files,
+around 5,500 lines.
