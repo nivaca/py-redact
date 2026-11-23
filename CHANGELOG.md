@@ -5,7 +5,7 @@ AppImages and RPMs, are on
 [Codeberg](https://codeberg.org/nivaca/py-redact/releases) and
 [GitHub](https://github.com/nivaca/py-redact/releases).
 
-## Unreleased
+## 1.0.11 — 2026-11-22
 
 - **Every release signed**: besides the RPM, each file published (the
   wheel, the source, the ZIP, the AppImage) comes with its signature

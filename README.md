@@ -619,8 +619,12 @@ Fedora's own Python and packages.
 Version
 -------
 
-This is py-redact 1.0.10. `py-redact --version` says which one is installed.
+This is py-redact 1.0.11. `py-redact --version` says which one is installed.
 
+- 1.0.11:
+  - Every release signed: each file published comes with its signature
+    (`.asc`), with `SHA256SUMS` and its signature, and with the public key;
+    the tag is signed too.
 - 1.0.10:
   - The list of the free and open-source software py-redact uses, with
     their licences, in `docs/SOFTWARE.md` (and in Spanish).

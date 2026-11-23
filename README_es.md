@@ -640,9 +640,13 @@ correr todas al construirse, con el Python y los paquetes de Fedora.
 Versión
 -------
 
-Esta es la versión 1.0.10 de py-redact. `py-redact --version` dice cuál está
+Esta es la versión 1.0.11 de py-redact. `py-redact --version` dice cuál está
 instalada.
 
+- 1.0.11:
+  - Cada versión firmada: cada archivo publicado va con su firma (`.asc`),
+    con `SHA256SUMS` y su firma, y con la clave pública; la etiqueta
+    también se firma.
 - 1.0.10:
   - La lista del software libre que usa py-redact, con sus licencias, en
     `docs/SOFTWARE_es.md` (y en inglés).
