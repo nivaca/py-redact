@@ -50,7 +50,7 @@ none); a release that is there keeps its notes.
 
 The deposit for Zenodo is collected in dist/zenodo/ after the tag (tools/zenodo.py collect: the tree of the
 tag, signed, with SHA256SUMS and the public key), and at the end uploaded to Zenodo as a draft (the token
-in $ZENODO_TOKEN), unless --no-zenodo. The draft is never published here: review it and publish it on
+in $ZENODO_TOKEN or the keyring), unless --no-zenodo. The draft is never published here: review it and publish it on
 Zenodo by hand.
 """
 
@@ -81,6 +81,16 @@ PUBLIC_KEY = "packaging/RPM-GPG-KEY-py-redact"  # (the public key published with
 SUMS = "dist/SHA256SUMS"
 COPR_PROJECT = "py-redact"  # (of the copr-cli user, nivaca)
 REMOTES = {"github": "origin", "codeberg": "codeberg"}
+
+
+def zenodo_token() -> bool:
+    """Whether tools/zenodo.py finds a Zenodo token, in $ZENODO_TOKEN or
+    in the desktop keyring (secret-tool)."""
+    tool = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "tools", "zenodo.py")
+    done = subprocess.run([sys.executable, tool, "check-token"],
+                          capture_output=True, check=False)
+    return done.returncode == 0
 
 
 def signing_key() -> str:
@@ -321,8 +331,8 @@ class Release:
         if self.args.no_zenodo:
             return
         # (sin token se para aquí, antes de hacer nada, y no al final de la versión)
-        if not os.environ.get("ZENODO_TOKEN") and not self.args.dry_run:
-            sys.exit("release.py: the upload to Zenodo needs a token in $ZENODO_TOKEN (see tools/zenodo.py); "
+        if not zenodo_token() and not self.args.dry_run:
+            sys.exit("release.py: the upload to Zenodo needs a token (see tools/zenodo.py check-token); "
                      "--no-zenodo leaves it out")
         self.plan("Zenodo: upload the deposit as a draft (not published)", sys.executable, "tools/zenodo.py",
                   "upload")
@@ -375,7 +385,7 @@ def main(argv=None):
     parser.add_argument("--tea-login", default="codeberg", help="the login of tea for Codeberg (default: codeberg)")
     parser.add_argument("--no-zenodo", action="store_true",
                         help="don't upload dist/zenodo/ to Zenodo (by default it goes as a draft, "
-                             "never published, with the token in $ZENODO_TOKEN)")
+                             "never published, with the token in $ZENODO_TOKEN or the keyring)")
     parser.add_argument("--zenodo", action="store_true",
                         help="(the upload to Zenodo is made always now, unless --no-zenodo: kept "
                              "for older scripts)")
