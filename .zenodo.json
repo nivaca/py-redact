@@ -1,0 +1,21 @@
+{
+  "title": "py-redact",
+  "upload_type": "software",
+  "description": "<p>Redact PDF documents: remove what lies under boxes drawn on their pages.</p>",
+  "creators": [
+    {
+      "name": "Vaughan, Nicolas",
+      "affiliation": "Universidad de los Andes",
+      "orcid": "0000-0002-2877-0539"
+    }
+  ],
+  "license": "gpl-3.0-or-later",
+  "access_right": "open",
+  "keywords": [
+    "pdf",
+    "redaction",
+    "redact",
+    "anonymize",
+    "censor"
+  ]
+}
