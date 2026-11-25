@@ -14,7 +14,8 @@ ruedas, AppImages y RPM, están en
   clave (`--packages` añade los archivos de la versión). `upload` lo sube a
   Zenodo como borrador, versión nueva del depósito si ya lo hay, y nunca lo
   publica. `tools/release.py` reúne ahora el depósito después de la etiqueta
-  y, con `--zenodo`, lo sube. Los metadatos están en `.zenodo.json`.
+  y lo sube como borrador, salvo con `--no-zenodo`. Los metadatos están en
+  `.zenodo.json`.
 
 ## 1.0.11 — 2026-11-22
 
