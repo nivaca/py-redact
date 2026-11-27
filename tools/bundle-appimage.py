@@ -1,25 +1,22 @@
 #!/usr/bin/env python3
-"""Make an AppImage of py-redact, for Linux:
+"""Hace una AppImage de py-redact, para Linux:
 
     uv run python tools/bundle-appimage.py [-o FOLDER] [--python APPIMAGE]
                                           [--python-version 3.14] [--appimagetool APPIMAGE]
 
-The AppImage is build/release/py-redact-VERSION-x86_64.AppImage (the
-version of pyproject.toml; --output gives another folder). It holds a Python of its own
-(a relocatable Python of the python-appimage project,
-https://github.com/niess/python-appimage) with py-redact and everything it
-needs installed into it (PyMuPDF, PySide6), so it runs on any recent Linux
-(glibc 2.34 or later: Ubuntu 22.04, Debian 12, Fedora 35 and later) without
-installing anything.
+La AppImage es build/release/py-redact-VERSIÓN-x86_64.AppImage (la versión de pyproject.toml; --output da otra
+carpeta). Lleva un Python propio (un Python reubicable del proyecto python-appimage,
+https://github.com/niess/python-appimage), con py-redact y todo lo que necesita instalado en él (PyMuPDF,
+PySide6), así que corre en cualquier Linux reciente (glibc 2.34 o posterior: Ubuntu 22.04, Debian 12, Fedora 35 y
+posteriores) sin instalar nada.
 
     py-redact.AppImage [file.pdf]
 
-What it needs is downloaded the first time and kept in the user's cache
-folder (~/.cache/py-redact-build): the Python and appimagetool
-(https://github.com/AppImage/appimagetool). The program's wheel is made with
-"uv build", and its dependencies come from PyPI (so this needs the network),
-in the versions of uv.lock: the AppImage runs the PyMuPDF and the PySide6
-that the tests ran with, not whatever is newest on PyPI that day.
+Lo que necesita se descarga la primera vez y se guarda en la carpeta de caché del usuario
+(~/.cache/py-redact-build): el Python y appimagetool (https://github.com/AppImage/appimagetool). La rueda del
+programa se hace con "uv build", y sus dependencias vienen de PyPI (por eso hace falta la red), en las versiones
+de uv.lock: la AppImage lleva el PyMuPDF y el PySide6 con los que corrieron las pruebas, no lo último que haya en
+PyPI ese día.
 """
 
 from __future__ import annotations

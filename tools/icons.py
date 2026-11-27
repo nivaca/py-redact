@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Draws the PNG icons of py-redact, in every size of the hicolor theme, from
-its two SVG pictures: the scalable one (hicolor/scalable/apps/py-redact.svg)
-for 48 pixels and more, and a plainer one (icons/source/py-redact-small.svg),
-with fewer and bolder lines, for 32 pixels and less.
+"""Dibuja los iconos PNG de py-redact, en cada tamaño del tema hicolor, a partir de sus dos imágenes SVG: la
+escalable (hicolor/scalable/apps/py-redact.svg), para 48 píxeles o más, y otra más sencilla
+(icons/source/py-redact-small.svg), con menos líneas y más gruesas, para 32 píxeles o menos.
 
     python3 tools/icons.py [--inkscape INKSCAPE]
 
-It needs Inkscape (by default, `inkscape` on the PATH, or the AppImage in
-~/AppImages/inkscape.appimage).
+Necesita Inkscape: el que se dé con --inkscape o, si no, `inkscape` del PATH o la AppImage de
+~/AppImages/inkscape.appimage.
 """
 
 from __future__ import annotations
@@ -17,6 +16,16 @@ import shutil
 import subprocess
 from pathlib import Path
 
+DESCRIPTION = """Draws the PNG icons of py-redact, in every size of the hicolor theme, from
+its two SVG pictures: the scalable one (hicolor/scalable/apps/py-redact.svg)
+for 48 pixels and more, and a plainer one (icons/source/py-redact-small.svg),
+with fewer and bolder lines, for 32 pixels and less.
+
+    python3 tools/icons.py [--inkscape INKSCAPE]
+
+It needs Inkscape (by default, `inkscape` on the PATH, or the AppImage in
+~/AppImages/inkscape.appimage).
+"""
 ROOT = Path(__file__).resolve().parent.parent
 ICONS = ROOT / "src" / "py_redact" / "icons"
 HICOLOR = ICONS / "linux" / "hicolor"
@@ -33,7 +42,7 @@ def inkscape(given: str | None) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--inkscape", help="the Inkscape to use")
     program = inkscape(parser.parse_args().inkscape)
     for size in SIZES:
