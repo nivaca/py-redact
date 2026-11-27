@@ -25,6 +25,9 @@
    GitHub (`origin`) and Codeberg (`codeberg`); and attaches the files to the
    release on both; then it sends the signed source RPM to Copr
    (project nivaca/py-redact). `--dry-run` only shows the commands.
+   Everything but the RPM is made in `build/release/`, not in `dist/`, and
+   deleted at the end, once published: only the RPM is kept here, in
+   `build/rpm/` and its copy in `dist/`.
 
 ## What the RPM build needs
 
@@ -66,7 +69,7 @@ needs an API token in `~/.config/copr` (it expires after 180 days).
 
 ## Zenodo
 
-Each release leaves in `dist/zenodo/` what goes to Zenodo: the tree of the
+Each release makes in `build/zenodo/` what goes to Zenodo: the tree of the
 tag as `py-redact-VERSION-source.tar.gz`, made with `git archive`, its signature,
 a `SHA256SUMS` of only that file with its signature, and the public key.
 `tools/release.py` makes it after the tag (`tools/zenodo.py collect`),

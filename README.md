@@ -279,9 +279,9 @@ What is where
 
 Each package is made by one command:
 
-    $ uv build                                   # the wheel and the source package, in dist/
-    $ uv run python tools/bundle-appimage.py     # the AppImage, in dist/
-    $ packaging/build-rpm.sh [--sign]            # the RPM, in build/rpm/
+    $ uv build --out-dir build/release           # the wheel and the source package, in build/release/
+    $ uv run python tools/bundle-appimage.py     # the AppImage, in build/release/
+    $ packaging/build-rpm.sh [--sign]            # the RPM, in build/rpm/ (and a copy in dist/)
     $ uv run python tools/screenshots.py         # the screenshots, in docs/img/
     $ uv run python tools/icons.py               # the PNG icons, from the SVG ones (Inkscape)
 

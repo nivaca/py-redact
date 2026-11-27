@@ -21,11 +21,11 @@ In order, each step only if it is needed:
 2. runs the tests (tools/test.py: each file in a pytest of its own, all at once), unless --no-tests;
 3. makes the wheel and the source package (uv build), the ZIP of the
    source (git archive of HEAD) and the AppImage (tools/bundle-appimage.py)
-   in dist/, unless --no-build (then those in
-   dist/ are used); unless --no-rpm, also the signed RPM in build/rpm/
+   in build/release/, unless --no-build (then those in
+   build/release/ are used); unless --no-rpm, also the signed RPM in build/rpm/
    (packaging/build-rpm.sh --sign, which checks its signature; gpg asks for
    the passphrase); then signs every file (tools/sign_release.py: FILE.asc,
-   dist/SHA256SUMS and its .asc), and checks each signature with only the
+   build/release/SHA256SUMS and its .asc), and checks each signature with only the
    public key that is published (packaging/RPM-GPG-KEY-py-redact);
 4. tags HEAD as vVERSION, a tag signed with the same key (git tag --sign),
    and checks it (git tag -v). If the tag is already on another commit, it
@@ -43,12 +43,16 @@ In order, each step only if it is needed:
    with the API token in $UV_PUBLISH_TOKEN). PyPI never takes a file twice:
    with --redo, those already there are skipped, not replaced.
 
+Only the RPM is kept here once the release is done (in build/rpm/, and its copy in dist/, which holds nothing
+else): at the end, build/release/ and build/zenodo/ are deleted, since the forges and Zenodo have what they
+held.
+
 Before doing anything, it shows the commands it will run and asks; --yes
 doesn't ask, --dry-run only shows them. The notes of a new release are
 --notes, --notes-file, or else made by GitHub from the commits (on Codeberg,
 none); a release that is there keeps its notes.
 
-The deposit for Zenodo is collected in dist/zenodo/ after the tag (tools/zenodo.py collect: the tree of the
+The deposit for Zenodo is collected in build/zenodo/ after the tag (tools/zenodo.py collect: the tree of the
 tag, signed, with SHA256SUMS and the public key), and at the end uploaded to Zenodo and published (the token
 in $ZENODO_TOKEN or the keyring), unless --no-zenodo. It is published there, with a new DOI;
 with --zenodo-draft it is left as a draft, to publish by hand.
@@ -72,13 +76,16 @@ VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["versi
 TAG = f"v{VERSION}"
 TITLE = f"py-redact {VERSION}"
 BRANCH = "main"
-WHEEL = f"dist/py_redact-{VERSION}-py3-none-any.whl"
-SDIST = f"dist/py_redact-{VERSION}.tar.gz"
-ZIP = f"dist/py-redact-{VERSION}.zip"
-APPIMAGE = f"dist/py-redact-{VERSION}-x86_64.AppImage"
+# Lo que se publica se hace en build/release/, no en dist/: en local solo se guarda el RPM (en build/rpm/, y su
+# copia en dist/, que no tiene nada más)
+OUT = "build/release"
+WHEEL = f"{OUT}/py_redact-{VERSION}-py3-none-any.whl"
+SDIST = f"{OUT}/py_redact-{VERSION}.tar.gz"
+ZIP = f"{OUT}/py-redact-{VERSION}.zip"
+APPIMAGE = f"{OUT}/py-redact-{VERSION}-x86_64.AppImage"
 SPEC = "packaging/py-redact.spec"
 PUBLIC_KEY = "packaging/RPM-GPG-KEY-py-redact"  # (the public key published with every release)
-SUMS = "dist/SHA256SUMS"
+SUMS = f"{OUT}/SHA256SUMS"
 COPR_PROJECT = "py-redact"  # (of the copr-cli user, nivaca)
 REMOTES = {"github": "origin", "codeberg": "codeberg"}
 
@@ -228,11 +235,12 @@ class Release:
                 if not (ROOT / f).is_file():
                     sys.exit(f"release.py: there is no {f} (leave out --no-build to make it)")
             return
-        self.plan("Make the wheel and the source package", "uv", "build", "--out-dir", "dist")
+        (ROOT / OUT).mkdir(parents=True, exist_ok=True)
+        self.plan("Make the wheel and the source package", "uv", "build", "--out-dir", OUT)
         self.plan("Make the ZIP of the source", "git", "archive", "--format=zip", f"--prefix=py-redact-{VERSION}/",
                   "--output", ZIP, "HEAD")
         if APPIMAGE in self.files:
-            self.plan("Make the AppImage", "uv", "run", "python", "tools/bundle-appimage.py")
+            self.plan("Make the AppImage", "uv", "run", "python", "tools/bundle-appimage.py", "--output", OUT)
         if self.args.rpm:
             self.plan("Make the signed RPM", "packaging/build-rpm.sh", "--sign")
 
@@ -321,13 +329,13 @@ class Release:
                   "--check-url", "https://pypi.org/simple/", WHEEL, SDIST)
 
     def zenodo_collect(self):
-        """The deposit of the release for Zenodo, in dist/zenodo/ (tools/zenodo.py): the tree of the tag, signed,
+        """The deposit of the release for Zenodo, in build/zenodo/ (tools/zenodo.py): the tree of the tag, signed,
         with SHA256SUMS and the public key, each signature checked with only that key."""
-        self.plan("Zenodo: collect the deposit in dist/zenodo/", sys.executable, "tools/zenodo.py", "collect",
+        self.plan("Zenodo: collect the deposit in build/zenodo/", sys.executable, "tools/zenodo.py", "collect",
                   "--tag", TAG)
 
     def zenodo_upload(self):
-        """Unless --no-zenodo, dist/zenodo/ uploaded to Zenodo and published (with
+        """Unless --no-zenodo, build/zenodo/ uploaded to Zenodo and published (with
         --zenodo-draft, only as a draft, published there by hand)."""
         if self.args.no_zenodo:
             return
@@ -361,7 +369,13 @@ class Release:
         if a.pypi:
             self.pypi()
         self.zenodo_upload()
+        self.clean_up()
         self.run_plan()
+
+    def clean_up(self):
+        """Once all is published: only the RPM stays here (build/rpm/, and its copy in dist/); the rest is on the
+        forges and on Zenodo."""
+        self.plan("Delete what was published from build/ (only the RPM stays)", "rm", "-rf", OUT, "build/zenodo")
 
 
 def main(argv=None):
@@ -377,7 +391,8 @@ def main(argv=None):
     parser.add_argument("--no-copr", action="store_true", help="don't send the RPM to Copr")
     parser.add_argument("--pypi", action="store_true",
                         help="also upload the wheel and the source package to PyPI ($UV_PUBLISH_TOKEN)")
-    parser.add_argument("--no-build", action="store_true", help="use the files in dist/ (and build/rpm/) as they are")
+    parser.add_argument("--no-build", action="store_true",
+                        help="use the files in build/release/ (and build/rpm/) as they are")
     parser.add_argument("--no-appimage", action="store_true", help="without the AppImage")
     parser.add_argument("--no-tests", action="store_true", help="don't run the tests first")
     parser.add_argument("--redo", action="store_true",
@@ -386,7 +401,7 @@ def main(argv=None):
     parser.add_argument("--only", choices=("github", "codeberg"), help="publish on one forge only")
     parser.add_argument("--tea-login", default="codeberg", help="the login of tea for Codeberg (default: codeberg)")
     parser.add_argument("--no-zenodo", action="store_true",
-                        help="don't upload dist/zenodo/ to Zenodo (by default it is uploaded and "
+                        help="don't upload build/zenodo/ to Zenodo (by default it is uploaded and "
                              "published, with the token in $ZENODO_TOKEN or the keyring)")
     parser.add_argument("--zenodo-draft", action="store_true",
                         help="upload it to Zenodo as a draft, not published")

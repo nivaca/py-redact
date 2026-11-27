@@ -285,9 +285,9 @@ Qué hay dónde
 
 Cada paquete lo hace una orden:
 
-    $ uv build                                   # la rueda y el paquete fuente, en dist/
-    $ uv run python tools/bundle-appimage.py     # la AppImage, en dist/
-    $ packaging/build-rpm.sh [--sign]            # el RPM, en build/rpm/
+    $ uv build --out-dir build/release           # la rueda y el paquete fuente, en build/release/
+    $ uv run python tools/bundle-appimage.py     # la AppImage, en build/release/
+    $ packaging/build-rpm.sh [--sign]            # el RPM, en build/rpm/ (y una copia en dist/)
     $ uv run python tools/screenshots.py         # las capturas, en docs/img/
     $ uv run python tools/icons.py               # los iconos PNG, desde los SVG (Inkscape)
 

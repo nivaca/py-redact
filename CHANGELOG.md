@@ -36,6 +36,13 @@ AppImages and RPMs, are on
   its own, as many at a time as there are processors, the slowest first.
   `tools/release.py` and the RPM's `%check` run them with it, instead of
   one pytest for them all.
+- Only the RPM is kept here after a release: `tools/release.py` makes and
+  signs the wheel, the source package, the ZIP, the AppImage and
+  `SHA256SUMS` in `build/release/` (no longer `dist/`), and the deposit for
+  Zenodo in `build/zenodo/` (no longer `dist/zenodo/`), publishes them from
+  there and deletes both at the end. `tools/bundle-appimage.py` writes to
+  `build/release/` by default. `dist/` keeps only the copy of the RPM that
+  `packaging/build-rpm.sh` leaves there.
 
 ## 1.0.11 — 2026-11-22
 
