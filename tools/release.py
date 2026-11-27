@@ -18,7 +18,7 @@ In order, each step only if it is needed:
    the versions agree (pyproject.toml, __init__.py and, unless --no-rpm, the
    spec), that the tools are installed (gh, tea, gpg; unless --no-rpm,
    rpmbuild and copr-cli) and that the signing key is in gpg;
-2. runs the tests (unless --no-tests);
+2. runs the tests (tools/test.py: each file in a pytest of its own, all at once), unless --no-tests;
 3. makes the wheel and the source package (uv build), the ZIP of the
    source (git archive of HEAD) and the AppImage (tools/bundle-appimage.py)
    in dist/, unless --no-build (then those in
@@ -219,7 +219,8 @@ class Release:
 
     def tests(self):
         if not self.args.no_tests:
-            self.plan("Run the tests", "uv", "run", "pytest", "-q")
+            # (cada archivo en un pytest propio, todos a la vez: tools/test.py)
+            self.plan("Run the tests", "uv", "run", "python", "tools/test.py")
 
     def build(self):
         if self.args.no_build:

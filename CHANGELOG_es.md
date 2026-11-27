@@ -33,6 +33,10 @@ ruedas, AppImages y RPM, están en
   `--zenodo-draft` todavía lo deja. `tools/zenodo.py publish` publica un
   borrador que ya está allí (por omisión, el que espera con el título del
   proyecto).
+- `tools/test.py` corre las pruebas a la vez, cada archivo en un pytest
+  propio, tantos a la vez como procesadores haya, primero los más lentos.
+  `tools/release.py` y el `%check` del RPM las corren con él, y no con un
+  solo pytest para todas.
 
 ## 1.0.11 — 2026-11-22
 

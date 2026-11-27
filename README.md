@@ -604,7 +604,12 @@ PDF/X is done by pdf2iso, and the window waits for it in the same way.
 Testing
 -------
 
-    $ uv run pytest
+    $ uv run python tools/test.py
+
+runs each test file in a pytest of its own, as many at once as there are
+processors (`-j N` changes that), the slowest first; the release and the
+RPM's `%check` run them so too. `uv run pytest` runs them one after the
+other.
 
 There are 98 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,

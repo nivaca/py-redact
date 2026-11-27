@@ -32,6 +32,10 @@ AppImages and RPMs, are on
   (`tools/zenodo.py upload --publish`), instead of leaving a draft;
   `--zenodo-draft` still leaves one. `tools/zenodo.py publish` publishes a
   draft already there (by default the one waiting with the project's title).
+- `tools/test.py` runs the tests at once, each test file in a pytest of
+  its own, as many at a time as there are processors, the slowest first.
+  `tools/release.py` and the RPM's `%check` run them with it, instead of
+  one pytest for them all.
 
 ## 1.0.11 — 2026-11-22
 
