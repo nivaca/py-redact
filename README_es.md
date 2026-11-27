@@ -632,7 +632,7 @@ procesadores haya (`-j N` lo cambia), primero los más lentos; así las corren
 también la publicación y el `%check` del RPM. `uv run pytest` las corre una
 tras otra.
 
-Hay 98 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
+Hay 121 pruebas. Cubren la censura (de texto, imágenes, dibujos, anotaciones,
 páginas giradas y archivos protegidos), la búsqueda y sus patrones, los
 códigos de censura, la información oculta, la configuración y la ventana,
 manejada como la manejaría un usuario: dibujando, moviendo y redimensionando

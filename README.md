@@ -611,7 +611,7 @@ processors (`-j N` changes that), the slowest first; the release and the
 RPM's `%check` run them so too. `uv run pytest` runs them one after the
 other.
 
-There are 98 tests. They cover the redaction (of text, pictures, drawings,
+There are 121 tests. They cover the redaction (of text, pictures, drawings,
 annotations, rotated pages, protected files), the search and its patterns,
 the redaction codes, the hidden information, the settings, and the window,
 driven as a user would drive it: drawing, moving and resizing marks with the

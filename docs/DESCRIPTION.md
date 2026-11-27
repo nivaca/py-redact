@@ -317,7 +317,8 @@ folder of their own, never with mine.
 Testing
 -------
 
-The program has 101 tests (`uv run pytest`). The tests of the redaction make
+The program has 121 tests. They run with `uv run python tools/test.py`,
+each test file in a process of its own, all at once. The tests of the redaction make
 documents with text, pictures, annotations, form fields, rotated pages and
 passwords, redact them, and read the result: what was under a mark must be
 gone, and what was not must stay. The window is tested as a user would use
